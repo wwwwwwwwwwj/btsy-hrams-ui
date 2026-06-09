@@ -1,0 +1,73 @@
+import request from '@/utils/request';
+import { download, toFormData, checkDownloadRes } from '@/utils/common';
+
+/**
+ * 分页查询岗位
+ */
+export async function pagePost(params) {
+  const res = await request.get('/system/post/list', { params });
+  if (res.data.code === 200) {
+    return res.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+/**
+ * 添加岗位
+ */
+export async function addPost(data) {
+  const res = await request.post('/system/post', data);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+/**
+ * 修改岗位
+ */
+export async function updatePost(data) {
+  const res = await request.put('/system/post', data);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+/**
+ * 批量删除岗位
+ */
+export async function removePost(ids) {
+  const res = await request.delete(`/system/post/${ids.join()}`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+/**
+ * 导出岗位
+ */
+export async function exportPost(params) {
+  const res = await request({
+    url: '/system/post/export',
+    method: 'POST',
+    data: toFormData(params),
+    responseType: 'blob'
+  });
+  await checkDownloadRes(res);
+  download(res.data, `post_${Date.now()}.xlsx`);
+}
+
+/**
+ * 查询岗位
+ */
+export async function listPost(params) {
+  const res = await request.get('/system/post/optionselect', {
+    params
+  });
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}

@@ -1,0 +1,195 @@
+@use 'ele-admin-plus/es/style/util.scss' as *;
+
+.ele-md-editor {
+  width: 100%;
+  height: 480px;
+  line-height: initial;
+  box-sizing: border-box;
+
+  .bytemd {
+    height: 100%;
+    color: elVar('text-color', 'regular');
+    border-color: elVar('border-color', 'light');
+    border-radius: elVar('border-radius', 'base');
+    background: transparent;
+
+    .markdown-body {
+      max-width: 100%;
+      padding: 16px 24px;
+    }
+
+    /* 编辑器样式修改 */
+    &.bytemd-fullscreen {
+      z-index: calc(var(#{eleVarName('layout', 'index')}, 9) + 99);
+      background: elVar('bg-color', 'overlay');
+    }
+
+    .bytemd-toolbar-right > .bytemd-toolbar-icon:last-child {
+      display: none;
+    }
+
+    .bytemd-toolbar {
+      background: elVar('fill-color', 'light');
+      border-color: elVar('border-color', 'light');
+      border-top-left-radius: elVar('border-radius', 'base');
+      border-top-right-radius: elVar('border-radius', 'base');
+    }
+
+    .bytemd-toolbar .bytemd-toolbar-left,
+    .bytemd-toolbar .bytemd-toolbar-right {
+      .tippy-box[data-theme~='light-border'] {
+        color: elVar('text-color', 'regular');
+        background: elVar('bg-color', 'overlay');
+        box-shadow: elVar('box-shadow', 'light');
+        border: none;
+      }
+
+      .tippy-content {
+        padding: 0;
+      }
+    }
+
+    .bytemd-toolbar-icon:hover {
+      background: hsla(0, 0%, 60%, 0.15);
+    }
+
+    .bytemd-dropdown {
+      padding-top: 4px;
+      padding-bottom: 4px;
+      padding-left: calc((#{elVar('border-radius', 'small')} - 2px) * 2);
+      padding-right: calc((#{elVar('border-radius', 'small')} - 2px) * 2);
+    }
+
+    .bytemd-dropdown-item {
+      border-radius: calc((#{elVar('border-radius', 'small')} - 2px) * 2);
+    }
+
+    .bytemd-dropdown-item + .bytemd-dropdown-item {
+      margin-top: 2px;
+    }
+
+    .bytemd-dropdown-item:hover {
+      background: elVar('fill-color', 'light');
+    }
+
+    .bytemd-dropdown-title {
+      color: elVar('text-color', 'secondary');
+      border-color: elVar('border-color', 'light');
+      margin-bottom: 3px;
+    }
+
+    .bytemd-sidebar ul {
+      color: elVar('text-color', 'regular');
+    }
+
+    .bytemd-toc-active {
+      color: elVar('color-primary');
+      background: elVar('fill-color', 'light');
+      border-radius: calc((#{elVar('border-radius', 'small')} - 2px) * 2);
+    }
+
+    .bytemd-status {
+      border-color: elVar('border-color', 'light');
+    }
+
+    .bytemd-preview,
+    .bytemd-sidebar {
+      border-color: elVar('border-color', 'light');
+    }
+
+    .bytemd-toolbar-icon-active,
+    .bytemd-status-right span:hover,
+    .bytemd-sidebar-close:hover {
+      color: elVar('color-primary');
+    }
+
+    /* 编辑框样式修改 */
+    .CodeMirror {
+      background: transparent;
+      color: elVar('text-color', 'primary');
+    }
+
+    .CodeMirror .CodeMirror-lines {
+      max-width: 100%;
+      padding: 12px 0;
+    }
+
+    pre.CodeMirror-line,
+    pre.CodeMirror-line-like {
+      padding: 0 12px;
+    }
+
+    .CodeMirror .cm-header {
+      color: elVar('color-primary');
+    }
+
+    .CodeMirror div.CodeMirror-selected {
+      background: elVar('fill-color', 'light');
+    }
+
+    .CodeMirror-focused div.CodeMirror-selected {
+      background: elVar('color-primary', 'light-9');
+    }
+
+    .CodeMirror .CodeMirror-line::selection,
+    .CodeMirror .CodeMirror-line > span::selection,
+    .CodeMirror .CodeMirror-line > span > span::selection {
+      background: elVar('fill-color', 'light');
+    }
+
+    .CodeMirror .CodeMirror-line::-moz-selection,
+    .CodeMirror .CodeMirror-line > span::-moz-selection,
+    .CodeMirror .CodeMirror-line > span > span::-moz-selection {
+      background: elVar('fill-color', 'light');
+    }
+
+    .CodeMirror .CodeMirror-gutters {
+      background: elVar('fill-color', 'lighter');
+      border-right: 1px solid elVar('border-color', 'light');
+    }
+
+    .CodeMirror .CodeMirror-guttermarker {
+      color: elVar('text-color', 'primary');
+    }
+
+    .CodeMirror .CodeMirror-guttermarker-subtle {
+      color: elVar('text-color', 'secondary');
+    }
+
+    .CodeMirror .CodeMirror-linenumber {
+      color: elVar('text-color', 'secondary');
+      text-align: center;
+    }
+
+    .CodeMirror .CodeMirror-cursor {
+      border-left: 1px solid elVar('color-primary');
+    }
+
+    .CodeMirror .cm-meta,
+    .CodeMirror .cm-qualifier {
+      color: elVar('text-color', 'secondary');
+    }
+  }
+}
+
+body > div > .tippy-box[data-placement^='top'] > .tippy-arrow:before {
+  bottom: -5px;
+  border-width: 6px 6px 0;
+}
+
+body > div > .tippy-box[data-placement^='bottom'] > .tippy-arrow:before {
+  top: -5px;
+  border-width: 0 6px 6px;
+}
+
+html.ele-theme-simple > body > div > .tippy-box,
+html.ele-theme-simple-dark > body > div > .tippy-box,
+html.is-transparent > body > div > .tippy-box {
+  color: elVar('text-color', 'regular');
+  background: elVar('bg-color', 'overlay');
+  box-shadow: elVar('box-shadow', 'light');
+
+  & > .tippy-arrow {
+    display: none;
+  }
+}

@@ -1,0 +1,2 @@
+import 'highlight.js/styles/atom-one-light.css';
+import './index.scss';

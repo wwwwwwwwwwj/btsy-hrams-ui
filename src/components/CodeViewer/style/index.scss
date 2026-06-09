@@ -1,0 +1,136 @@
+@use 'ele-admin-plus/es/style/themes/default.scss' as *;
+@use 'ele-admin-plus/es/style/util.scss' as *;
+
+.ele-code-viewer {
+  display: flex;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 20px;
+  background: #f8f8f8;
+  border-radius: elVar('border-radius', 'base');
+  box-sizing: border-box;
+  overflow: auto;
+
+  & > pre {
+    margin: 0;
+    padding: 10px 16px;
+    box-sizing: border-box;
+
+    & > code {
+      display: inline;
+      padding: 0;
+      font-family: $code-family;
+      background: none;
+      overflow: visible;
+    }
+  }
+
+  .ele-code-viewer-lines {
+    flex-shrink: 0;
+    min-width: 32px;
+    min-height: 100%;
+    padding: 10px 0 6px 0;
+    line-height: 20.67px;
+    color: #a0a1a7;
+    font-family: $code-family;
+    border-right: 1px solid hsla(0, 0%, 60%, 0.1);
+    background: #f8f8f8;
+    box-sizing: border-box;
+    text-align: center;
+    user-select: none;
+    position: sticky;
+    left: 0;
+  }
+
+  &.is-dark {
+    background: #1e1e1e;
+    #{eleVarName('scrollbar', 'color')}: #5e5e5e;
+    #{eleVarName('scrollbar', 'hover-color')}: #707070;
+
+    .ele-code-viewer-lines {
+      color: #5c6370;
+      background: #1e1e1e;
+    }
+  }
+}
+
+/* 代码高亮暗色主题 */
+.ele-code-viewer.is-dark,
+html.dark .ele-code-viewer,
+html.dark .ele-md-body.markdown-body,
+html.dark .ele-md-editor .bytemd-preview > .markdown-body {
+  .hljs {
+    color: #abb2bf;
+    background: transparent;
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: #5c6370;
+    font-style: italic;
+  }
+
+  .hljs-doctag,
+  .hljs-keyword,
+  .hljs-formula {
+    color: #c678dd;
+  }
+
+  .hljs-section,
+  .hljs-name,
+  .hljs-selector-tag,
+  .hljs-deletion,
+  .hljs-subst {
+    color: #e06c75;
+  }
+
+  .hljs-literal {
+    color: #56b6c2;
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition,
+  .hljs-attribute,
+  .hljs-meta .hljs-string {
+    color: #98c379;
+  }
+
+  .hljs-attr,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-selector-class,
+  .hljs-selector-attr,
+  .hljs-selector-pseudo,
+  .hljs-number {
+    color: #d19a66;
+  }
+
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-link,
+  .hljs-meta,
+  .hljs-selector-id,
+  .hljs-title {
+    color: #61aeee;
+  }
+
+  .hljs-built_in,
+  .hljs-title.class_,
+  .hljs-class .hljs-title {
+    color: #e6c07b;
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: bold;
+  }
+
+  .hljs-link {
+    text-decoration: underline;
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "baseUrl": "./",
+    "lib": ["esnext", "dom"],
+    "types": ["element-plus/global", "ele-admin-plus/typings/global"],
+    "allowSyntheticDefaultImports": true,
+    "checkJs": false,
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["./components.d.ts", "src/**/*", "vite.config.js"],
+  "exclude": ["node_modules", "dist"]
+}

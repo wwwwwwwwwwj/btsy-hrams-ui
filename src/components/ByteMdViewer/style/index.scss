@@ -1,0 +1,509 @@
+@use 'ele-admin-plus/es/style/themes/default.scss' as *;
+@use 'ele-admin-plus/es/style/util.scss' as *;
+
+/* 代码块容器 */
+.ele-md-body-code {
+  margin-bottom: var(--base-size-16);
+
+  .ele-md-body-code-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: calc(#{elVar('border-radius', 'base')} * 2);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: var(--bgColor-muted);
+    border: 1px solid elVar('border-color', 'light');
+  }
+
+  .ele-md-body-code-main {
+    display: flex;
+    flex-direction: row-reverse;
+    background-color: #d4d5d82b;
+    border: 1px solid elVar('border-color', 'light');
+    border-top: 0;
+    border-radius: calc(#{elVar('border-radius', 'base')} * 2);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+
+    & > pre {
+      flex: 1;
+      margin: 0;
+    }
+  }
+
+  .ele-md-body-code-lines {
+    flex-shrink: 0;
+    padding: 0.74rem 0 0 0;
+    font-size: 92.8%;
+    line-height: 18.83px;
+    font-family: var(--fontStack-monospace);
+    min-width: 32px;
+    color: elVar('text-color', 'placeholder');
+    border-right: 1px solid hsla(0, 0%, 60%, 0.1);
+    text-align: center;
+  }
+
+  .ele-md-body-code-name {
+    flex: 1;
+    font-size: 12px;
+    color: elVar('text-color', 'secondary');
+    font-family: var(--fontStack-monospace);
+    padding-left: 6px;
+    overflow: hidden;
+  }
+
+  .ele-md-body-code-tool {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 8px;
+    color: elVar('text-color', 'secondary');
+    font-size: 14px;
+    border-radius: elVar('border-radius', 'base');
+    transition: all 0.2s;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+
+    &::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 100%;
+      width: max-content;
+      font-size: 12px;
+      font-weight: normal;
+      margin-top: 8px;
+      padding: 4px 8px;
+      color: #fff;
+      background: #2c2c2e;
+      border-radius: calc(#{elVar('border-radius', 'base')} * 2 - 2px);
+      display: none;
+    }
+
+    &:hover {
+      background: hsla(0, 0%, 60%, 0.15);
+      color: elVar('text-color', 'primary');
+
+      &::after {
+        display: block;
+      }
+    }
+
+    svg {
+      width: 1em;
+      height: 1em;
+      pointer-events: none;
+    }
+
+    &[data-action='copy'] > svg {
+      transform: scale(0.9) translateY(0.38px);
+    }
+
+    &[data-action='download'] > svg {
+      transform: scale(1.06) translateY(-0.38px);
+    }
+
+    &[data-action='zoomOut'] > svg {
+      transform: scale(1.06) translateY(-0.38px);
+    }
+
+    &[data-action='zoomIn'] > svg {
+      transform: scale(1.06) translateY(-0.38px);
+    }
+
+    &[data-action='mermaidTheme'] > svg {
+      transform: scale(1.06) translateY(0.38px);
+    }
+
+    &[data-action='viewer'] > svg {
+      transform: scale(1.06);
+    }
+
+    &.is-copy-success {
+      & > svg > path {
+        #{'d'}: path('M6 24 19 37 43 13');
+      }
+
+      &::after {
+        content: attr(data-success-text);
+      }
+    }
+
+    &[data-theme='light'] > svg {
+      transform: scale(1.02);
+
+      & > path {
+        #{'d'}: path(
+          'M24 5C14 5 5 13 5 24 5 35 14 44 25 44 36 44 44 35 44 25 40 28 37 28 32 28 28 28 23 24 22 20 21 16 20 10 24 5Z'
+        );
+      }
+    }
+  }
+
+  .ele-md-body-code-tabs {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: elVar('border-radius', 'base');
+    background: elVar('bg-color');
+    margin: 0 auto 0 0;
+  }
+
+  .ele-md-body-code-tab {
+    font-size: 13px;
+    padding: 2px 8px;
+    color: elVar('text-color', 'placeholder');
+    border-radius: elVar('border-radius', 'base');
+    transition: all 0.2s;
+    user-select: none;
+    cursor: pointer;
+
+    & + .ele-md-body-code-tab {
+      margin-left: 2px;
+    }
+
+    &:hover {
+      background: hsla(0, 0%, 60%, 0.15);
+    }
+  }
+
+  .ele-md-body-mermaid {
+    flex: 1;
+    height: 460px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    & > svg {
+      flex-shrink: 0;
+      margin: auto;
+    }
+  }
+
+  &.is-mermaid {
+    &.is-show-mermaid .ele-md-body-code-main > pre,
+    &.is-show-mermaid .ele-md-body-code-main > .ele-md-body-code-lines,
+    &:not(.is-show-mermaid) .ele-md-body-code-main > .ele-md-body-mermaid,
+    &:not(.is-show-mermaid) .ele-md-body-code-tool[data-action='mermaidTheme'],
+    &:not(.is-show-mermaid) .ele-md-body-code-tool[data-action='viewer'],
+    &:not(.is-show-mermaid) .ele-md-body-code-tool[data-action='zoomOut'],
+    &:not(.is-show-mermaid) .ele-md-body-code-tool[data-action='zoomIn'],
+    &.is-show-mermaid .ele-md-body-code-tool[data-action='copy'],
+    &.is-show-mermaid .ele-md-body-code-tool[data-action='download'] {
+      display: none;
+    }
+
+    &.is-show-mermaid
+      .ele-md-body-code-tabs
+      > .ele-md-body-code-tab:first-child,
+    &:not(.is-show-mermaid)
+      .ele-md-body-code-tabs
+      > .ele-md-body-code-tab:last-child {
+      color: elVar('text-color', 'regular');
+      background: elVar('fill-color');
+    }
+  }
+}
+
+.ele-mermaid-viewer .el-image-viewer__img {
+  background: #fff;
+}
+
+.ele-mermaid-viewer.is-dark .el-image-viewer__img {
+  background: #181818;
+}
+
+/* 主题样式重写 */
+.ele-md-body.markdown-body,
+.ele-md-editor .bytemd-preview > .markdown-body {
+  font-size: 14px;
+  line-height: 1.58;
+  font-family: elVar('font-family');
+  --base-size-4: 0.25rem;
+  --base-size-8: 0.5rem;
+  --base-size-16: 1rem;
+  --base-size-24: 1.5rem;
+  --base-size-40: 2.5rem;
+  --base-text-weight-normal: 400;
+  --base-text-weight-medium: 500;
+  --base-text-weight-semibold: 600;
+  --fontStack-monospace: #{$code-family};
+  --fgColor-accent: 'Highlight';
+  color-scheme: light;
+  --focus-outlineColor: #0969da;
+  --fgColor-default: #{elVar('text-color', 'regular')};
+  --fgColor-muted: #59636e;
+  --fgColor-accent: #0969da;
+  --fgColor-success: #1a7f37;
+  --fgColor-attention: #9a6700;
+  --fgColor-danger: #d1242f;
+  --fgColor-done: #8250df;
+  --bgColor-default: transparent;
+  --bgColor-muted: #d4d4d43b;
+  --bgColor-neutral-muted: #818b981f;
+  --bgColor-attention-muted: #fff8c5;
+  --borderColor-default: #{elVar('border-color')};
+  --borderColor-muted: #{elVar('border-color')};
+  --borderColor-neutral-muted: #d1d9e0b3;
+  --borderColor-accent-emphasis: #0969da;
+  --borderColor-success-emphasis: #1a7f37;
+  --borderColor-attention-emphasis: #9a6700;
+  --borderColor-danger-emphasis: #cf222e;
+  --borderColor-done-emphasis: #8250df;
+  --color-prettylights-syntax-comment: #59636e;
+  --color-prettylights-syntax-constant: #0550ae;
+  --color-prettylights-syntax-constant-other-reference-link: #0a3069;
+  --color-prettylights-syntax-entity: #6639ba;
+  --color-prettylights-syntax-storage-modifier-import: #1f2328;
+  --color-prettylights-syntax-entity-tag: #0550ae;
+  --color-prettylights-syntax-keyword: #cf222e;
+  --color-prettylights-syntax-string: #0a3069;
+  --color-prettylights-syntax-variable: #953800;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #82071e;
+  --color-prettylights-syntax-brackethighlighter-angle: #59636e;
+  --color-prettylights-syntax-invalid-illegal-text: #f6f8fa;
+  --color-prettylights-syntax-invalid-illegal-bg: #82071e;
+  --color-prettylights-syntax-carriage-return-text: #f6f8fa;
+  --color-prettylights-syntax-carriage-return-bg: #cf222e;
+  --color-prettylights-syntax-string-regexp: #116329;
+  --color-prettylights-syntax-markup-list: #3b2300;
+  --color-prettylights-syntax-markup-heading: #0550ae;
+  --color-prettylights-syntax-markup-italic: #1f2328;
+  --color-prettylights-syntax-markup-bold: #1f2328;
+  --color-prettylights-syntax-markup-deleted-text: #82071e;
+  --color-prettylights-syntax-markup-deleted-bg: #ffebe9;
+  --color-prettylights-syntax-markup-inserted-text: #116329;
+  --color-prettylights-syntax-markup-inserted-bg: #dafbe1;
+  --color-prettylights-syntax-markup-changed-text: #953800;
+  --color-prettylights-syntax-markup-changed-bg: #ffd8b5;
+  --color-prettylights-syntax-markup-ignored-text: #d1d9e0;
+  --color-prettylights-syntax-markup-ignored-bg: #0550ae;
+  --color-prettylights-syntax-meta-diff-range: #8250df;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #818b98;
+
+  img {
+    cursor: zoom-in;
+  }
+
+  h1 {
+    font-size: 24px;
+    border-bottom: none;
+  }
+
+  h2 {
+    font-size: 20px;
+    border-bottom: none;
+  }
+
+  h3 {
+    font-size: 18px;
+  }
+
+  h4 {
+    font-size: 16px;
+  }
+
+  h5 {
+    font-size: 14px;
+  }
+
+  h6 {
+    font-size: 13px;
+    color: unset;
+  }
+
+  code:not(.hljs) {
+    font-size: 94%;
+    color: elVar('text-color', 'primary');
+    padding: 0.06em 0.3em;
+    border-radius: 4px;
+    border: 1px solid elVar('border-color');
+    box-sizing: border-box;
+  }
+
+  pre {
+    font-size: 92.8%;
+    padding: 0.68rem 1rem;
+    background-color: transparent;
+
+    & > code,
+    & > code:not(.hljs) {
+      display: inline;
+      font-family: var(--fontStack-monospace);
+      color: inherit;
+      font-size: 100%;
+      padding: 0;
+      border-radius: 0;
+      border: none;
+    }
+  }
+
+  blockquote {
+    padding: 0.25em 1em;
+  }
+
+  hr {
+    height: auto;
+    background: transparent;
+    border-bottom: 1px solid var(--borderColor-muted);
+  }
+
+  .task-list-item {
+    list-style-type: disc;
+  }
+
+  li > pre,
+  li > blockquote,
+  li > table,
+  li > .ele-md-body-code {
+    margin-top: 6px;
+  }
+
+  table {
+    border-spacing: 0;
+    border-collapse: separate;
+    border-width: 0;
+    border-top-width: 1px;
+    border-left-width: 1px;
+    border-style: solid;
+    border-color: elVar('border-color');
+    border-top-left-radius: elVar('border-radius', 'base');
+    border-top-right-radius: elVar('border-radius', 'base');
+    border-bottom-left-radius: elVar('border-radius', 'base');
+    border-bottom-right-radius: elVar('border-radius', 'base');
+
+    & > thead > tr:first-child > th:first-child,
+    & > thead > tr:first-child > td:first-child {
+      border-top-left-radius: elVar('border-radius', 'base');
+    }
+
+    & > thead > tr:first-child > th:last-child,
+    & > thead > tr:first-child > td:last-child {
+      border-top-right-radius: elVar('border-radius', 'base');
+    }
+
+    & > tr:last-child > td:first-child,
+    & > tr:last-child > th:first-child,
+    & > tbody > tr:last-child > td:first-child {
+      border-bottom-left-radius: elVar('border-radius', 'base');
+    }
+
+    & > tr:last-child > td:last-child,
+    & > tr:last-child > th:last-child,
+    & > tbody > tr:last-child > td:last-child,
+    & > tfoot > tr:last-child > td:last-child {
+      border-bottom-right-radius: elVar('border-radius', 'base');
+    }
+
+    & > tr,
+    & > thead > tr,
+    & > tbody > tr,
+    & > tfoot > tr {
+      background: transparent;
+
+      & > th,
+      & > td {
+        border-width: 0;
+        border-style: solid;
+        border-bottom-width: 1px;
+        border-right-width: 1px;
+        border-color: elVar('border-color');
+        padding: 10px 14px;
+        transition: all 0.2s;
+      }
+
+      &:hover > td {
+        background: var(--bgColor-muted);
+      }
+    }
+
+    & > tr > th,
+    & > thead > tr > th,
+    & > tbody > tr > th,
+    & > tfoot > tr > th,
+    & > thead > tr > td {
+      background: var(--bgColor-muted);
+    }
+  }
+}
+
+/* 暗色主题 */
+html.dark .ele-md-body.markdown-body,
+html.dark .ele-md-editor .bytemd-preview > .markdown-body {
+  color-scheme: dark;
+  --focus-outlineColor: #1f6feb;
+  --fgColor-default: #{elVar('text-color', 'regular')};
+  --fgColor-muted: #9198a1;
+  --fgColor-accent: #4493f8;
+  --fgColor-success: #3fb950;
+  --fgColor-attention: #d29922;
+  --fgColor-danger: #f85149;
+  --fgColor-done: #ab7df8;
+  --bgColor-default: transparent;
+  --bgColor-muted: #43444659;
+  --bgColor-neutral-muted: #656c7625;
+  --bgColor-attention-muted: #bb800928;
+  --borderColor-default: #{elVar('border-color')};
+  --borderColor-muted: #{elVar('border-color')};
+  --borderColor-neutral-muted: #3d444db3;
+  --borderColor-accent-emphasis: #1f6feb;
+  --borderColor-success-emphasis: #238636;
+  --borderColor-attention-emphasis: #9e6a03;
+  --borderColor-danger-emphasis: #da3633;
+  --borderColor-done-emphasis: #8957e5;
+  --color-prettylights-syntax-comment: #9198a1;
+  --color-prettylights-syntax-constant: #79c0ff;
+  --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
+  --color-prettylights-syntax-entity: #d2a8ff;
+  --color-prettylights-syntax-storage-modifier-import: #f0f6fc;
+  --color-prettylights-syntax-entity-tag: #7ee787;
+  --color-prettylights-syntax-keyword: #ff7b72;
+  --color-prettylights-syntax-string: #a5d6ff;
+  --color-prettylights-syntax-variable: #ffa657;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #f85149;
+  --color-prettylights-syntax-brackethighlighter-angle: #9198a1;
+  --color-prettylights-syntax-invalid-illegal-text: #f0f6fc;
+  --color-prettylights-syntax-invalid-illegal-bg: #8e1519;
+  --color-prettylights-syntax-carriage-return-text: #f0f6fc;
+  --color-prettylights-syntax-carriage-return-bg: #b62324;
+  --color-prettylights-syntax-string-regexp: #7ee787;
+  --color-prettylights-syntax-markup-list: #f2cc60;
+  --color-prettylights-syntax-markup-heading: #1f6feb;
+  --color-prettylights-syntax-markup-italic: #f0f6fc;
+  --color-prettylights-syntax-markup-bold: #f0f6fc;
+  --color-prettylights-syntax-markup-deleted-text: #ffdcd7;
+  --color-prettylights-syntax-markup-deleted-bg: #67060c;
+  --color-prettylights-syntax-markup-inserted-text: #aff5b4;
+  --color-prettylights-syntax-markup-inserted-bg: #033a16;
+  --color-prettylights-syntax-markup-changed-text: #ffdfb6;
+  --color-prettylights-syntax-markup-changed-bg: #5a1e02;
+  --color-prettylights-syntax-markup-ignored-text: #f0f6fc;
+  --color-prettylights-syntax-markup-ignored-bg: #1158c7;
+  --color-prettylights-syntax-meta-diff-range: #d2a8ff;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #3d444d;
+
+  .ele-md-body-code .ele-md-body-code-main {
+    background-color: #12131538;
+  }
+
+  pre {
+    background-color: transparent;
+  }
+}
+
+html.ele-theme-simple-dark .ele-md-body.markdown-body,
+html.ele-theme-simple-dark .bytemd-preview > .markdown-body {
+  --bgColor-muted: #27375478;
+}
+
+html.is-transparent .ele-md-body-code-tabs {
+  background: rgba(255, 255, 255, 0.68);
+}
+
+html.is-transparent.dark .ele-md-body-code-tabs {
+  background: rgba(0, 0, 0, 0.28);
+}
