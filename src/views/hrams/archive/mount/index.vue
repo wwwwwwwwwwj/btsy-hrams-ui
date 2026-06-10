@@ -92,6 +92,10 @@
         ? await mountIncrement(personId.value, file.value)
         : await mountBatch(personId.value, file.value);
       EleMessage.success({ message: '挂接完成', plain: true });
+      router.push({
+        path: '/hrams/archive/feedback',
+        query: { batchId: result.value?.id, folderName: result.value?.folderName }
+      });
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     } finally {

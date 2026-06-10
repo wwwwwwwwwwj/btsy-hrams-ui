@@ -16,6 +16,8 @@
           <el-button type="primary" v-permission="'hrams:archive:mount'" @click="goMount('batch')">批量挂接</el-button>
           <el-button v-permission="'hrams:archive:mount'" @click="goMount('increment')">增补挂接</el-button>
           <el-button v-permission="'hrams:archive:feedback'" @click="goFeedback">挂接反馈</el-button>
+          <el-button v-permission="'hrams:pool:list'" @click="goPool">待归档材料池</el-button>
+          <el-button v-permission="'hrams:scan:list'" @click="goScan">扫描接收</el-button>
         </template>
         <template #action="{ row }">
           <el-button link type="primary" v-permission="'hrams:archive:material'" @click="goMaterial(row)">材料管理</el-button>
@@ -58,6 +60,10 @@
   };
 
   const goFeedback = () => router.push({ path: '/hrams/archive/feedback' });
+
+  const goPool = () => router.push({ path: '/hrams/archive/pool' });
+
+  const goScan = () => router.push({ path: '/hrams/archive/scan' });
 
   const goMount = (mode) => {
     const ids = selections.value.map((d) => d.id);

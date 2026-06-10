@@ -32,6 +32,9 @@
             <el-table-column prop="formDate" label="形成时间" width="120" />
             <el-table-column prop="pageCount" label="页数" width="70" />
             <el-table-column prop="remark" label="备注" min-width="100" show-overflow-tooltip />
+            <el-table-column prop="sourceType" label="来源" width="100">
+              <template #default="{ row }">{{ sourceLabel(row.sourceType) }}</template>
+            </el-table-column>
             <el-table-column label="操作" width="260" fixed="right">
               <template #default="{ row }">
                 <el-button link v-permission="'hrams:archive:preview'" :disabled="row.fileStatus !== 'uploaded'" @click="preview(row)">预览</el-button>
@@ -80,7 +83,7 @@
 </template>
 
 <script setup>
-  import { computed, onMounted, ref } from 'vue';
+  import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import {
@@ -102,6 +105,15 @@
   const editVisible = ref(false);
   const uploadForm = ref({ categoryCode: '1', itemNo: 1, materialName: '', pageCount: 1, formDate: '', file: null });
   const editForm = ref({});
+  const highlightMaterialId = ref(null);
+  const tableRef = ref(null);
+
+  const sourceLabel = (t) => ({
+    manual: '手工上传',
+    batch_mount: '批量挂接',
+    increment_mount: '增补挂接',
+    pool_archive: '材料池归档'
+  }[t] || t || '—');
 
   const flatCategories = computed(() => {
     const list = [];
@@ -113,7 +125,12 @@
   const displayMaterials = computed(() => materials.value);
   const selectedUploaded = computed(() => selections.value.filter((r) => r.fileStatus === 'uploaded'));
 
-  const rowClass = ({ row }) => (row.fileStatus === 'uploaded' ? '' : 'is-disabled');
+  const rowClass = ({ row }) => {
+    const classes = [];
+    if (row.fileStatus !== 'uploaded') classes.push('is-disabled');
+    if (highlightMaterialId.value && row.id === highlightMaterialId.value) classes.push('is-highlight');
+    return classes.join(' ');
+  };
   const rowSelectable = (row) => row.fileStatus === 'uploaded';
 
   const loadPanel = async () => {
@@ -185,12 +202,27 @@
     await downloadMaterialsZip(personId.value, ids);
   };
 
-  onMounted(load);
+  onMounted(async () => {
+    if (route.query.categoryCode) {
+      categoryCode.value = route.query.categoryCode;
+    }
+    if (route.query.materialId) {
+      highlightMaterialId.value = Number(route.query.materialId);
+    }
+    await load();
+    if (route.query.itemNo && materials.value.length) {
+      const itemNo = Number(route.query.itemNo);
+      const hit = materials.value.find((m) => m.itemNo === itemNo);
+      if (hit) highlightMaterialId.value = hit.id;
+    }
+    await nextTick();
+  });
 </script>
 
 <style scoped>
   .summary { margin-top: 12px; font-size: 13px; color: #666; }
   .toolbar { margin-top: 8px; display: flex; gap: 8px; }
   :deep(.is-disabled) { color: #999; background: #f9f9fc; }
+  :deep(.is-highlight) { background: #fffbe6 !important; }
   :deep(mark) { background: #ffe58f; padding: 0 2px; }
 </style>

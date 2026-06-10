@@ -134,6 +134,94 @@ export async function listMountDetails(batchId) {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function handleMountDetail(detailId) {
+  const res = await request.put(`/hrams/archive/mount/details/${detailId}/handled`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function pageMaterialPool(params) {
+  const res = await request.get('/hrams/material-pool/list', { params });
+  if (res.data.code === 200) {
+    return res.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function archiveFromPool(data) {
+  const res = await request.post('/hrams/material-pool/archive', data);
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function ignoreMaterialPool(poolId) {
+  const res = await request.put(`/hrams/material-pool/${poolId}/ignore`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function deleteMaterialPool(poolId) {
+  const res = await request.delete(`/hrams/material-pool/${poolId}`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function listScanConfigs() {
+  const res = await request.get('/hrams/scan/configs');
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function saveScanConfig(data) {
+  const res = await request.post('/hrams/scan/configs', data);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function deleteScanConfig(id) {
+  const res = await request.delete(`/hrams/scan/configs/${id}`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function runScanConfig(configId) {
+  const res = await request.post(`/hrams/scan/run/${configId}`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function runAllScanConfigs() {
+  const res = await request.post('/hrams/scan/run-all');
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function pageScanLogs(params) {
+  const res = await request.get('/hrams/scan/logs', { params });
+  if (res.data.code === 200) {
+    return res.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function exportCatalog(personId) {
   const res = await request.get(`/hrams/archive/${personId}/catalog/export`, { responseType: 'blob' });
   await checkDownloadRes(res);

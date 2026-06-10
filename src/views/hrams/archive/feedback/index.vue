@@ -4,7 +4,7 @@
       <div class="page-head">
         <div>
           <div class="title">挂接反馈</div>
-          <div class="desc">查看历史挂接记录及失败明细</div>
+          <div class="desc">查看历史挂接记录、成功追溯与失败处理</div>
         </div>
         <el-button @click="$router.push('/hrams/archive')">返回档案管理</el-button>
       </div>
@@ -40,38 +40,69 @@
           <span v-else class="badge fail">成功 {{ row.successCount || 0 }} / 失败 {{ row.failCount }}</span>
         </template>
         <template #action="{ row }">
-          <el-button v-if="row.failCount" link type="primary" @click="showDetail(row)">失败明细</el-button>
-          <span v-else class="muted">—</span>
+          <el-button link type="primary" @click="showDetail(row)">明细</el-button>
         </template>
       </ele-pro-table>
     </ele-card>
-    <el-dialog v-model="visible" title="失败明细" width="800px">
+    <el-dialog v-model="visible" :title="dialogTitle" width="920px">
       <el-table :data="details" size="small">
-        <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="errorType" label="错误类型" width="130">
+        <el-table-column prop="fileName" label="文件名" min-width="180" show-overflow-tooltip />
+        <el-table-column label="结果" width="80">
           <template #default="{ row }">
-            <el-tag size="small" type="danger" effect="plain">{{ row.errorType || '其他' }}</el-tag>
+            <el-tag v-if="row.status === '1'" size="small" type="success">成功</el-tag>
+            <el-tag v-else size="small" type="danger">失败</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="errorMsg" label="错误信息" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="errorType" label="错误类型" width="120">
+          <template #default="{ row }">
+            <span v-if="row.status === '1'">—</span>
+            <el-tag v-else size="small" type="danger" effect="plain">{{ row.errorType || '其他' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="errorMsg" label="说明" min-width="160" show-overflow-tooltip />
+        <el-table-column label="处理" width="90">
+          <template #default="{ row }">
+            <span v-if="row.status === '1'">—</span>
+            <el-tag v-else-if="row.handleStatus === '1'" size="small" type="info">已处理</el-tag>
+            <el-tag v-else size="small">待处理</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button v-if="row.materialId" link type="primary" @click="goMaterial(row)">查看材料</el-button>
+            <el-button
+              v-if="row.status !== '1' && row.handleStatus !== '1'"
+              link
+              type="primary"
+              v-permission="'hrams:archive:feedback:handle'"
+              @click="markHandled(row)"
+            >标记已处理</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </el-dialog>
   </ele-page>
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { EleMessage } from 'ele-admin-plus';
 
-  import { pageMountBatches, listMountDetails } from '@/api/hrams/archive';
+  import { pageMountBatches, listMountDetails, handleMountDetail } from '@/api/hrams/archive';
 
   defineOptions({ name: 'HramsArchiveFeedback' });
+  const route = useRoute();
+  const router = useRouter();
   const tableRef = ref(null);
   const visible = ref(false);
   const details = ref([]);
+  const currentBatch = ref(null);
   const where = ref({});
   const dateRange = ref(null);
 
   const mountLabel = (t) => ({ batch: '批量挂接', increment: '增补挂接' }[t] || t);
+  const dialogTitle = ref('挂接明细');
 
   const columns = ref([
     { type: 'index', width: 55, label: '序号' },
@@ -100,10 +131,43 @@
   };
 
   const showDetail = async (row) => {
-    const list = await listMountDetails(row.id);
-    details.value = (list || []).filter((d) => d.status === '0' || d.errorType);
+    currentBatch.value = row;
+    dialogTitle.value = `挂接明细：${row.folderName || row.id}`;
+    details.value = await listMountDetails(row.id);
     visible.value = true;
   };
+
+  const goMaterial = (row) => {
+    if (!row.personId || !row.materialId) return;
+    router.push({
+      path: '/hrams/archive/material',
+      query: {
+        personId: row.personId,
+        archiveNo: row.archiveNo,
+        name: row.personName,
+        materialId: row.materialId
+      }
+    });
+  };
+
+  const markHandled = async (row) => {
+    try {
+      await handleMountDetail(row.id);
+      EleMessage.success({ message: '已标记', plain: true });
+      if (currentBatch.value) {
+        details.value = await listMountDetails(currentBatch.value.id);
+      }
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
+  };
+
+  onMounted(async () => {
+    const batchId = route.query.batchId;
+    if (batchId) {
+      await showDetail({ id: batchId, folderName: route.query.folderName || batchId });
+    }
+  });
 </script>
 
 <style scoped>
@@ -134,8 +198,5 @@
   .badge.fail {
     background: #ffebee;
     color: #c0392b;
-  }
-  .muted {
-    color: #999;
   }
 </style>
