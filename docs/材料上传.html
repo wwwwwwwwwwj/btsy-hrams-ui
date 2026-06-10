@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 材料上传子页面</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1f2d3d;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e6edf4;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .logo-area {
+            padding: 28px 20px 20px 24px;
+            border-bottom: 1px solid #f0f2f6;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e4668, #2c6e9e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .nav-menu {
+            flex: 1;
+            padding: 0 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #44546f;
+            cursor: default;
+        }
+        .menu-item.active {
+            background: #ecf5fc;
+            color: #1e6f9f;
+            font-weight: 600;
+        }
+        .user-bottom {
+            padding: 20px 24px;
+            border-top: 1px solid #ecf3fa;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #d9e6f2;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+            background: #eef2f6;
+        }
+
+        .person-header {
+            background: white;
+            border-radius: 20px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eef2f8;
+        }
+        .person-info {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .btn-back {
+            background: #f0f4f9;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .material-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+        .category-sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            padding: 16px 0;
+            height: auto;
+            flex-shrink: 0;
+        }
+        .category-item {
+            padding: 10px 20px;
+            margin: 2px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .category-item.active {
+            background: #ecf5fc;
+            color: #1e6f9f;
+            font-weight: 500;
+        }
+        .category-count {
+            color: #7c8ea0;
+            font-size: 12px;
+        }
+        .total-stats {
+            margin-top: 20px;
+            padding: 14px 20px;
+            border-top: 1px solid #edf2f7;
+            font-size: 13px;
+            background: #fafcff;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .toolbar {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eef2f8;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 4px 12px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+        }
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 8px 0;
+            outline: none;
+            width: 100%;
+        }
+        .btn-icon {
+            background: white;
+            border: 1px solid #cfdfed;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary-small {
+            background: #2c6e9e;
+            color: white;
+            border: none;
+        }
+        .btn-danger {
+            background: #fff2f0;
+            border-color: #f3c2c2;
+            color: #c0392b;
+        }
+
+        .material-table-wrap {
+            flex: 1;
+            overflow-x: auto;
+            padding: 0 20px 20px 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            text-align: left;
+            padding: 14px 8px;
+            background: #f9fbfe;
+            border-bottom: 1px solid #e9edf2;
+        }
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f3f8;
+            vertical-align: middle;
+        }
+        .gray-row {
+            background-color: #f9f9fc;
+            color: #9aa7b9;
+        }
+        .checkbox-col {
+            width: 32px;
+            text-align: center;
+        }
+        .action-icons i {
+            margin: 0 6px;
+            cursor: pointer;
+            color: #6f8fae;
+        }
+        .action-icons i.fa-trash-alt {
+            color: #e07c6c;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top:0;left:0;width:100%;height:100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+        .modal-content {
+            background: white;
+            width: 480px;
+            border-radius: 28px;
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 8px 12px;
+            border-radius: 14px;
+            border: 1px solid #cfdfed;
+        }
+        .error-msg {
+            color: #d9534f;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div><div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item">数据看板</div><div class="menu-item">人员管理</div>
+                <div class="menu-item active">档案管理</div><div class="menu-item">综合查询</div>
+                <div class="menu-item">档案利用</div><div class="menu-item">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">档案管理员</span></div></div>
+    </div>
+
+    <div class="main-content">
+        <div class="person-header">
+            <div class="person-info"><i class="fas fa-user-circle"></i> 档案编号：20260001 · 张三</div>
+            <button class="btn-back" id="backBtn"><i class="fas fa-arrow-left"></i> 返回档案管理</button>
+        </div>
+
+        <div class="material-layout">
+            <div class="category-sidebar" id="categoryList"></div>
+            <div class="right-panel">
+                <div class="toolbar">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchMaterialInput" placeholder="材料名称关键字搜索"></div>
+                    <button id="searchQueryBtn" class="btn-icon"><i class="fas fa-search"></i> 查询</button>
+                    <button id="resetSearchBtn" class="btn-icon"><i class="fas fa-undo-alt"></i> 重置</button>
+                    <button id="downloadBtn" class="btn-icon"><i class="fas fa-download"></i> 下载</button>
+                    <button id="uploadBtn" class="btn-icon btn-primary-small"><i class="fas fa-upload"></i> 上传</button>
+                    <button id="deleteSelectedBtn" class="btn-icon btn-danger"><i class="fas fa-trash-alt"></i> 删除记录及附件</button>
+                </div>
+                <div class="material-table-wrap">
+                    <table id="materialTable">
+                        <thead>
+                            <tr><th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th><th>序号</th><th>材料名称</th><th>材料形成时间</th><th>页数</th><th>备注</th><th>操作</th></tr>
+                        </thead>
+                        <tbody id="materialTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 16px;">上传材料</h3>
+        <div class="form-group"><label>分类</label><select id="uploadCategory"></select></div>
+        <div class="form-group"><label>序号 (如: 4-1 / 1-2)</label><input id="uploadSeq" placeholder="目录表登记序号"></div>
+        <div class="form-group"><label>材料名称</label><input id="uploadName"></div>
+        <div class="form-group"><label>页数</label><input id="uploadPages" type="number"></div>
+        <div class="form-group"><label>形成日期</label><input id="uploadDate" type="date"></div>
+        <div class="form-group"><label>文件</label><input type="file" id="uploadFile" accept=".pdf,.jpg,.jpeg,.xls,.xlsx"></div>
+        <div id="uploadError" class="error-msg"></div>
+        <div style="display:flex; justify-content: flex-end; gap:12px; margin-top:20px;">
+            <button class="btn-icon" id="cancelUploadBtn">取消</button><button class="btn-primary-small" id="confirmUploadBtn">确定上传</button>
+        </div>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 16px;">修改材料信息</h3>
+        <div class="form-group"><label>材料名称</label><input id="editName" placeholder="材料名称"></div>
+        <div class="form-group"><label>材料形成时间</label><input id="editFormDate" type="date"></div>
+        <div class="form-group"><label>页数</label><input id="editPages" type="number"></div>
+        <div class="form-group"><label>备注</label><textarea id="editRemark" rows="2"></textarea></div>
+        <div style="display:flex; justify-content: flex-end; gap:12px; margin-top:20px;">
+            <button class="btn-icon" id="cancelEditBtn">取消</button><button class="btn-primary-small" id="confirmEditBtn">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== 接收 URL 参数，显示对应人员信息 ==========
+    function getUrlParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+    
+    const personCode = getUrlParam('code');
+    const personName = getUrlParam('name');
+    
+    if (personCode && personName) {
+        const personHeader = document.querySelector('.person-info');
+        if (personHeader) {
+            personHeader.innerHTML = `<i class="fas fa-user-circle"></i> 档案编号：${personCode} · ${personName}`;
+        }
+        console.log(`加载人员材料：${personCode} - ${personName}`);
+    }
+    
+    // 修改返回按钮行为，跳回档案管理页面
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn) {
+        backBtn.onclick = () => {
+            if (window.parent && window.parent.document.getElementById("mainIframe")) {
+                window.parent.document.getElementById("mainIframe").src = "档案管理.html";
+                if (window.parent.document.getElementById("currentPageTitle")) {
+                    window.parent.document.getElementById("currentPageTitle").innerHTML = "档案管理 <span>功能模块</span>";
+                }
+            } else {
+                window.location.href = "档案管理.html";
+            }
+        };
+    }
+    
+    // ========== 原有的分类和材料逻辑 ==========
+    const categories = [
+        { id: "1", name: "一、履历类材料", sub: false },
+        { id: "2", name: "二、自传和思想类材料", sub: false },
+        { id: "3", name: "三、考核、鉴定类材料", sub: false },
+        { id: "4", name: "四、学历学位等材料", sub: true, children: ["4-1 学历学位材料","4-2 职业资格、专业技术职称材料","4-3 个人科研学术水平材料","4-4 培训材料"] },
+        { id: "5", name: "五、政审、审计和审核类材料", sub: false },
+        { id: "6", name: "六、党、团类材料", sub: false },
+        { id: "7", name: "七、表彰奖励类材料", sub: false },
+        { id: "8", name: "八、违规违纪违法处理处分类材料", sub: false },
+        { id: "9", name: "九、工资、任免、出国和会议代表类材料", sub: true, children: ["9-1 工资材料","9-2 任免材料","9-3 出国、出境材料","9-4 会议代表登记表等其他材料"] },
+        { id: "10", name: "十、其他可供组织参考的材料", sub: false }
+    ];
+
+    let flatCategories = [];
+    categories.forEach(cat => {
+        flatCategories.push({ id: cat.id, name: cat.name, parentId: null });
+        if(cat.children) {
+            cat.children.forEach((child, idx) => {
+                flatCategories.push({ id: `${cat.id}-${idx+1}`, name: child, parentId: cat.id });
+            });
+        }
+    });
+
+    let materials = [
+        { id: 1, categoryId: "1", seq: "1-1", name: "干部履历表", formDate: "2020-03-01", pages: 2, remark: "原件已归档", hasFile: true },
+        { id: 2, categoryId: "1", seq: "1-2", name: "任职审批表", formDate: "2021-07-15", pages: 1, remark: "", hasFile: true },
+        { id: 3, categoryId: "4-1", seq: "4-1-1", name: "本科学历学位证书", formDate: "2008-06-30", pages: 1, remark: "", hasFile: true },
+        { id: 4, categoryId: "4-1", seq: "4-1-2", name: "硕士学位证书", formDate: "2011-06-20", pages: 1, remark: "", hasFile: false },
+        { id: 5, categoryId: "9-2", seq: "9-2-1", name: "任免通知", formDate: "2022-01-10", pages: 3, remark: "共3页", hasFile: true },
+        { id: 6, categoryId: "3", seq: "3-5", name: "年度考核登记表", formDate: "2023-12-20", pages: 2, remark: "", hasFile: true }
+    ];
+
+    let currentCategory = "1";
+    let currentSearchKeyword = "";
+    let selectedMaterialIds = new Set();
+    let editingMaterialId = null;
+
+    function renderCategories() {
+        const container = document.getElementById("categoryList");
+        let html = `<div style="padding:0 12px;"><div style="font-weight:600; margin:8px 0 12px 12px;">📂 十大材料分类</div>`;
+        flatCategories.forEach(c => {
+            const count = materials.filter(m => m.categoryId === c.id).length;
+            const activeClass = currentCategory === c.id ? "active" : "";
+            html += `<div class="category-item ${activeClass}" data-id="${c.id}"><span>${c.name}</span><span class="category-count">${count}份</span></div>`;
+        });
+        const totalFiles = materials.length;
+        const totalPages = materials.reduce((sum, m) => sum + (m.pages || 0), 0);
+        html += `<div class="total-stats">📄 总份数：${totalFiles}<br>📑 总页数：${totalPages}</div>`;
+        container.innerHTML = html;
+        document.querySelectorAll(".category-item").forEach(el => {
+            el.addEventListener("click", () => {
+                currentCategory = el.getAttribute("data-id");
+                renderCategories();
+                renderMaterialList();
+                document.getElementById("selectAllCheckbox").checked = false;
+                selectedMaterialIds.clear();
+            });
+        });
+    }
+
+    function renderMaterialList() {
+        let filtered = materials.filter(m => m.categoryId === currentCategory);
+        if(currentSearchKeyword) filtered = filtered.filter(m => m.name.includes(currentSearchKeyword));
+        filtered.sort((a,b) => a.seq.localeCompare(b.seq));
+        const tbody = document.getElementById("materialTbody");
+        tbody.innerHTML = "";
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">暂无材料，请点击“上传”添加</td></tr>';
+            return;
+        }
+        filtered.forEach(mat => {
+            const isGray = !mat.hasFile;
+            const checkedAttr = selectedMaterialIds.has(mat.id) ? "checked" : "";
+            const rowClass = isGray ? "gray-row" : "";
+            tbody.insertAdjacentHTML("beforeend", `
+                <tr class="${rowClass}">
+                    <td class="checkbox-col"><input type="checkbox" class="material-checkbox" data-id="${mat.id}" ${checkedAttr} ${isGray ? "disabled" : ""}></td>
+                    <td>${mat.seq}</td><td>${mat.name}</td><td>${mat.formDate || ""}</td><td>${mat.pages}</td><td>${mat.remark || ""}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-eye" title="预览" onclick="previewMaterial(${mat.id})"></i>
+                        <i class="fas fa-edit" title="修改" onclick="openEditModal(${mat.id})"></i>
+                        <i class="fas fa-trash-alt" title="仅删除附件" onclick="deleteFileOnly(${mat.id})"></i>
+                    </td>
+                </tr>
+            `);
+        });
+        document.querySelectorAll(".material-checkbox").forEach(cb => {
+            cb.addEventListener("change", (e) => {
+                const mid = parseInt(cb.getAttribute("data-id"));
+                if(cb.checked) selectedMaterialIds.add(mid);
+                else selectedMaterialIds.delete(mid);
+            });
+        });
+        const selectAll = document.getElementById("selectAllCheckbox");
+        if(selectAll) {
+            selectAll.onchange = (e) => {
+                const allCheckboxes = document.querySelectorAll(".material-checkbox:not(:disabled)");
+                if(e.target.checked) allCheckboxes.forEach(cb => { cb.checked = true; selectedMaterialIds.add(parseInt(cb.getAttribute("data-id"))); });
+                else { allCheckboxes.forEach(cb => { cb.checked = false; selectedMaterialIds.clear(); }); }
+            };
+        }
+    }
+
+    function performSearch() { currentSearchKeyword = document.getElementById("searchMaterialInput").value.trim(); renderMaterialList(); }
+    function resetSearch() { document.getElementById("searchMaterialInput").value = ""; currentSearchKeyword = ""; renderMaterialList(); }
+
+    function deleteSelectedRecordsAndFiles() {
+        if(selectedMaterialIds.size === 0) return alert("请先选中材料");
+        if(confirm("确认删除所选材料【记录及附件】？此操作不可恢复。")) {
+            materials = materials.filter(m => !selectedMaterialIds.has(m.id));
+            selectedMaterialIds.clear();
+            document.getElementById("selectAllCheckbox").checked = false;
+            renderCategories();
+            renderMaterialList();
+        }
+    }
+
+    window.deleteFileOnly = (id) => {
+        const mat = materials.find(m => m.id === id);
+        if(mat && confirm(`仅删除附件“${mat.name}”的附件文件，保留材料记录。`)) {
+            mat.hasFile = false;
+            mat.pages = 0;
+            mat.formDate = "";
+            mat.remark = "(附件已删除)";
+            renderCategories();
+            renderMaterialList();
+        }
+    };
+    window.previewMaterial = (id) => { alert(`预览材料：${materials.find(m=>m.id===id)?.name}`); };
+
+    function openEditModal(id) {
+        const mat = materials.find(m => m.id === id);
+        if(!mat) return;
+        editingMaterialId = id;
+        document.getElementById("editName").value = mat.name;
+        document.getElementById("editFormDate").value = mat.formDate || "";
+        document.getElementById("editPages").value = mat.pages;
+        document.getElementById("editRemark").value = mat.remark || "";
+        document.getElementById("editModal").style.display = "flex";
+    }
+    function closeEditModal() { document.getElementById("editModal").style.display = "none"; editingMaterialId = null; }
+    function saveEdit() {
+        if(editingMaterialId === null) return;
+        const mat = materials.find(m => m.id === editingMaterialId);
+        if(mat) {
+            mat.name = document.getElementById("editName").value;
+            mat.formDate = document.getElementById("editFormDate").value;
+            mat.pages = parseInt(document.getElementById("editPages").value) || 0;
+            mat.remark = document.getElementById("editRemark").value;
+            renderMaterialList();
+        }
+        closeEditModal();
+    }
+
+    const uploadModal = document.getElementById("uploadModal");
+    function openUploadModal() {
+        const catSelect = document.getElementById("uploadCategory");
+        catSelect.innerHTML = "";
+        flatCategories.forEach(c => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            option.textContent = c.name;
+            if(c.id === currentCategory) option.selected = true;
+            catSelect.appendChild(option);
+        });
+        document.getElementById("uploadSeq").value = "";
+        document.getElementById("uploadName").value = "";
+        document.getElementById("uploadPages").value = "";
+        document.getElementById("uploadDate").value = "";
+        document.getElementById("uploadFile").value = "";
+        document.getElementById("uploadError").innerText = "";
+        uploadModal.style.display = "flex";
+    }
+    function closeUploadModal() { uploadModal.style.display = "none"; }
+    function confirmUpload() {
+        const categoryId = document.getElementById("uploadCategory").value;
+        const seq = document.getElementById("uploadSeq").value.trim();
+        const materialName = document.getElementById("uploadName").value.trim();
+        const pagesVal = parseInt(document.getElementById("uploadPages").value);
+        const formDate = document.getElementById("uploadDate").value;
+        const fileInput = document.getElementById("uploadFile").files[0];
+        const fileExt = fileInput ? fileInput.name.split('.').pop().toLowerCase() : "";
+        const allowed = ["xls","xlsx","pdf","jpg","jpeg"];
+        if(!seq || !materialName) { document.getElementById("uploadError").innerText = "请填写序号、材料名称"; return; }
+        if(fileInput && !allowed.includes(fileExt)) { document.getElementById("uploadError").innerText = "上传失败，不支持该文件类型！"; return; }
+        if(materials.some(m => m.categoryId === categoryId && m.seq === seq)) {
+            document.getElementById("uploadError").innerText = `第${categoryId}类第${seq}项材料已存在，如需替换请先删除原文件！`;
+            return;
+        }
+        const newId = Date.now();
+        materials.push({
+            id: newId, categoryId, seq, name: materialName, formDate, pages: pagesVal || 0,
+            remark: "", hasFile: !!fileInput
+        });
+        closeUploadModal();
+        renderCategories();
+        renderMaterialList();
+        alert("上传成功，文件已模拟挂接。");
+    }
+
+    document.getElementById("downloadBtn").onclick = () => {
+        if(selectedMaterialIds.size === 0) return alert("请勾选至少一份材料");
+        alert(`批量下载选中材料（${selectedMaterialIds.size}份）附件打包ZIP（模拟）。`);
+    };
+    document.getElementById("searchQueryBtn").onclick = performSearch;
+    document.getElementById("resetSearchBtn").onclick = resetSearch;
+    document.getElementById("deleteSelectedBtn").onclick = deleteSelectedRecordsAndFiles;
+    document.getElementById("uploadBtn").onclick = openUploadModal;
+    document.getElementById("cancelUploadBtn").onclick = closeUploadModal;
+    document.getElementById("confirmUploadBtn").onclick = confirmUpload;
+    document.getElementById("cancelEditBtn").onclick = closeEditModal;
+    document.getElementById("confirmEditBtn").onclick = saveEdit;
+
+    renderCategories();
+    renderMaterialList();
+</script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 人员管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 原有样式保持不变，仅添加返回按钮相关样式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eef2f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2d3d; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; width: 100%; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e6edf4; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+        .logo-area { padding: 28px 20px 20px 24px; border-bottom: 1px solid #f0f2f6; margin-bottom: 20px; }
+        .logo-text { font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #1e4668, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-menu { flex: 1; padding: 0 16px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 6px; border-radius: 14px; font-size: 15px; font-weight: 500; color: #44546f; cursor: pointer; }
+        .menu-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 600; }
+        .user-bottom { padding: 20px 20px 28px 24px; border-top: 1px solid #ecf3fa; }
+        .avatar { width: 40px; height: 40px; background: #d9e6f2; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-title { font-size: 24px; font-weight: 600; }
+        .btn-secondary { background: white; border: 1px solid #cbd5e1; padding: 8px 20px; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+        .btn-primary { background: #2c6e9e; color: white; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .action-buttons { display: flex; gap: 12px; }
+        .filters-bar { background: white; border-radius: 20px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #eef2f8; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .filter-field label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 6px; }
+        .filter-field input, .filter-field select { width: 100%; padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; }
+        .filter-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .table-container { background: white; border-radius: 24px; border: 1px solid #eef2f8; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+        th { text-align: left; padding: 16px; background: #f9fbfe; border-bottom: 1px solid #e9edf2; font-weight: 600; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f0f3f8; }
+        .action-icons i { font-size: 16px; margin: 0 6px; cursor: pointer; color: #6f8fae; }
+        .badge-status { background: #e6f7e6; color: #2b6e3b; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 18px 24px; background: white; border-top: 1px solid #eef2f8; flex-wrap: wrap; }
+        .pagination button { background: white; border: 1px solid #cfdfed; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .modal { display: none; position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 560px; max-width: 90%; border-radius: 28px; padding: 24px; }
+        .modal-header { display: flex; justify-content: space-between; font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+        .form-row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .form-row input, .form-row select, .form-row textarea { padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+        .close-modal { cursor: pointer; font-size: 24px; }
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background: #2c6e9e; color: white; padding: 12px 20px; border-radius: 40px; z-index: 1200; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item" data-page="dashboard">数据看板</div>
+                <div class="menu-item active" data-page="person">人员管理</div>
+                <div class="menu-item" data-page="archive">档案管理</div>
+                <div class="menu-item" data-page="query">综合查询</div>
+                <div class="menu-item" data-page="utilize">档案利用</div>
+                <div class="menu-item" data-page="system">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom">
+            <div class="avatar"><i class="fas fa-user-shield"></i></div>
+            <div>李敏<br><span style="font-size:12px;">档案管理员</span></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="page-title">人员管理</div>
+            <div class="action-buttons">
+                <button class="btn-secondary" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> 返回首页</button>
+                <button class="btn-primary" id="newPersonBtn"><i class="fas fa-plus"></i> 新增人员</button>
+                <button class="btn-secondary" id="importExcelBtn"><i class="fas fa-upload"></i> 批量导入</button>
+                <button class="btn-secondary" id="exportExcelBtn"><i class="fas fa-download"></i> 批量导出</button>
+            </div>
+        </div>
+
+        <!-- 检索栏 -->
+        <div class="filters-bar">
+            <div class="filters-grid">
+                <div class="filter-field"><label>档案编号</label><input type="text" id="searchCode" placeholder="档案编号"></div>
+                <div class="filter-field"><label>姓名</label><input type="text" id="searchName" placeholder="姓名"></div>
+                <div class="filter-field"><label>性别</label><select id="searchGender"><option value="">全部</option><option>男</option><option>女</option></select></div>
+                <div class="filter-field"><label>出生年月</label><input type="month" id="searchBirth"></div>
+                <div class="filter-field"><label>年龄</label><input type="text" id="searchAge" placeholder="年龄"></div>
+                <div class="filter-field"><label>民族</label><input type="text" id="searchNation" placeholder="民族"></div>
+                <div class="filter-field"><label>政治面貌</label><input type="text" id="searchPolitics" placeholder="政治面貌"></div>
+                <div class="filter-field"><label>学历</label><select id="searchEdu"><option value="">全部</option><option>博士</option><option>硕士</option><option>本科</option><option>大专</option><option>其他</option></select></div>
+                <div class="filter-field"><label>身份证号</label><input type="text" id="searchIdNum" placeholder="身份证号"></div>
+                <div class="filter-field"><label>当前状态</label><select id="searchStatus"><option value="">全部</option><option>在职</option><option>离职</option><option>退休</option></select></div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-secondary" id="searchBtn"><i class="fas fa-search"></i> 查询</button>
+                <button class="btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> 重置</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="personTable">
+                <thead><tr><th>序号</th><th>档案编号</th><th>姓名</th><th>性别</th><th>出生年月</th><th>年龄</th><th>民族</th><th>政治面貌</th><th>学历</th><th>当前状态</th><th>操作</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div class="pagination" id="paginationArea"></div>
+        </div>
+    </div>
+</div>
+
+<div id="personModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><span id="modalTitle">新增人员</span><span class="close-modal" id="closeModalBtn">&times;</span></div>
+        <form id="personForm">
+            <input type="hidden" id="editId">
+            <div class="form-row"><label>姓名 *</label><input id="name" required></div>
+            <div class="form-row"><label>性别</label><select id="gender"><option>男</option><option>女</option></select></div>
+            <div class="form-row"><label>出生年月</label><input type="month" id="birthDate" onchange="calcAge()"></div>
+            <div class="form-row"><label>年龄(自动)</label><input id="age" readonly style="background:#f3f6fc;"></div>
+            <div class="form-row"><label>民族</label><input id="ethnicity"></div>
+            <div class="form-row"><label>籍贯</label><input id="nativePlace"></div>
+            <div class="form-row"><label>政治面貌</label><input id="politicalStatus"></div>
+            <div class="form-row"><label>身份证号</label><input id="idNumber"></div>
+            <div class="form-row"><label>学历</label><select id="education"><option>博士</option><option>硕士</option><option>本科</option><option>大专</option><option>其他</option></select></div>
+            <div class="form-row"><label>专业</label><input id="major"></div>
+            <div class="form-row"><label>当前状态</label><select id="status"><option>在职</option><option>离职</option><option>退休</option></select></div>
+            <div class="form-row"><label>备注</label><textarea id="remarks" rows="2"></textarea></div>
+            <div class="modal-buttons"><button type="button" class="btn-secondary" id="cancelModalBtn">取消</button><button type="submit" class="btn-primary">保存</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'person') return;
+            let targetUrl = '';
+            switch(page) {
+                case 'dashboard': targetUrl = '数据看板.html'; break;
+                case 'archive': targetUrl = '档案管理.html'; break;
+                case 'query': targetUrl = '综合查询.html'; break;
+                case 'utilize': targetUrl = '档案利用.html'; break;
+                case 'system': targetUrl = '系统管理.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    // 返回首页按钮
+    document.getElementById('backToHomeBtn').onclick = () => {
+        window.location.href = '数据看板.html';
+    };
+
+    let persons = [
+        { id: 1, code: "20260001", name: "张三", gender: "男", birth: "1985-06-15", age: 41, ethnicity: "汉族", native: "湖南", political: "中共党员", idNumber: "430************001", education: "本科", major: "行政管理", status: "在职", remarks: "" },
+        { id: 2, code: "20260002", name: "李四", gender: "女", birth: "1990-09-10", age: 35, ethnicity: "壮族", native: "广西", political: "中共党员", idNumber: "450************002", education: "硕士", major: "经济管理", status: "在职", remarks: "" },
+        { id: 3, code: "20260003", name: "王芳", gender: "女", birth: "1978-12-01", age: 47, ethnicity: "汉族", native: "广东", political: "群众", idNumber: "440************003", education: "大专", major: "会计", status: "退休", remarks: "已办理退休" },
+        { id: 4, code: "20260004", name: "赵强", gender: "男", birth: "2000-03-22", age: 26, ethnicity: "瑶族", native: "广西", political: "共青团员", idNumber: "451************004", education: "本科", major: "计算机", status: "在职", remarks: "" },
+        { id: 5, code: "20260005", name: "陈敏", gender: "女", birth: "1995-07-19", age: 30, ethnicity: "汉族", native: "江西", political: "中共党员", idNumber: "360************005", education: "博士", major: "法学", status: "离职", remarks: "调出" },
+        { id: 6, code: "20260006", name: "刘东", gender: "男", birth: "1982-11-02", age: 43, ethnicity: "汉族", native: "山东", political: "中共党员", idNumber: "370************006", education: "硕士", major: "工商管理", status: "在职", remarks: "" },
+        { id: 7, code: "20260007", name: "吴琼", gender: "女", birth: "1992-05-12", age: 34, ethnicity: "回族", native: "宁夏", political: "群众", idNumber: "640************007", education: "本科", major: "设计", status: "在职", remarks: "" },
+        { id: 8, code: "20260008", name: "郑浩然", gender: "男", birth: "1975-08-22", age: 50, ethnicity: "汉族", native: "河北", political: "中共党员", idNumber: "130************008", education: "大专", major: "机械", status: "退休", remarks: "" }
+    ];
+    let nextId = 9;
+    let currentFilteredData = [...persons];
+    let currentPage = 1;
+    const pageSize = 8;
+
+    function calcAgeByBirth(birthStr) { if(!birthStr) return ''; const birth = new Date(birthStr); const today = new Date(); let age = today.getFullYear() - birth.getFullYear(); const m = today.getMonth() - birth.getMonth(); if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--; return age; }
+    window.calcAge = function() { const birth = document.getElementById("birthDate").value; document.getElementById("age").value = birth ? calcAgeByBirth(birth) : ''; };
+
+    function getFilteredPersons() {
+        const searchCode = document.getElementById("searchCode").value.trim();
+        const searchName = document.getElementById("searchName").value.trim();
+        const searchGender = document.getElementById("searchGender").value;
+        const searchBirth = document.getElementById("searchBirth").value;
+        const searchAge = document.getElementById("searchAge").value.trim();
+        const searchNation = document.getElementById("searchNation").value.trim();
+        const searchPolitics = document.getElementById("searchPolitics").value.trim();
+        const searchEdu = document.getElementById("searchEdu").value;
+        const searchIdNum = document.getElementById("searchIdNum").value.trim();
+        const searchStatus = document.getElementById("searchStatus").value;
+        return persons.filter(p => {
+            if(searchCode && !p.code.includes(searchCode)) return false;
+            if(searchName && !p.name.includes(searchName)) return false;
+            if(searchGender && p.gender !== searchGender) return false;
+            if(searchBirth && p.birth && !p.birth.startsWith(searchBirth)) return false;
+            if(searchAge && p.age.toString() !== searchAge) return false;
+            if(searchNation && !p.ethnicity.includes(searchNation)) return false;
+            if(searchPolitics && !p.political.includes(searchPolitics)) return false;
+            if(searchEdu && p.education !== searchEdu) return false;
+            if(searchIdNum && !p.idNumber.includes(searchIdNum)) return false;
+            if(searchStatus && p.status !== searchStatus) return false;
+            return true;
+        });
+    }
+
+    function renderTableBody() {
+        const start = (currentPage - 1) * pageSize;
+        const pageData = currentFilteredData.slice(start, start + pageSize);
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = '';
+        pageData.forEach((p, idx) => {
+            const globalIdx = start + idx + 1;
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr>
+                    <td>${globalIdx}</td>
+                    <td>${p.code}</td>
+                    <td>${p.name}</td>
+                    <td>${p.gender}</td>
+                    <td>${p.birth || ''}</td>
+                    <td>${p.age}</td>
+                    <td>${p.ethnicity}</td>
+                    <td>${p.political}</td>
+                    <td>${p.education}</td>
+                    <td><span class="badge-status">${p.status}</span></td>
+                    <td class="action-icons">
+                        <i class="fas fa-eye" title="查看" onclick="viewPerson(${p.id})"></i>
+                        <i class="fas fa-edit" title="编辑" onclick="editPerson(${p.id})"></i>
+                        <i class="fas fa-trash-alt" title="删除" onclick="deletePerson(${p.id})"></i>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function renderPagination() {
+        const total = currentFilteredData.length;
+        const totalPages = Math.ceil(total / pageSize);
+        const container = document.getElementById("paginationArea");
+        if (!container) return;
+        if(total === 0) { container.innerHTML = '<div class="page-info">共0条</div>'; return; }
+        container.innerHTML = `
+            <button id="firstPageBtn" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>
+            <button id="prevPageBtn" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i> 上一页</button>
+            <span class="page-info">第 ${currentPage} / ${totalPages} 页，共 ${total} 条记录</span>
+            <button id="nextPageBtn" ${currentPage === totalPages ? 'disabled' : ''}>下一页 <i class="fas fa-angle-right"></i></button>
+            <button id="lastPageBtn" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>
+            <div class="page-jump" style="display:inline-flex;gap:6px;"><span>跳至</span><input type="number" id="jumpPageInput" min="1" max="${totalPages}" value="${currentPage}" style="width:60px;"><button id="jumpPageBtn">GO</button></div>
+        `;
+        document.getElementById("firstPageBtn")?.addEventListener("click", () => { currentPage = 1; render(); });
+        document.getElementById("prevPageBtn")?.addEventListener("click", () => { if(currentPage > 1) { currentPage--; render(); } });
+        document.getElementById("nextPageBtn")?.addEventListener("click", () => { if(currentPage < totalPages) { currentPage++; render(); } });
+        document.getElementById("lastPageBtn")?.addEventListener("click", () => { currentPage = totalPages; render(); });
+        document.getElementById("jumpPageBtn")?.addEventListener("click", () => {
+            let jump = parseInt(document.getElementById("jumpPageInput").value);
+            if(isNaN(jump)) jump = 1;
+            if(jump < 1) jump = 1;
+            if(jump > totalPages) jump = totalPages;
+            currentPage = jump;
+            render();
+        });
+    }
+
+    function render() {
+        currentFilteredData = getFilteredPersons();
+        if (currentFilteredData.length === 0) {
+            document.getElementById("tableBody").innerHTML = '<tr><td colspan="11" style="text-align:center">暂无数据</td></tr>';
+            document.getElementById("paginationArea").innerHTML = '<div class="page-info">共 0 条记录</div>';
+            return;
+        }
+        const totalPages = Math.ceil(currentFilteredData.length / pageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        renderTableBody();
+        renderPagination();
+    }
+
+    window.viewPerson = (id) => { const p = persons.find(x=>x.id===id); if(p) alert(`查看详情：\n姓名:${p.name}\n档案编号:${p.code}\n学历:${p.education}\n状态:${p.status}\n备注:${p.remarks||'无'}`); };
+    window.editPerson = (id) => { const p = persons.find(x=>x.id===id); if(p) { document.getElementById("modalTitle").innerText="编辑人员"; document.getElementById("editId").value=p.id; document.getElementById("name").value=p.name; document.getElementById("gender").value=p.gender; document.getElementById("birthDate").value=p.birth; window.calcAge(); document.getElementById("age").value=p.age; document.getElementById("ethnicity").value=p.ethnicity; document.getElementById("nativePlace").value=p.native; document.getElementById("politicalStatus").value=p.political; document.getElementById("idNumber").value=p.idNumber; document.getElementById("education").value=p.education; document.getElementById("major").value=p.major; document.getElementById("status").value=p.status; document.getElementById("remarks").value=p.remarks; document.getElementById("personModal").style.display="flex"; } };
+    window.deletePerson = (id) => { if(confirm("确认删除该人员？")) { persons = persons.filter(x=>x.id !== id); render(); } };
+
+    function closeModal() { document.getElementById("personModal").style.display="none"; }
+    document.getElementById("newPersonBtn").onclick = () => { document.getElementById("personForm").reset(); document.getElementById("editId").value=""; document.getElementById("age").value=""; document.getElementById("modalTitle").innerText="新增人员"; document.getElementById("personModal").style.display="flex"; };
+    document.getElementById("closeModalBtn").onclick = closeModal;
+    document.getElementById("cancelModalBtn").onclick = closeModal;
+    document.getElementById("personForm").onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById("editId").value;
+        const name = document.getElementById("name").value.trim(); if(!name) return alert("姓名必填");
+        const gender = document.getElementById("gender").value;
+        const birth = document.getElementById("birthDate").value;
+        const age = birth ? calcAgeByBirth(birth) : '';
+        const ethnicity = document.getElementById("ethnicity").value;
+        const native = document.getElementById("nativePlace").value;
+        const political = document.getElementById("politicalStatus").value;
+        const idNumber = document.getElementById("idNumber").value;
+        const education = document.getElementById("education").value;
+        const major = document.getElementById("major").value;
+        const status = document.getElementById("status").value;
+        const remarks = document.getElementById("remarks").value;
+        if(id) {
+            const index = persons.findIndex(p=>p.id == id);
+            if(index!==-1) persons[index] = { ...persons[index], name, gender, birth, age, ethnicity, native, political, idNumber, education, major, status, remarks };
+        } else {
+            const year = new Date().getFullYear();
+            let maxNum = 0;
+            persons.forEach(p=>{ if(p.code && p.code.startsWith(year.toString())) { let num = parseInt(p.code.slice(4)); if(num>maxNum) maxNum=num; } });
+            const newCode = `${year}${String(maxNum+1).padStart(4,'0')}`;
+            persons.push({ id: nextId++, code: newCode, name, gender, birth, age, ethnicity, native, political, idNumber, education, major, status, remarks });
+        }
+        render();
+        closeModal();
+    };
+
+    document.getElementById("searchBtn").onclick = () => { currentPage = 1; render(); };
+    document.getElementById("resetBtn").onclick = () => {
+        document.getElementById("searchCode").value=""; document.getElementById("searchName").value=""; document.getElementById("searchGender").value="";
+        document.getElementById("searchBirth").value=""; document.getElementById("searchAge").value=""; document.getElementById("searchNation").value="";
+        document.getElementById("searchPolitics").value=""; document.getElementById("searchEdu").value=""; document.getElementById("searchIdNum").value="";
+        document.getElementById("searchStatus").value=""; currentPage = 1; render();
+    };
+    document.getElementById("importExcelBtn").onclick = () => alert("批量导入：支持Excel模板导入人员信息");
+    document.getElementById("exportExcelBtn").onclick = () => alert("导出人员列表（Excel格式）开发中");
+    render();
+</script>
+</body>
+</html>

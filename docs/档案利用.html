@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 档案利用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eef2f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2d3d; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; width: 100%; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e6edf4; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+        .logo-area { padding: 28px 20px 20px 24px; border-bottom: 1px solid #f0f2f6; }
+        .logo-text { font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #1e4668, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-menu { flex: 1; padding: 0 16px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: #44546f; cursor: pointer; }
+        .menu-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 600; }
+        .user-bottom { padding: 20px 24px; border-top: 1px solid #ecf3fa; }
+        .avatar { width: 40px; height: 40px; background: #d9e6f2; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+        .page-header { background: white; border-radius: 20px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid #eef2f8; display: flex; justify-content: space-between; align-items: center; }
+        .header-left .page-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .header-left .page-desc { font-size: 13px; color: #6c7e97; }
+        .btn-secondary { background: white; border: 1px solid #cfdfed; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #2c6e9e; color: white; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .tab-bar { display: flex; gap: 0; margin-bottom: 24px; background: white; border-radius: 20px; padding: 6px; border: 1px solid #eef2f8; width: fit-content; }
+        .tab-btn { padding: 10px 28px; border-radius: 40px; font-size: 14px; font-weight: 500; cursor: pointer; background: transparent; border: none; }
+        .tab-btn.active { background: #2c6e9e; color: white; }
+        .form-container { background: white; border-radius: 24px; border: 1px solid #eef2f8; padding: 24px; margin-bottom: 24px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 24px; }
+        .form-field { display: flex; flex-direction: column; gap: 6px; }
+        .form-field.full-width { grid-column: span 2; }
+        .form-field label { font-size: 13px; font-weight: 500; color: #2c3e66; }
+        .form-field input, .form-field select, .form-field textarea { padding: 10px 14px; border-radius: 12px; border: 1px solid #cfdfed; font-size: 13px; }
+        .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; grid-column: span 2; }
+        .filters-bar { background: white; border-radius: 20px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #eef2f8; }
+        .filters-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+        .filter-item { display: flex; flex-direction: column; gap: 6px; }
+        .filter-item label { font-size: 12px; font-weight: 500; }
+        .filter-item input, .filter-item select { padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; width: 180px; }
+        .date-range { display: flex; align-items: center; gap: 8px; }
+        .date-range input { width: 140px; }
+        .filter-actions { display: flex; gap: 12px; margin-left: auto; }
+        .table-container { background: white; border-radius: 24px; border: 1px solid #eef2f8; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1200px; }
+        th { text-align: left; padding: 14px 12px; background: #f9fbfe; border-bottom: 1px solid #e9edf2; font-weight: 600; }
+        td { padding: 12px 12px; border-bottom: 1px solid #f0f3f8; }
+        .badge-borrowing { background: #fff3e0; color: #e67e22; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .badge-overdue { background: #ffebee; color: #c0392b; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .badge-returned { background: #e6f7e6; color: #2b6e3b; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .return-btn { background: #2c6e9e; color: white; border: none; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #eef2f8; flex-wrap: wrap; }
+        .pagination button { background: white; border: 1px solid #cfdfed; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .stats-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+        .stats-card { background: white; border-radius: 24px; border: 1px solid #eef2f8; padding: 20px; }
+        .stats-title { font-weight: 600; margin-bottom: 20px; font-size: 16px; padding-bottom: 8px; border-bottom: 1px solid #eef2f8; }
+        .chart-container { height: 280px; width: 100%; }
+        .export-btn { margin-top: 20px; text-align: right; }
+        .modal { display: none; position: fixed; top:0;left:0; width:100%;height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 400px; border-radius: 24px; padding: 24px; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-weight: 600; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background: #2c6e9e; color: white; padding: 12px 20px; border-radius: 40px; z-index: 1200; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item" data-page="dashboard">数据看板</div>
+                <div class="menu-item" data-page="person">人员管理</div>
+                <div class="menu-item" data-page="archive">档案管理</div>
+                <div class="menu-item" data-page="query">综合查询</div>
+                <div class="menu-item active" data-page="utilize">档案利用</div>
+                <div class="menu-item" data-page="system">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">档案管理员</span></div></div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="header-left"><div class="page-title">档案利用</div><div class="page-desc">调阅登记 · 调阅记录 · 台账统计</div></div>
+            <button class="btn-secondary" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> 返回首页</button>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="register">调阅登记</button>
+            <button class="tab-btn" data-tab="records">调阅记录</button>
+            <button class="tab-btn" data-tab="stats">台账统计</button>
+        </div>
+
+        <div id="registerPanel">
+            <div class="form-container">
+                <div class="form-grid">
+                    <div class="form-field"><label>档案编号 *</label><input type="text" id="borrowCode" placeholder="输入档案编号自动带出被查阅人信息"></div>
+                    <div class="form-field"><label>被查阅人</label><input type="text" id="borrowPerson" readonly style="background:#f5f7fa;"></div>
+                    <div class="form-field"><label>借阅时间</label><input type="datetime-local" id="borrowTime"></div>
+                    <div class="form-field"><label>预计归还时间 *</label><input type="date" id="expectedReturnDate"></div>
+                    <div class="form-field"><label>借阅人</label><input type="text" id="borrower" value="李敏"></div>
+                    <div class="form-field"><label>借阅事由 *</label><input type="text" id="borrowReason" placeholder="请输入借阅事由"></div>
+                    <div class="form-field full-width"><label>备注</label><textarea id="borrowRemark" rows="2" placeholder="可选"></textarea></div>
+                    <div class="form-field full-width"><label>附件上传</label><input type="file" id="attachFile" accept=".pdf,.jpg,.jpeg"></div>
+                    <div class="form-actions"><button class="btn-secondary" id="resetFormBtn">重置</button><button class="btn-primary" id="submitBorrowBtn">提交</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="recordsPanel" style="display: none;">
+            <div class="filters-bar">
+                <div class="filters-row">
+                    <div class="filter-item"><label>档案编号</label><input type="text" id="searchRecordCode" placeholder="档案编号" style="width:150px;"></div>
+                    <div class="filter-item"><label>被查阅人</label><input type="text" id="searchRecordPerson" placeholder="被查阅人" style="width:120px;"></div>
+                    <div class="filter-item"><label>借阅时间范围</label><div class="date-range"><input type="date" id="startDate" placeholder="开始日期"><span>至</span><input type="date" id="endDate" placeholder="结束日期"></div></div>
+                    <div class="filter-item"><label>借阅状态</label><select id="searchStatus" style="width:110px;"><option value="">全部</option><option>借阅中</option><option>逾期未还</option><option>已归还</option></select></div>
+                    <div class="filter-actions"><button class="btn-secondary" id="searchRecordBtn"><i class="fas fa-search"></i> 查询</button><button class="btn-secondary" id="resetRecordBtn"><i class="fas fa-undo-alt"></i> 重置</button></div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="recordTable"><thead><tr><th>档案编号</th><th>被查阅人</th><th>借阅时间</th><th>预计归还时间</th><th>借阅人</th><th>借阅事由</th><th>备注</th><th>附件</th><th>归还时间</th><th>借阅状态</th><th>操作</th></tr></thead><tbody id="recordTableBody"></tbody></table>
+                <div class="pagination" id="recordPagination"></div>
+            </div>
+        </div>
+
+        <div id="statsPanel" style="display: none;">
+            <div class="stats-cards">
+                <div class="stats-card"><div class="stats-title">📊 按时间维度统计查阅次数</div><div id="timeStatsChart" class="chart-container"></div><div class="export-btn"><button class="btn-secondary" id="exportTimeStats"><i class="fas fa-download"></i> 导出Excel</button></div></div>
+                <div class="stats-card"><div class="stats-title">👥 按人员维度统计被查阅频率</div><div id="personStatsChart" class="chart-container"></div><div class="export-btn"><button class="btn-secondary" id="exportPersonStats"><i class="fas fa-download"></i> 导出Excel</button></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="returnModal" class="modal"><div class="modal-content"><div class="modal-header"><span>确认归还</span><span style="cursor:pointer;" id="closeReturnModal">&times;</span></div><div class="form-field"><label>归还日期</label><input type="date" id="returnDate" value=""></div><div class="modal-buttons"><button class="btn-secondary" id="cancelReturnBtn">取消</button><button class="btn-primary" id="confirmReturnBtn">确认归还</button></div></div></div>
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'utilize') return;
+            let targetUrl = '';
+            switch(page) {
+                case 'dashboard': targetUrl = '数据看板.html'; break;
+                case 'person': targetUrl = '人员管理.html'; break;
+                case 'archive': targetUrl = '档案管理.html'; break;
+                case 'query': targetUrl = '综合查询.html'; break;
+                case 'system': targetUrl = '系统管理.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    document.getElementById('backToHomeBtn').onclick = () => { window.location.href = '数据看板.html'; };
+
+    const persons = [{ code: "20260001", name: "张三" }, { code: "20260002", name: "李四" }, { code: "20260003", name: "王芳" }, { code: "20260004", name: "赵强" }];
+    let borrowRecords = [{ id: 1, code: "20260001", person: "张三", borrowTime: "2026-05-20 09:30", expectedReturn: "2026-06-10", borrower: "李敏", reason: "干部考察", remark: "", attach: "申请表.pdf", returnTime: null, status: "逾期未还" }, { id: 2, code: "20260002", person: "李四", borrowTime: "2026-06-01 14:20", expectedReturn: "2026-06-15", borrower: "王主任", reason: "职称评审", remark: "", attach: "", returnTime: null, status: "借阅中" }, { id: 3, code: "20260003", person: "王芳", borrowTime: "2026-05-10 10:00", expectedReturn: "2026-05-25", borrower: "张科", reason: "退休手续", remark: "", attach: "", returnTime: "2026-05-24", status: "已归还" }];
+    let nextId = 4;
+    let currentReturnId = null;
+    let currentPage = 1, pageSize = 5, filteredRecords = [...borrowRecords];
+
+    function showMsg(msg) { const toast = document.getElementById("toastMsg"); toast.innerText = msg; toast.style.display = "block"; setTimeout(()=> toast.style.display = "none", 2500); }
+    document.getElementById("borrowCode").addEventListener("blur", function() { const code = this.value.trim(); const person = persons.find(p => p.code === code); document.getElementById("borrowPerson").value = person ? person.name : ""; if(!person && code) showMsg("未找到对应档案编号"); });
+    document.getElementById("borrowTime").value = new Date().toISOString().slice(0,16);
+    document.getElementById("expectedReturnDate").value = new Date().toISOString().slice(0,10);
+    document.getElementById("submitBorrowBtn").onclick = () => {
+        const code = document.getElementById("borrowCode").value.trim(); const person = document.getElementById("borrowPerson").value; const borrowTime = document.getElementById("borrowTime").value; const expectedReturn = document.getElementById("expectedReturnDate").value; const borrower = document.getElementById("borrower").value.trim(); const reason = document.getElementById("borrowReason").value.trim();
+        if(!code || !person || !expectedReturn || !reason) { showMsg("请填写必填项：档案编号、预计归还时间、借阅事由"); return; }
+        const newRecord = { id: nextId++, code, person, borrowTime, expectedReturn, borrower, reason, remark: document.getElementById("borrowRemark").value, attach: document.getElementById("attachFile").files[0]?.name || "", returnTime: null, status: "借阅中" };
+        borrowRecords.unshift(newRecord); filteredRecords = [...borrowRecords]; currentPage = 1; renderRecordTable(); document.getElementById("resetFormBtn").click(); showMsg("调阅登记成功");
+    };
+    document.getElementById("resetFormBtn").onclick = () => { document.getElementById("borrowCode").value=""; document.getElementById("borrowPerson").value=""; document.getElementById("borrowTime").value=new Date().toISOString().slice(0,16); document.getElementById("expectedReturnDate").value=new Date().toISOString().slice(0,10); document.getElementById("borrower").value="李敏"; document.getElementById("borrowReason").value=""; document.getElementById("borrowRemark").value=""; document.getElementById("attachFile").value=""; };
+
+    function renderRecordTable() {
+        const start = (currentPage-1)*pageSize; const pageData = filteredRecords.slice(start, start+pageSize); const tbody = document.getElementById("recordTableBody"); tbody.innerHTML = "";
+        if(pageData.length===0){ tbody.innerHTML='<tr><td colspan="11">暂无记录</td></tr>'; document.getElementById("recordPagination").innerHTML=''; return; }
+        pageData.forEach(rec => { let statusClass = "", statusText = ""; if(rec.status === "借阅中") { statusClass = "badge-borrowing"; statusText = "借阅中"; } else if(rec.status === "逾期未还") { statusClass = "badge-overdue"; statusText = "逾期未还"; } else { statusClass = "badge-returned"; statusText = "已归还"; } let actionBtn = (rec.status === "借阅中" || rec.status === "逾期未还") ? `<button class="return-btn" data-id="${rec.id}">归还</button>` : "—"; tbody.insertAdjacentHTML("beforeend", `<tr><td>${rec.code}</td><td>${rec.person}</td><td>${rec.borrowTime}</td><td>${rec.expectedReturn}</td><td>${rec.borrower}</td><td>${rec.reason}</td><td>${rec.remark||''}</td><td>${rec.attach ? '<span class="detail-link" data-attach="'+rec.attach+'">查看</span>' : '—'}</td><td>${rec.returnTime||'—'}</td><td><span class="${statusClass}">${statusText}</span></td><td>${actionBtn}</td>`); });
+        document.querySelectorAll('.return-btn').forEach(btn => { btn.addEventListener('click', (e) => { currentReturnId = parseInt(btn.dataset.id); document.getElementById("returnDate").value = new Date().toISOString().slice(0,10); document.getElementById("returnModal").style.display = "flex"; }); });
+        document.querySelectorAll('[data-attach]').forEach(el => { el.addEventListener('click', () => alert("预览附件："+el.dataset.attach)); });
+        const total = filteredRecords.length, totalPages = Math.ceil(total/pageSize); const container = document.getElementById("recordPagination");
+        if(total===0){ container.innerHTML=''; return; }
+        container.innerHTML = `<button id="rf" ${currentPage===1?'disabled':''}>首页</button><button id="rp" ${currentPage===1?'disabled':''}>上一页</button><span>第${currentPage}/${totalPages}页(共${total}条)</span><button id="rn" ${currentPage===totalPages?'disabled':''}>下一页</button><button id="rl" ${currentPage===totalPages?'disabled':''}>末页</button><div><span>跳至</span><input id="rj" style="width:60px;" min="1" max="${totalPages}" value="${currentPage}"><button id="rg">GO</button></div>`;
+        document.getElementById("rf")?.addEventListener("click",()=>{currentPage=1;renderRecordTable();}); document.getElementById("rp")?.addEventListener("click",()=>{if(currentPage>1){currentPage--;renderRecordTable();}}); document.getElementById("rn")?.addEventListener("click",()=>{if(currentPage<totalPages){currentPage++;renderRecordTable();}}); document.getElementById("rl")?.addEventListener("click",()=>{currentPage=totalPages;renderRecordTable();}); document.getElementById("rg")?.addEventListener("click",()=>{let v=parseInt(document.getElementById("rj").value); if(!isNaN(v)&&v>=1&&v<=totalPages){currentPage=v;renderRecordTable();}});
+    }
+    function filterRecords() { const code = document.getElementById("searchRecordCode").value.trim(); const person = document.getElementById("searchRecordPerson").value.trim(); const startDate = document.getElementById("startDate").value; const endDate = document.getElementById("endDate").value; const status = document.getElementById("searchStatus").value; filteredRecords = borrowRecords.filter(rec => { if(code && !rec.code.includes(code)) return false; if(person && !rec.person.includes(person)) return false; if(startDate && rec.borrowTime.split(' ')[0] < startDate) return false; if(endDate && rec.borrowTime.split(' ')[0] > endDate) return false; if(status && rec.status !== status) return false; return true; }); currentPage = 1; renderRecordTable(); }
+    function resetRecordFilter() { document.getElementById("searchRecordCode").value = ""; document.getElementById("searchRecordPerson").value = ""; document.getElementById("startDate").value = ""; document.getElementById("endDate").value = ""; document.getElementById("searchStatus").value = ""; filteredRecords = [...borrowRecords]; currentPage = 1; renderRecordTable(); }
+    document.getElementById("confirmReturnBtn").onclick = () => { if(currentReturnId) { const record = borrowRecords.find(r => r.id === currentReturnId); if(record) { record.returnTime = document.getElementById("returnDate").value; record.status = "已归还"; } filteredRecords = [...borrowRecords]; renderRecordTable(); document.getElementById("returnModal").style.display = "none"; showMsg("归还成功"); } };
+    document.getElementById("cancelReturnBtn").onclick = () => document.getElementById("returnModal").style.display = "none";
+    document.getElementById("closeReturnModal").onclick = () => document.getElementById("returnModal").style.display = "none";
+    document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const tab = btn.dataset.tab; document.getElementById("registerPanel").style.display = tab === 'register' ? 'block' : 'none'; document.getElementById("recordsPanel").style.display = tab === 'records' ? 'block' : 'none'; document.getElementById("statsPanel").style.display = tab === 'stats' ? 'block' : 'none'; if(tab === 'records') renderRecordTable(); if(tab === 'stats') loadStats(); }); });
+    function loadStats() { if(typeof echarts === 'undefined') { document.getElementById("timeStatsChart").innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;">加载图表库中...</div>'; document.getElementById("personStatsChart").innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;">加载图表库中...</div>'; return; } const timeChart = echarts.init(document.getElementById("timeStatsChart")); timeChart.setOption({ tooltip: { trigger: 'axis' }, grid: { left: '8%', right: '5%', top: '10%', bottom: '8%', containLabel: true }, xAxis: { type: 'category', data: ['第1周', '第2周', '第3周', '第4周'] }, yAxis: { type: 'value', name: '查阅次数' }, series: [{ type: 'bar', data: [5, 8, 12, 7], itemStyle: { borderRadius: [6,6,0,0], color: '#2c6e9e' }, label: { show: true } }] }); const personChart = echarts.init(document.getElementById("personStatsChart")); personChart.setOption({ tooltip: { trigger: 'axis' }, grid: { left: '8%', right: '5%', top: '10%', bottom: '8%', containLabel: true }, xAxis: { type: 'category', data: ['张三', '李四', '王芳', '赵强'], axisLabel: { rotate: 15, fontSize: 11 } }, yAxis: { type: 'value', name: '被查阅次数' }, series: [{ type: 'bar', data: [3, 5, 2, 1], itemStyle: { borderRadius: [6,6,0,0], color: '#4f9da6' }, label: { show: true } }] }); window.addEventListener('resize', () => { timeChart.resize(); personChart.resize(); }); }
+    document.getElementById("exportTimeStats").onclick = () => alert("导出时间维度统计台账Excel"); document.getElementById("exportPersonStats").onclick = () => alert("导出人员维度统计台账Excel"); document.getElementById("searchRecordBtn").onclick = filterRecords; document.getElementById("resetRecordBtn").onclick = resetRecordFilter; const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js'; script.onload = () => { if(document.getElementById("statsPanel").style.display !== 'none') loadStats(); }; document.head.appendChild(script); renderRecordTable();
+</script>
+</body>
+</html>

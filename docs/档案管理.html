@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 档案管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eef2f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2d3d; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; width: 100%; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e6edf4; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+        .logo-area { padding: 28px 20px 20px 24px; border-bottom: 1px solid #f0f2f6; }
+        .logo-text { font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #1e4668, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-menu { flex: 1; padding: 0 16px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: #44546f; cursor: pointer; }
+        .menu-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 600; }
+        .user-bottom { padding: 20px 24px; border-top: 1px solid #ecf3fa; }
+        .avatar { width: 40px; height: 40px; background: #d9e6f2; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; background: #eef2f6; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-title { font-size: 24px; font-weight: 600; }
+        .action-bar { background: white; border-radius: 20px; padding: 16px 24px; margin-bottom: 24px; border: 1px solid #eef2f8; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .btn-primary { background: #2c6e9e; color: white; border: none; padding: 8px 20px; border-radius: 30px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-secondary { background: white; border: 1px solid #cbd5e1; padding: 8px 20px; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+        .filters-bar { background: white; border-radius: 20px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #eef2f8; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .filter-field label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 6px; }
+        .filter-field input, .filter-field select { width: 100%; padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; }
+        .filter-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .table-container { background: white; border-radius: 24px; border: 1px solid #eef2f8; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1100px; }
+        th { text-align: left; padding: 16px; background: #f9fbfe; border-bottom: 1px solid #e9edf2; font-weight: 600; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f0f3f8; vertical-align: middle; }
+        .checkbox-col { width: 40px; text-align: center; }
+        .badge-status { background: #e6f7e6; color: #2b6e3b; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .action-icons i { font-size: 16px; margin: 0 6px; cursor: pointer; color: #6f8fae; }
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 18px 24px; border-top: 1px solid #eef2f8; flex-wrap: wrap; }
+        .pagination button { background: white; border: 1px solid #cfdfed; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background: #2c6e9e; color: white; padding: 12px 20px; border-radius: 40px; font-size: 13px; z-index: 1200; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item" data-page="dashboard">数据看板</div>
+                <div class="menu-item" data-page="person">人员管理</div>
+                <div class="menu-item active" data-page="archive">档案管理</div>
+                <div class="menu-item" data-page="query">综合查询</div>
+                <div class="menu-item" data-page="utilize">档案利用</div>
+                <div class="menu-item" data-page="system">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom">
+            <div class="avatar"><i class="fas fa-user-shield"></i></div>
+            <div>李敏<br><span style="font-size:12px;">档案管理员</span></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="page-title">档案管理</div>
+            <button class="btn-secondary" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> 返回首页</button>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn-primary" id="batchAttachBtn"><i class="fas fa-folder-open"></i> 批量挂接</button>
+            <button class="btn-secondary" id="incrementalAttachBtn"><i class="fas fa-plus-circle"></i> 增补挂接</button>
+            <button class="btn-secondary" id="feedbackBtn"><i class="fas fa-history"></i> 挂接反馈</button>
+            <button class="btn-secondary" id="exportCatalogBtn"><i class="fas fa-download"></i> 导出目录</button>
+        </div>
+
+        <div class="filters-bar">
+            <div class="filters-grid">
+                <div class="filter-field"><label>档案编号</label><input type="text" id="searchCode" placeholder="档案编号"></div>
+                <div class="filter-field"><label>姓名</label><input type="text" id="searchName" placeholder="姓名"></div>
+                <div class="filter-field"><label>性别</label><select id="searchGender"><option value="">全部</option><option>男</option><option>女</option></select></div>
+                <div class="filter-field"><label>出生年月</label><input type="month" id="searchBirth" placeholder="出生年月"></div>
+                <div class="filter-field"><label>年龄</label><input type="text" id="searchAge" placeholder="年龄"></div>
+                <div class="filter-field"><label>民族</label><input type="text" id="searchNation" placeholder="民族"></div>
+                <div class="filter-field"><label>政治面貌</label><input type="text" id="searchPolitics" placeholder="政治面貌"></div>
+                <div class="filter-field"><label>学历</label><select id="searchEdu"><option value="">全部</option><option>博士</option><option>硕士</option><option>本科</option><option>大专</option><option>其他</option></select></div>
+                <div class="filter-field"><label>身份证号</label><input type="text" id="searchIdNum" placeholder="身份证号"></div>
+                <div class="filter-field"><label>当前状态</label><select id="searchStatus"><option value="">全部</option><option>在职</option><option>离职</option><option>退休</option></select></div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-secondary" id="searchBtn"><i class="fas fa-search"></i> 查询</button>
+                <button class="btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> 重置</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="archiveTable">
+                <thead>
+                    <tr><th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th><th>序号</th><th>档案编号</th><th>姓名</th><th>性别</th><th>出生年月</th><th>年龄</th><th>民族</th><th>政治面貌</th><th>学历</th><th>当前状态</th><th>操作</th></tr>
+                </thead>
+                <tbody id="archiveTableBody"></tbody>
+            </table>
+            <div class="pagination" id="paginationArea"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'archive') return;
+            let targetUrl = '';
+            switch(page) {
+                case 'dashboard': targetUrl = '数据看板.html'; break;
+                case 'person': targetUrl = '人员管理.html'; break;
+                case 'query': targetUrl = '综合查询.html'; break;
+                case 'utilize': targetUrl = '档案利用.html'; break;
+                case 'system': targetUrl = '系统管理.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    // 返回首页按钮
+    document.getElementById('backToHomeBtn').onclick = () => {
+        window.location.href = '数据看板.html';
+    };
+
+    let persons = [
+        { id: 1, code: "20260001", name: "张三", gender: "男", birth: "1985-06-15", age: 41, ethnicity: "汉族", political: "中共党员", education: "本科", status: "在职", idNumber: "430************001" },
+        { id: 2, code: "20260002", name: "李四", gender: "女", birth: "1990-09-10", age: 35, ethnicity: "壮族", political: "中共党员", education: "硕士", status: "在职", idNumber: "450************002" },
+        { id: 3, code: "20260003", name: "王芳", gender: "女", birth: "1978-12-01", age: 47, ethnicity: "汉族", political: "群众", education: "大专", status: "退休", idNumber: "440************003" },
+        { id: 4, code: "20260004", name: "赵强", gender: "男", birth: "2000-03-22", age: 26, ethnicity: "瑶族", political: "共青团员", education: "本科", status: "在职", idNumber: "451************004" },
+        { id: 5, code: "20260005", name: "陈敏", gender: "女", birth: "1995-07-19", age: 30, ethnicity: "汉族", political: "中共党员", education: "博士", status: "离职", idNumber: "360************005" },
+        { id: 6, code: "20260006", name: "刘东", gender: "男", birth: "1982-11-02", age: 43, ethnicity: "汉族", political: "中共党员", education: "硕士", status: "在职", idNumber: "370************006" },
+        { id: 7, code: "20260007", name: "吴琼", gender: "女", birth: "1992-05-12", age: 34, ethnicity: "回族", political: "群众", education: "本科", status: "在职", idNumber: "640************007" },
+        { id: 8, code: "20260008", name: "郑浩然", gender: "男", birth: "1975-08-22", age: 50, ethnicity: "汉族", political: "中共党员", education: "大专", status: "退休", idNumber: "130************008" }
+    ];
+
+    let currentFiltered = [...persons];
+    let currentPage = 1;
+    const pageSize = 5;
+    let selectedPersonIds = new Set();
+
+    function filterData() {
+        const code = document.getElementById("searchCode").value.trim();
+        const name = document.getElementById("searchName").value.trim();
+        const gender = document.getElementById("searchGender").value;
+        const birth = document.getElementById("searchBirth").value;
+        const age = document.getElementById("searchAge").value.trim();
+        const nation = document.getElementById("searchNation").value.trim();
+        const politics = document.getElementById("searchPolitics").value.trim();
+        const edu = document.getElementById("searchEdu").value;
+        const idNum = document.getElementById("searchIdNum").value.trim();
+        const status = document.getElementById("searchStatus").value;
+
+        currentFiltered = persons.filter(p => {
+            if(code && !p.code.includes(code)) return false;
+            if(name && !p.name.includes(name)) return false;
+            if(gender && p.gender !== gender) return false;
+            if(birth && p.birth && !p.birth.startsWith(birth)) return false;
+            if(age && p.age.toString() !== age) return false;
+            if(nation && !p.ethnicity.includes(nation)) return false;
+            if(politics && !p.political.includes(politics)) return false;
+            if(edu && p.education !== edu) return false;
+            if(idNum && !p.idNumber.includes(idNum)) return false;
+            if(status && p.status !== status) return false;
+            return true;
+        });
+        currentPage = 1;
+        selectedPersonIds.clear();
+        const selectAll = document.getElementById("selectAllCheckbox");
+        if(selectAll) selectAll.checked = false;
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("archiveTableBody");
+        const start = (currentPage-1)*pageSize;
+        const pageData = currentFiltered.slice(start, start+pageSize);
+        tbody.innerHTML = '';
+        if(pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center">暂无数据</td></tr>';
+            renderPagination();
+            return;
+        }
+        pageData.forEach((p, idx) => {
+            const globalIdx = start + idx + 1;
+            const isChecked = selectedPersonIds.has(p.id);
+            const row = `
+                <tr>
+                    <td class="checkbox-col"><input type="checkbox" class="row-checkbox" data-id="${p.id}" ${isChecked ? 'checked' : ''}></td>
+                    <td>${globalIdx}</td><td>${p.code}</td><td>${p.name}</td><td>${p.gender}</td>
+                    <td>${p.birth || ''}</td><td>${p.age}</td><td>${p.ethnicity}</td>
+                    <td>${p.political}</td><td>${p.education}</td>
+                    <td><span class="badge-status">${p.status}</span></td>
+                    <td class="action-icons">
+                        <i class="fas fa-folder-tree" title="材料管理" onclick="materialManagement('${p.code}', '${p.name}')"></i>
+                    </td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
+
+        document.querySelectorAll(".row-checkbox").forEach(cb => {
+            cb.addEventListener("change", (e) => {
+                const pid = parseInt(cb.getAttribute("data-id"));
+                if(cb.checked) selectedPersonIds.add(pid);
+                else selectedPersonIds.delete(pid);
+            });
+        });
+
+        const selectAll = document.getElementById("selectAllCheckbox");
+        if(selectAll) {
+            selectAll.onchange = (e) => {
+                const allCheckboxes = document.querySelectorAll(".row-checkbox");
+                if(e.target.checked) {
+                    allCheckboxes.forEach(cb => { cb.checked = true; selectedPersonIds.add(parseInt(cb.getAttribute("data-id"))); });
+                } else {
+                    allCheckboxes.forEach(cb => { cb.checked = false; selectedPersonIds.clear(); });
+                }
+            };
+        }
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const total = currentFiltered.length;
+        const totalPages = Math.ceil(total/pageSize);
+        const container = document.getElementById("paginationArea");
+        if (!container) return;
+        if(total === 0) { container.innerHTML = '<div class="page-info">共0条</div>'; return; }
+        container.innerHTML = `
+            <button id="firstPage" ${currentPage===1?'disabled':''}>首页</button>
+            <button id="prevPage" ${currentPage===1?'disabled':''}>上一页</button>
+            <span class="page-info">第 ${currentPage} / ${totalPages} 页 (共${total}条)</span>
+            <button id="nextPage" ${currentPage===totalPages?'disabled':''}>下一页</button>
+            <button id="lastPage" ${currentPage===totalPages?'disabled':''}>末页</button>
+            <div style="display:inline-flex; gap:6px; margin-left:8px;">
+                <span>跳至</span><input type="number" id="jumpPage" style="width:60px;" min="1" max="${totalPages}" value="${currentPage}">
+                <button id="gotoPage">GO</button>
+            </div>
+        `;
+        document.getElementById("firstPage")?.addEventListener("click",()=>{currentPage=1; renderTable();});
+        document.getElementById("prevPage")?.addEventListener("click",()=>{if(currentPage>1){currentPage--; renderTable();}});
+        document.getElementById("nextPage")?.addEventListener("click",()=>{if(currentPage<totalPages){currentPage++; renderTable();}});
+        document.getElementById("lastPage")?.addEventListener("click",()=>{currentPage=totalPages; renderTable();});
+        document.getElementById("gotoPage")?.addEventListener("click",()=>{ let val=parseInt(document.getElementById("jumpPage").value); if(!isNaN(val) && val>=1 && val<=totalPages) { currentPage=val; renderTable(); } });
+    }
+
+    window.materialManagement = function(code, name) {
+        window.location.href = `材料上传.html?code=${code}&name=${encodeURIComponent(name)}`;
+    };
+
+    function showMsg(msg) { 
+        const toast = document.getElementById("toastMsg"); 
+        toast.innerText = msg; 
+        toast.style.display = "block"; 
+        setTimeout(()=>{ toast.style.display = "none"; }, 2500); 
+    }
+
+    document.getElementById("batchAttachBtn").onclick = () => {
+        if(selectedPersonIds.size === 0) { alert("请先勾选需要批量挂接的档案人员（支持多选）"); return; }
+        const selectedIds = Array.from(selectedPersonIds).join(',');
+        window.location.href = `材料挂接.html?mode=batch&ids=${selectedIds}`;
+    };
+    document.getElementById("incrementalAttachBtn").onclick = () => {
+        if(selectedPersonIds.size === 0) { alert("请先勾选需要增补材料的档案人员"); return; }
+        const selectedIds = Array.from(selectedPersonIds).join(',');
+        window.location.href = `材料挂接.html?mode=incremental&ids=${selectedIds}`;
+    };
+    document.getElementById("feedbackBtn").onclick = () => {
+        window.location.href = `挂接反馈.html`;
+    };
+    document.getElementById("exportCatalogBtn").onclick = () => {
+        if(selectedPersonIds.size === 0) { alert("请先勾选需要导出目录的档案人员"); return; }
+        const names = Array.from(selectedPersonIds).map(id => persons.find(p=>p.id===id)?.name).join(",");
+        alert(`正在导出所选人员（${selectedPersonIds.size}人：${names}）的档案材料目录表（Excel）。\n目录包含十大分类及已归档材料信息。`);
+    };
+
+    document.getElementById("searchBtn").onclick = () => filterData();
+    document.getElementById("resetBtn").onclick = () => {
+        document.getElementById("searchCode").value = ""; document.getElementById("searchName").value = ""; document.getElementById("searchGender").value = "";
+        document.getElementById("searchBirth").value = ""; document.getElementById("searchAge").value = ""; document.getElementById("searchNation").value = "";
+        document.getElementById("searchPolitics").value = ""; document.getElementById("searchEdu").value = ""; document.getElementById("searchIdNum").value = "";
+        document.getElementById("searchStatus").value = "";
+        currentFiltered = [...persons];
+        currentPage = 1;
+        selectedPersonIds.clear();
+        const selectAll = document.getElementById("selectAllCheckbox");
+        if(selectAll) selectAll.checked = false;
+        renderTable();
+    };
+    renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 挂接反馈</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1f2d3d;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e6edf4;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .logo-area {
+            padding: 28px 20px 20px 24px;
+            border-bottom: 1px solid #f0f2f6;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e4668, #2c6e9e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .nav-menu {
+            flex: 1;
+            padding: 0 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #44546f;
+            cursor: pointer;
+        }
+        .menu-item.active {
+            background: #ecf5fc;
+            color: #1e6f9f;
+            font-weight: 600;
+        }
+        .user-bottom {
+            padding: 20px 24px;
+            border-top: 1px solid #ecf3fa;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #d9e6f2;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2f8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header-left .page-desc {
+            font-size: 13px;
+            color: #6c7e97;
+        }
+        .btn-secondary {
+            background: white;
+            border: 1px solid #cfdfed;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filters-bar {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2f8;
+        }
+        .filters-row {
+            display: flex;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #5a6e8a;
+        }
+        .filter-item input, .filter-item select {
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid #cfdfed;
+            width: 180px;
+        }
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .date-range input {
+            width: 140px;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            margin-left: auto;
+        }
+        .table-container {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 800px;
+        }
+        th {
+            text-align: left;
+            padding: 16px;
+            background: #f9fbfe;
+            border-bottom: 1px solid #e9edf2;
+            font-weight: 600;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f3f8;
+            vertical-align: middle;
+        }
+        .badge-success {
+            background: #e6f7e6;
+            color: #2b6e3b;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        .badge-fail {
+            background: #ffebee;
+            color: #c0392b;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        .badge-type {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        .detail-link {
+            color: #2c6e9e;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 24px;
+            border-top: 1px solid #eef2f8;
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            background: white;
+            border: 1px solid #cfdfed;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 800px;
+            max-width: 90%;
+            border-radius: 24px;
+            padding: 24px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .fail-detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .fail-detail-table th {
+            background: #f5f7fa;
+            padding: 10px 8px;
+        }
+        .fail-detail-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2c6e9e;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            z-index: 1200;
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item"><i class="fas fa-chalkboard-user"></i> 数据看板</div>
+                <div class="menu-item"><i class="fas fa-users"></i> 人员管理</div>
+                <div class="menu-item active"><i class="fas fa-folder-open"></i> 档案管理</div>
+                <div class="menu-item"><i class="fas fa-chart-line"></i> 综合查询</div>
+                <div class="menu-item"><i class="fas fa-book"></i> 档案利用</div>
+                <div class="menu-item"><i class="fas fa-gear"></i> 系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">档案管理员</span></div></div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="header-left">
+                <div class="page-title">挂接反馈</div>
+                <div class="page-desc">查看所有历史挂接操作记录及失败明细</div>
+            </div>
+            <button class="btn-secondary" id="backBtn"><i class="fas fa-arrow-left"></i> 返回档案管理</button>
+        </div>
+
+        <div class="filters-bar">
+            <div class="filters-row">
+                <div class="filter-item">
+                    <label>上传文件夹名</label>
+                    <input type="text" id="searchFolder" placeholder="例如：20260003王芳" style="width: 180px;">
+                </div>
+                <div class="filter-item">
+                    <label>挂接类型</label>
+                    <select id="searchType">
+                        <option value="">全部</option>
+                        <option value="批量挂接">批量挂接</option>
+                        <option value="增补挂接">增补挂接</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>上传时间范围</label>
+                    <div class="date-range">
+                        <input type="date" id="startDate" placeholder="开始日期">
+                        <span>至</span>
+                        <input type="date" id="endDate" placeholder="结束日期">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-secondary" id="searchBtn"><i class="fas fa-search"></i> 查询</button>
+                    <button class="btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> 重置</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead><tr><th>序号</th><th>上传文件夹名</th><th>挂接类型</th><th>上传时间</th><th>上传结果</th><th>操作</th></tr></thead>
+                <tbody id="recordTableBody"></tbody>
+            </table>
+            <div class="pagination" id="paginationArea"></div>
+        </div>
+    </div>
+</div>
+
+<div id="detailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><span>失败明细</span><span style="cursor:pointer;" id="closeModalBtn">&times;</span></div>
+        <div id="modalDetailContent"></div>
+    </div>
+</div>
+
+<script>
+    let uploadRecords = [
+        { id: 1, folderName: "20260001张三", attachType: "批量挂接", uploadTime: "2026-06-01 14:23:15", success: 12, fail: 3, failDetails: [{ fileName: "20260001张三3-5.pdf", errorType: "目录表无对应项", errorMsg: "目录表无第3类第5项！" }, { fileName: "20260001张三4-1-2.pdf", errorType: "材料已存在", errorMsg: "第4类第1子类第2项材料已存在" }, { fileName: "20260001张三2-3.bmp", errorType: "格式不支持", errorMsg: "不支持该文件类型！" }] },
+        { id: 2, folderName: "20260002李四", attachType: "增补挂接", uploadTime: "2026-06-03 09:45:22", success: 5, fail: 1, failDetails: [{ fileName: "20260002李四4-1-3.pdf", errorType: "目录表无对应项", errorMsg: "目录表无第4类第1子类第3项！" }] },
+        { id: 3, folderName: "20260003王芳", attachType: "批量挂接", uploadTime: "2026-06-05 11:20:08", success: 8, fail: 0, failDetails: [] },
+        { id: 4, folderName: "20260004赵强", attachType: "增补挂接", uploadTime: "2026-06-10 16:30:45", success: 2, fail: 2, failDetails: [{ fileName: "20260004赵强9-2-5.pdf", errorType: "目录表无对应项", errorMsg: "目录表无第9类第2子类第5项！" }, { fileName: "20260004赵强1-5.docx", errorType: "格式不支持", errorMsg: "不支持该文件类型！" }] }
+    ];
+    let filteredRecords = [...uploadRecords];
+    let currentPage = 1;
+    const pageSize = 5;
+
+    function filterRecords() {
+        const folderKeyword = document.getElementById("searchFolder").value.trim().toLowerCase();
+        const attachType = document.getElementById("searchType").value;
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+        filteredRecords = uploadRecords.filter(r => {
+            if(folderKeyword && !r.folderName.toLowerCase().includes(folderKeyword)) return false;
+            if(attachType && r.attachType !== attachType) return false;
+            if(startDate && r.uploadTime.split(' ')[0] < startDate) return false;
+            if(endDate && r.uploadTime.split(' ')[0] > endDate) return false;
+            return true;
+        });
+        currentPage = 1;
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("recordTableBody");
+        const start = (currentPage-1)*pageSize;
+        const pageData = filteredRecords.slice(start, start+pageSize);
+        tbody.innerHTML = '';
+        if(pageData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">暂无挂接记录</td></tr>'; renderPagination(); return; }
+        pageData.forEach((r, idx) => {
+            const globalIdx = start+idx+1;
+            const resultClass = r.fail > 0 ? "badge-fail" : "badge-success";
+            tbody.insertAdjacentHTML('beforeend', `<tr><td>${globalIdx}</td><td>${escapeHtml(r.folderName)}</td><td><span class="badge-type">${escapeHtml(r.attachType)}</span></td><td>${r.uploadTime}</td><td><span class="${resultClass}">成功 ${r.success} 条，失败 ${r.fail} 条</span></td><td><span class="detail-link" data-id="${r.id}">详情</span></td></tr>`);
+        });
+        document.querySelectorAll('.detail-link').forEach(el => el.addEventListener('click', (e) => { const id = parseInt(el.dataset.id); const record = uploadRecords.find(r=>r.id===id); if(record) showFailDetails(record); }));
+        renderPagination();
+    }
+    function renderPagination() {
+        const total = filteredRecords.length, totalPages = Math.ceil(total/pageSize);
+        const container = document.getElementById("paginationArea");
+        if(total===0) { container.innerHTML = '<div class="page-info">共0条</div>'; return; }
+        container.innerHTML = `<button id="firstPage" ${currentPage===1?'disabled':''}>首页</button><button id="prevPage" ${currentPage===1?'disabled':''}>上一页</button><span>第 ${currentPage} / ${totalPages} 页 (共${total}条)</span><button id="nextPage" ${currentPage===totalPages?'disabled':''}>下一页</button><button id="lastPage" ${currentPage===totalPages?'disabled':''}>末页</button><div style="display:inline-flex;gap:6px;"><span>跳至</span><input type="number" id="jumpPage" style="width:60px;" min="1" max="${totalPages}" value="${currentPage}"><button id="gotoPage">GO</button></div>`;
+        document.getElementById("firstPage")?.addEventListener("click",()=>{currentPage=1;renderTable();});
+        document.getElementById("prevPage")?.addEventListener("click",()=>{if(currentPage>1){currentPage--;renderTable();}});
+        document.getElementById("nextPage")?.addEventListener("click",()=>{if(currentPage<totalPages){currentPage++;renderTable();}});
+        document.getElementById("lastPage")?.addEventListener("click",()=>{currentPage=totalPages;renderTable();});
+        document.getElementById("gotoPage")?.addEventListener("click",()=>{let v=parseInt(document.getElementById("jumpPage").value); if(!isNaN(v)&&v>=1&&v<=totalPages){currentPage=v;renderTable();}});
+    }
+    function showFailDetails(record) {
+        const modalContent = document.getElementById("modalDetailContent");
+        if(!record.failDetails || record.failDetails.length===0) modalContent.innerHTML = '<div style="padding:20px;text-align:center;">本次挂接无失败记录</div>';
+        else {
+            let html = '<table class="fail-detail-table"><thead><tr><th>序号</th><th>文件名</th><th>错误类型</th><th>错误提示</th></tr></thead><tbody>';
+            record.failDetails.forEach((d,i)=> { html += `<tr><td>${i+1}</td><td style="color:#c0392b;">${escapeHtml(d.fileName)}</td><td>${escapeHtml(d.errorType)}</td><td style="color:#c0392b;">${escapeHtml(d.errorMsg)}</td></tr>`; });
+            html += '</tbody></table>';
+            modalContent.innerHTML = html;
+        }
+        document.getElementById("detailModal").style.display = "flex";
+    }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+    document.getElementById("searchBtn").onclick = filterRecords;
+    document.getElementById("resetBtn").onclick = () => { document.getElementById("searchFolder").value = ""; document.getElementById("searchType").value = ""; document.getElementById("startDate").value = ""; document.getElementById("endDate").value = ""; filteredRecords = [...uploadRecords]; currentPage = 1; renderTable(); };
+    document.getElementById("backBtn").onclick = () => { window.location.href = "档案管理.html"; };
+    document.getElementById("closeModalBtn").onclick = () => { document.getElementById("detailModal").style.display = "none"; };
+    window.onclick = (e) => { if (e.target === document.getElementById("detailModal")) document.getElementById("detailModal").style.display = "none"; };
+    renderTable();
+</script>
+</body>
+</html>

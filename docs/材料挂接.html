@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 批量/增补挂接</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1f2d3d;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* 左侧菜单 */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e6edf4;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .logo-area {
+            padding: 28px 20px 20px 24px;
+            border-bottom: 1px solid #f0f2f6;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e4668, #2c6e9e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .nav-menu {
+            flex: 1;
+            padding: 0 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #44546f;
+            cursor: pointer;
+        }
+        .menu-item.active {
+            background: #ecf5fc;
+            color: #1e6f9f;
+            font-weight: 600;
+        }
+        .user-bottom {
+            padding: 20px 24px;
+            border-top: 1px solid #ecf3fa;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #d9e6f2;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+
+        /* 页面头部 - 参考材料上传页面，标题在左，按钮在右 */
+        .page-header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2f8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header-left .page-desc {
+            font-size: 13px;
+            color: #6c7e97;
+        }
+        .btn-secondary {
+            background: white;
+            border: 1px solid #cfdfed;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        /* 挂接类型切换卡片 */
+        .type-switch {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .type-card {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .type-card.active {
+            border-color: #2c6e9e;
+            background: #f0f7fc;
+        }
+        .type-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .type-card p {
+            font-size: 13px;
+            color: #6c7e97;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .folder-selector {
+            border: 2px dashed #cfdfed;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fafcff;
+        }
+        .folder-selector:hover {
+            border-color: #2c6e9e;
+            background: #f5f9fe;
+        }
+        .selected-info {
+            margin-top: 20px;
+            background: #f0f4f9;
+            border-radius: 16px;
+            padding: 16px;
+            font-size: 13px;
+        }
+
+        /* 反馈区域 */
+        .feedback-area {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .feedback-header {
+            padding: 16px 24px;
+            background: #f9fbfe;
+            border-bottom: 1px solid #eef2f8;
+            font-weight: 600;
+        }
+        .feedback-result {
+            padding: 20px 24px;
+        }
+        .result-summary {
+            background: #e8f5e9;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .result-summary.error {
+            background: #ffebee;
+        }
+        .fail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .fail-table th {
+            text-align: left;
+            padding: 12px 8px;
+            background: #f5f7fa;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+        .fail-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f2f5;
+            vertical-align: top;
+        }
+        .fail-name {
+            color: #c0392b;
+            font-weight: 500;
+            font-family: monospace;
+        }
+        .fail-type-badge {
+            background: #f5e6e6;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: inline-block;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2c6e9e;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            z-index: 1200;
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item"><i class="fas fa-chalkboard-user"></i> 数据看板</div>
+                <div class="menu-item"><i class="fas fa-users"></i> 人员管理</div>
+                <div class="menu-item active"><i class="fas fa-folder-open"></i> 档案管理</div>
+                <div class="menu-item"><i class="fas fa-chart-line"></i> 综合查询</div>
+                <div class="menu-item"><i class="fas fa-book"></i> 档案利用</div>
+                <div class="menu-item"><i class="fas fa-gear"></i> 系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">档案管理员</span></div></div>
+    </div>
+
+    <div class="main-content">
+        <!-- 页面头部：标题在左，返回按钮在右（参考材料上传页面） -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="page-title">材料挂接</div>
+                <div class="page-desc">支持批量挂接（完整文件夹结构）和增补挂接（仅新增材料），系统自动解析目录表匹配归档</div>
+            </div>
+            <button class="btn-secondary" id="backBtn"><i class="fas fa-arrow-left"></i> 返回档案管理</button>
+        </div>
+
+        <!-- 切换挂接类型 -->
+        <div class="type-switch">
+            <div class="type-card" data-type="batch" id="batchCard">
+                <h3><i class="fas fa-layer-group"></i> 批量挂接</h3>
+                <p>按人员生成独立文件夹（目录表 + 10个分类子文件夹），材料按目录表自动匹配</p>
+            </div>
+            <div class="type-card" data-type="incremental" id="incrementalCard">
+                <h3><i class="fas fa-plus-circle"></i> 增补挂接</h3>
+                <p>仅上传新增材料，按目录表自动匹配，不覆盖已有材料；只需包含有材料的子文件夹</p>
+            </div>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-area">
+            <div class="folder-selector" id="folderSelector">
+                <i class="fas fa-folder-open" style="font-size: 48px; color: #8aa9c9; margin-bottom: 12px; display: block;"></i>
+                <span id="selectText">点击选择文件夹或压缩包</span>
+                <input type="file" id="folderInput" style="display: none;" webkitdirectory directory multiple>
+                <input type="file" id="zipInput" style="display: none;" accept=".zip">
+            </div>
+            <div class="selected-info" id="selectedInfo" style="display: none;">
+                <i class="fas fa-check-circle" style="color: #2c6e9e;"></i> 已选择：<span id="selectedPath"></span>
+            </div>
+        </div>
+
+        <!-- 反馈区域（上传后显示） -->
+        <div id="feedbackArea" style="display: none;"></div>
+    </div>
+</div>
+
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+
+<script>
+    // 从URL获取挂接类型（从档案管理页面传递）
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentType = urlParams.get('mode') === 'incremental' ? 'incremental' : 'batch';  // 默认为批量
+    let selectedFolder = null;
+
+    function setActiveType(type) {
+        currentType = type;
+        if(type === "batch") {
+            document.getElementById("batchCard").classList.add("active");
+            document.getElementById("incrementalCard").classList.remove("active");
+        } else {
+            document.getElementById("incrementalCard").classList.add("active");
+            document.getElementById("batchCard").classList.remove("active");
+        }
+        selectedFolder = null;
+        document.getElementById("selectedInfo").style.display = "none";
+        document.getElementById("feedbackArea").style.display = "none";
+    }
+    document.getElementById("batchCard").onclick = () => setActiveType("batch");
+    document.getElementById("incrementalCard").onclick = () => setActiveType("incremental");
+
+    const folderSelector = document.getElementById("folderSelector");
+    folderSelector.onclick = () => {
+        let choice = confirm("模拟选择：点击「确定」模拟选择文件夹「20260001张三」\n（实际开发应支持选择本地文件夹或压缩包）");
+        if(choice) {
+            selectedFolder = "20260001张三";
+            document.getElementById("selectedInfo").style.display = "block";
+            document.getElementById("selectedPath").innerText = selectedFolder;
+            simulateAttach();
+        }
+    };
+
+    function simulateAttach() {
+        if(!selectedFolder) return;
+        let successCount = 0, failCount = 0;
+        let fails = [];
+
+        if(currentType === "batch") {
+            successCount = 7;
+            failCount = 3;
+            fails = [
+                { file: "20260001张三3-5.pdf", error: "目录表无第3类第5项！", type: "目录表无对应项" },
+                { file: "20260001张三4-1-2.pdf", error: "第4类第1子类第2项材料已存在，如需替换请先删除原文件！", type: "材料已存在" },
+                { file: "20260001张三2-3.bmp", error: "不支持该文件类型！", type: "格式不支持" }
+            ];
+        } else {
+            successCount = 1;
+            failCount = 1;
+            fails = [
+                { file: "20260001张三4-1-3.pdf", error: "目录表无第4类第1子类第3项！", type: "目录表无对应项" }
+            ];
+        }
+
+        renderFeedback(successCount, failCount, fails);
+        showMsg(`挂接完成：成功${successCount}条，失败${failCount}条`);
+    }
+
+    function renderFeedback(success, fail, failList) {
+        const feedbackContainer = document.getElementById("feedbackArea");
+        if (!feedbackContainer) return;
+        
+        let resultClass = fail > 0 ? "result-summary error" : "result-summary";
+        let resultIcon = fail > 0 ? "fa-exclamation-triangle" : "fa-check-circle";
+        
+        let html = `
+            <div class="feedback-area">
+                <div class="feedback-header"><i class="fas fa-chart-line"></i> 挂接结果反馈</div>
+                <div class="feedback-result">
+                    <div class="${resultClass}">
+                        <i class="fas ${resultIcon}"></i> 
+                        挂接完成：成功 ${success} 条，失败 ${fail} 条
+                    </div>
+        `;
+        
+        if (failList && failList.length > 0) {
+            html += `<div style="margin-top: 8px;"><strong>失败明细</strong></div>`;
+            html += `<table class="fail-table">
+                        <thead>
+                            <tr><th style="width: 40px;">序号</th><th>文件名</th><th style="width: 120px;">错误类型</th><th>错误提示</th></tr>
+                        </thead>
+                        <tbody>`;
+            failList.forEach((f, idx) => {
+                let typeDisplay = '';
+                if (f.type === '目录表无对应项') typeDisplay = '<span class="fail-type-badge">目录表无对应项</span>';
+                else if (f.type === '材料已存在') typeDisplay = '<span class="fail-type-badge">材料已存在</span>';
+                else if (f.type === '格式不支持') typeDisplay = '<span class="fail-type-badge">格式不支持</span>';
+                else typeDisplay = '<span class="fail-type-badge">其他</span>';
+                html += `<tr>
+                            <td style="text-align: center;">${idx + 1}</td>
+                            <td class="fail-name">${escapeHtml(f.file)}</td>
+                            <td>${typeDisplay}</td>
+                            <td style="color: #c0392b;">${escapeHtml(f.error)}</td>
+                          </tr>`;
+            });
+            html += `</tbody>
+                    </table>`;
+        } else {
+            html += `<div class="fail-list" style="padding: 16px 0; color: #2b6e3b;">✅ 无失败记录，所有材料均已成功挂接。</div>`;
+        }
+        
+        html += `</div></div>`;
+        feedbackContainer.innerHTML = html;
+        feedbackContainer.style.display = "block";
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function showMsg(msg) {
+        const toast = document.getElementById("toastMsg");
+        toast.innerText = msg;
+        toast.style.display = "block";
+        setTimeout(()=> toast.style.display = "none", 3000);
+    }
+
+    // 返回档案管理页面
+    document.getElementById("backBtn").onclick = () => {
+        window.location.href = "档案管理.html";
+    };
+
+    // 根据URL参数初始化挂接类型卡片的高亮
+    setActiveType(currentType);
+</script>
+</body>
+</html>

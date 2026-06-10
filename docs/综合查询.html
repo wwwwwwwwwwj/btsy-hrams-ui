@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 综合查询</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eef2f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2d3d; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; width: 100%; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e6edf4; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+        .logo-area { padding: 28px 20px 20px 24px; border-bottom: 1px solid #f0f2f6; }
+        .logo-text { font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #1e4668, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-menu { flex: 1; padding: 0 16px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: #44546f; cursor: pointer; }
+        .menu-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 600; }
+        .user-bottom { padding: 20px 24px; border-top: 1px solid #ecf3fa; }
+        .avatar { width: 40px; height: 40px; background: #d9e6f2; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+        .page-header { background: white; border-radius: 20px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid #eef2f8; display: flex; justify-content: space-between; align-items: center; }
+        .header-left .page-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .header-left .page-desc { font-size: 13px; color: #6c7e97; }
+        .btn-secondary { background: white; border: 1px solid #cfdfed; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .tab-bar { display: flex; gap: 0; margin-bottom: 24px; background: white; border-radius: 20px; padding: 6px; border: 1px solid #eef2f8; width: fit-content; }
+        .tab-btn { padding: 10px 28px; border-radius: 40px; font-size: 14px; font-weight: 500; cursor: pointer; background: transparent; border: none; }
+        .tab-btn.active { background: #2c6e9e; color: white; }
+        .filters-bar { background: white; border-radius: 20px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #eef2f8; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .filter-field label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 6px; }
+        .filter-field input, .filter-field select { width: 100%; padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; }
+        .filter-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .table-wrapper { background: white; border-radius: 24px; border: 1px solid #eef2f8; overflow: hidden; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1000px; }
+        th { text-align: left; padding: 16px; background: #f9fbfe; border-bottom: 1px solid #e9edf2; font-weight: 600; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f0f3f8; }
+        .badge-status { background: #e6f7e6; color: #2b6e3b; padding: 4px 10px; border-radius: 30px; font-size: 12px; }
+        .detail-link { color: #2c6e9e; cursor: pointer; text-decoration: underline; }
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 18px 24px; border-top: 1px solid #eef2f8; flex-wrap: wrap; background: white; }
+        .pagination button { background: white; border: 1px solid #cfdfed; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .fulltext-container { background: white; border-radius: 24px; border: 1px solid #eef2f8; overflow: hidden; }
+        .fulltext-search-bar { padding: 20px 24px; border-bottom: 1px solid #eef2f8; display: flex; gap: 12px; align-items: center; }
+        .fulltext-search-bar input { flex: 1; padding: 10px 16px; border-radius: 40px; border: 1px solid #cfdfed; }
+        .fulltext-results { display: flex; height: 500px; }
+        .result-panel { flex: 1; border-right: 1px solid #eef2f8; overflow-y: auto; padding: 16px; }
+        .result-panel:last-child { border-right: none; }
+        .panel-title { font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eef2f8; }
+        .person-item, .category-item { padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; background: #f8fafc; }
+        .person-item.active, .category-item.active { background: #ecf5fc; color: #1e6f9f; }
+        .keyword-highlight { background: #ffeb3b; color: #d32f2f; padding: 0 2px; border-radius: 4px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 95vw; height: 90vh; max-width: 1400px; border-radius: 28px; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-weight: 600; font-size: 18px; padding-bottom: 12px; border-bottom: 1px solid #eef2f8; flex-shrink: 0; }
+        .detail-layout { display: flex; gap: 20px; flex: 1; min-height: 0; overflow: hidden; }
+        .detail-category { width: 280px; background: #fafcff; border-radius: 20px; padding: 12px 0; border: 1px solid #eef2f8; overflow-y: auto; flex-shrink: 0; }
+        .cat-item { padding: 8px 12px; margin: 2px 8px; border-radius: 12px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; }
+        .cat-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 500; }
+        .category-count { color: #7c8ea0; font-size: 11px; }
+        .total-stats { margin-top: 12px; padding: 10px 12px; border-top: 1px solid #edf2f7; font-size: 12px; background: #fafcff; }
+        .detail-right { flex: 1; background: white; border-radius: 20px; border: 1px solid #eef2f8; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .person-info-card { background: #f9fbfe; padding: 14px 20px; border-bottom: 1px solid #eef2f8; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 20px; font-size: 13px; flex-shrink: 0; }
+        .person-info-card .info-item { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+        .info-item strong { font-weight: 600; color: #2c3e66; min-width: 72px; }
+        .material-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px 16px; min-height: 0; }
+        .material-header { font-weight: 600; font-size: 14px; margin-bottom: 12px; padding-left: 4px; border-left: 3px solid #2c6e9e; flex-shrink: 0; }
+        .material-table-wrap { flex: 1; overflow-y: auto; overflow-x: hidden; }
+        .material-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        .material-table th, .material-table td { padding: 8px 6px; border-bottom: 1px solid #f0f2f5; text-align: left; vertical-align: top; word-break: break-word; }
+        .material-table th:first-child { width: 45px; }
+        .material-table th:nth-child(2) { width: auto; }
+        .material-table th:nth-child(3) { width: 90px; }
+        .material-table th:nth-child(4) { width: 45px; }
+        .material-table th:nth-child(5) { width: 70px; }
+        .material-table th:last-child { width: 55px; }
+        .material-table th { background: #f9fbfe; font-weight: 600; }
+        .preview-btn { color: #2c6e9e; cursor: pointer; background: none; border: none; font-size: 11px; }
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background: #2c6e9e; color: white; padding: 12px 20px; border-radius: 40px; z-index: 1200; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div><div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item" data-page="dashboard">数据看板</div><div class="menu-item" data-page="person">人员管理</div>
+                <div class="menu-item" data-page="archive">档案管理</div><div class="menu-item active" data-page="query">综合查询</div>
+                <div class="menu-item" data-page="utilize">档案利用</div><div class="menu-item" data-page="system">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">档案管理员</span></div></div>
+    </div>
+    <div class="main-content">
+        <div class="page-header"><div class="header-left"><div class="page-title">综合查询</div><div class="page-desc">档案查询 · 全文检索 · 统计分析</div></div><button class="btn-secondary" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> 返回首页</button></div>
+        <div class="tab-bar"><button class="tab-btn active" data-tab="archive">档案查询</button><button class="tab-btn" data-tab="fulltext">全文检索</button></div>
+        <div id="archivePanel">
+            <div class="filters-bar"><div class="filters-grid"><div class="filter-field"><label>档案编号</label><input id="searchCode"></div><div class="filter-field"><label>姓名</label><input id="searchName"></div><div class="filter-field"><label>性别</label><select id="searchGender"><option value="">全部</option><option>男</option><option>女</option></select></div><div class="filter-field"><label>出生年月</label><input type="month" id="searchBirth"></div><div class="filter-field"><label>年龄</label><input id="searchAge"></div><div class="filter-field"><label>民族</label><input id="searchNation"></div><div class="filter-field"><label>政治面貌</label><input id="searchPolitics"></div><div class="filter-field"><label>学历</label><select id="searchEdu"><option value="">全部</option><option>博士</option><option>硕士</option><option>本科</option><option>大专</option><option>其他</option></select></div><div class="filter-field"><label>身份证号</label><input id="searchIdNum"></div><div class="filter-field"><label>当前状态</label><select id="searchStatus"><option value="">全部</option><option>在职</option><option>离职</option><option>退休</option></select></div></div><div class="filter-actions"><button class="btn-secondary" id="archiveSearchBtn"><i class="fas fa-search"></i> 查询</button><button class="btn-secondary" id="archiveResetBtn"><i class="fas fa-undo-alt"></i> 重置</button></div></div>
+            <div class="table-wrapper"><div class="table-container"><table><thead><tr><th>序号</th><th>档案编号</th><th>姓名</th><th>性别</th><th>出生年月</th><th>年龄</th><th>民族</th><th>政治面貌</th><th>学历</th><th>当前状态</th><th>操作</th></tr></thead><tbody id="archiveTableBody"></tbody></table></div><div class="pagination" id="archivePagination"></div></div>
+        </div>
+        <div id="fulltextPanel" style="display: none;"><div class="fulltext-container"><div class="fulltext-search-bar"><input id="fulltextKeyword" placeholder="请输入关键字进行全文检索..."><button class="btn-secondary" id="fulltextSearchBtn"><i class="fas fa-search"></i> 搜索</button></div><div class="fulltext-results" id="fulltextResults"></div></div></div>
+    </div>
+</div>
+<div id="detailModal" class="modal"><div class="modal-content"><div class="modal-header"><span>档案材料明细</span><span style="cursor:pointer;" id="closeModalBtn">&times;</span></div><div id="modalDetailContent" style="flex:1; min-height:0; overflow:auto;"></div></div></div>
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'query') return;
+            let targetUrl = '';
+            switch(page) {
+                case 'dashboard': targetUrl = '数据看板.html'; break;
+                case 'person': targetUrl = '人员管理.html'; break;
+                case 'archive': targetUrl = '档案管理.html'; break;
+                case 'utilize': targetUrl = '档案利用.html'; break;
+                case 'system': targetUrl = '系统管理.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    document.getElementById('backToHomeBtn').onclick = () => { window.location.href = '数据看板.html'; };
+
+    const persons = [
+        { id: 1, code: "20260001", name: "张三", gender: "男", birth: "1985-06-15", age: 41, ethnicity: "汉族", political: "中共党员", education: "本科", status: "在职", idNumber: "430************001", native: "湖南长沙", major: "行政管理" },
+        { id: 2, code: "20260002", name: "李四", gender: "女", birth: "1990-09-10", age: 35, ethnicity: "壮族", political: "中共党员", education: "硕士", status: "在职", idNumber: "450************002", native: "广西南宁", major: "经济管理" },
+        { id: 3, code: "20260003", name: "王芳", gender: "女", birth: "1978-12-01", age: 47, ethnicity: "汉族", political: "群众", education: "大专", status: "退休", idNumber: "440************003", native: "广东广州", major: "会计" },
+        { id: 4, code: "20260004", name: "赵强", gender: "男", birth: "2000-03-22", age: 26, ethnicity: "瑶族", political: "共青团员", education: "本科", status: "在职", idNumber: "451************004", native: "广西桂林", major: "计算机" }
+    ];
+    const fullCategories = [
+        { id: "1", name: "一、履历类材料" }, { id: "2", name: "二、自传和思想类材料" }, { id: "3", name: "三、考核、鉴定类材料" },
+        { id: "4", name: "四、学历学位、专业技术职务（职称）、学术评鉴和教育培训类材料", sub: true, children: ["4-1 学历学位材料", "4-2 职业资格、专业技术职称材料", "4-3 个人科研学术水平材料", "4-4 培训材料"] },
+        { id: "5", name: "五、政审、审计和审核类材料" }, { id: "6", name: "六、党、团类材料" }, { id: "7", name: "七、表彰奖励类材料" },
+        { id: "8", name: "八、违规违纪违法处理处分类材料" },
+        { id: "9", name: "九、工资、任免、出国和会议代表类材料", sub: true, children: ["9-1 工资材料", "9-2 任免材料", "9-3 出国、出境材料", "9-4 会议代表登记表等其他材料"] },
+        { id: "10", name: "十、其他可供组织参考的材料" }
+    ];
+    let flatCategories = [];
+    fullCategories.forEach(cat => { flatCategories.push({ id: cat.id, name: cat.name }); if(cat.children) cat.children.forEach(child => flatCategories.push({ id: `${cat.id}-${child.split(' ')[0]}`, name: child })); });
+    const materialsData = {
+        "20260001": [{ category: "一、履历类材料", seq: "1-1", name: "干部履历表", formDate: "2020-03-01", pages: 2, remark: "原件" }, { category: "一、履历类材料", seq: "1-2", name: "任职审批表", formDate: "2021-07-15", pages: 1, remark: "" }, { category: "四、学历学位、专业技术职务（职称）、学术评鉴和教育培训类材料", subCat: "4-1 学历学位材料", seq: "4-1-1", name: "本科学历证书", formDate: "2008-06-30", pages: 1, remark: "" }],
+        "20260002": [{ category: "三、考核、鉴定类材料", seq: "3-1", name: "年度考核表", formDate: "2023-12-20", pages: 2, remark: "" }, { category: "四、学历学位、专业技术职务（职称）、学术评鉴和教育培训类材料", subCat: "4-1 学历学位材料", seq: "4-1-2", name: "硕士学位证书", formDate: "2011-06-20", pages: 1, remark: "" }],
+        "20260003": [{ category: "二、自传和思想类材料", seq: "2-1", name: "个人自传", formDate: "2019-05-10", pages: 3, remark: "" }, { category: "九、工资、任免、出国和会议代表类材料", subCat: "9-2 任免材料", seq: "9-2-1", name: "任免通知", formDate: "2022-01-10", pages: 2, remark: "" }],
+        "20260004": [{ category: "一、履历类材料", seq: "1-1", name: "干部履历表", formDate: "2018-07-01", pages: 2, remark: "" }, { category: "三、考核、鉴定类材料", seq: "3-2", name: "试用期考核表", formDate: "2019-03-15", pages: 1, remark: "" }, { category: "六、党、团类材料", seq: "6-1", name: "入团志愿书", formDate: "2014-05-20", pages: 2, remark: "" }]
+    };
+
+    let archiveFiltered = [...persons], archivePage = 1, pageSize = 5;
+    function renderArchiveTable() {
+        const start = (archivePage-1)*pageSize, pageData = archiveFiltered.slice(start, start+pageSize);
+        const tbody = document.getElementById("archiveTableBody");
+        tbody.innerHTML = "";
+        if(pageData.length===0){ tbody.innerHTML='<tr><td colspan="11">暂无数据</td></tr>'; document.getElementById("archivePagination").innerHTML=''; return; }
+        pageData.forEach((p,idx)=>{ const globalIdx=start+idx+1;
+            tbody.insertAdjacentHTML("beforeend",`<tr><td>${globalIdx}</td><td>${p.code}</td><td>${p.name}</td><td>${p.gender}</td><td>${p.birth||''}</td><td>${p.age}</td><td>${p.ethnicity}</td><td>${p.political}</td><td>${p.education}</td><td><span class="badge-status">${p.status}</span></td><td><span class="detail-link" data-code="${p.code}">查看详情</span></td></tr>`);
+        });
+        document.querySelectorAll('#archiveTableBody .detail-link').forEach(el=>{ el.addEventListener('click',()=>showDetailWithMaterials(el.getAttribute('data-code'))); });
+        const total=archiveFiltered.length, totalPages=Math.ceil(total/pageSize);
+        const container=document.getElementById("archivePagination");
+        if(total===0){ container.innerHTML=''; return; }
+        container.innerHTML=`<button id="af" ${archivePage===1?'disabled':''}>首页</button><button id="ap" ${archivePage===1?'disabled':''}>上一页</button><span>第${archivePage}/${totalPages}页(共${total}条)</span><button id="an" ${archivePage===totalPages?'disabled':''}>下一页</button><button id="al" ${archivePage===totalPages?'disabled':''}>末页</button><div style="display:inline-flex;gap:6px;"><span>跳至</span><input id="aj" style="width:60px;" min="1" max="${totalPages}" value="${archivePage}"><button id="ag">GO</button></div>`;
+        document.getElementById("af")?.addEventListener("click",()=>{archivePage=1;filterArchive();});
+        document.getElementById("ap")?.addEventListener("click",()=>{if(archivePage>1){archivePage--;filterArchive();}});
+        document.getElementById("an")?.addEventListener("click",()=>{if(archivePage<totalPages){archivePage++;filterArchive();}});
+        document.getElementById("al")?.addEventListener("click",()=>{archivePage=totalPages;filterArchive();});
+        document.getElementById("ag")?.addEventListener("click",()=>{let v=parseInt(document.getElementById("aj").value); if(!isNaN(v)&&v>=1&&v<=totalPages){archivePage=v;filterArchive();}});
+    }
+    function filterArchive(){
+        const code=document.getElementById("searchCode").value.trim(), name=document.getElementById("searchName").value.trim(), gender=document.getElementById("searchGender").value, birth=document.getElementById("searchBirth").value, age=document.getElementById("searchAge").value.trim(), nation=document.getElementById("searchNation").value.trim(), politics=document.getElementById("searchPolitics").value.trim(), edu=document.getElementById("searchEdu").value, idNum=document.getElementById("searchIdNum").value.trim(), status=document.getElementById("searchStatus").value;
+        archiveFiltered=persons.filter(p=>{ if(code&&!p.code.includes(code))return false; if(name&&!p.name.includes(name))return false; if(gender&&p.gender!==gender)return false; if(birth&&p.birth&&!p.birth.startsWith(birth))return false; if(age&&p.age.toString()!==age)return false; if(nation&&!p.ethnicity.includes(nation))return false; if(politics&&!p.political.includes(politics))return false; if(edu&&p.education!==edu)return false; if(idNum&&!p.idNumber.includes(idNum))return false; if(status&&p.status!==status)return false; return true; });
+        archivePage=1; renderArchiveTable();
+    }
+    function resetArchive(){ 
+        document.getElementById("searchCode").value="";document.getElementById("searchName").value="";document.getElementById("searchGender").value="";document.getElementById("searchBirth").value="";document.getElementById("searchAge").value="";document.getElementById("searchNation").value="";document.getElementById("searchPolitics").value="";document.getElementById("searchEdu").value="";document.getElementById("searchIdNum").value="";document.getElementById("searchStatus").value=""; 
+        archiveFiltered=[...persons]; archivePage=1; renderArchiveTable(); 
+    }
+
+    function showDetailWithMaterials(code){
+        const person=persons.find(p=>p.code===code);
+        if(!person) return;
+        const materials=materialsData[code]||[];
+        const categoryMap=new Map();
+        flatCategories.forEach(c=>{ categoryMap.set(c.name, { items: [], totalPages:0 }); });
+        materials.forEach(mat=>{ let targetCat=mat.category; if(mat.subCat) targetCat=mat.subCat; if(categoryMap.has(targetCat)){ categoryMap.get(targetCat).items.push(mat); categoryMap.get(targetCat).totalPages+=mat.pages; } else if(categoryMap.has(mat.category)){ categoryMap.get(mat.category).items.push(mat); categoryMap.get(mat.category).totalPages+=mat.pages; } });
+        let currentCat=flatCategories[0].name;
+        const totalFiles=materials.length;
+        const totalPages=materials.reduce((sum,m)=>sum+m.pages,0);
+        let html=`<div class="detail-layout"><div class="detail-category">`;
+        flatCategories.forEach(cat=>{ const cnt=categoryMap.get(cat.name)?.items.length||0; html+=`<div class="cat-item ${currentCat===cat.name?'active':''}" data-cat="${cat.name}"><span>${cat.name}</span><span class="category-count">${cnt}份</span></div>`; });
+        html+=`<div class="total-stats">📄 总份数：${totalFiles}<br>📑 总页数：${totalPages}</div></div><div class="detail-right"><div class="person-info-card"><div class="info-item"><strong>档案编号：</strong>${person.code}</div><div class="info-item"><strong>姓名：</strong>${person.name}</div><div class="info-item"><strong>性别：</strong>${person.gender}</div><div class="info-item"><strong>出生年月：</strong>${person.birth||''}</div><div class="info-item"><strong>年龄：</strong>${person.age}岁</div><div class="info-item"><strong>民族：</strong>${person.ethnicity}</div><div class="info-item"><strong>政治面貌：</strong>${person.political}</div><div class="info-item"><strong>学历：</strong>${person.education}</div><div class="info-item"><strong>身份证号：</strong>${person.idNumber}</div><div class="info-item"><strong>当前状态：</strong>${person.status}</div><div class="info-item"><strong>籍贯：</strong>${person.native||'—'}</div><div class="info-item"><strong>专业：</strong>${person.major||'—'}</div></div><div class="material-area"><div class="material-header">材料列表</div><div class="material-table-wrap" id="detailMaterialList"></div></div></div></div>`;
+        const modal=document.getElementById("detailModal"), contentDiv=document.getElementById("modalDetailContent");
+        contentDiv.innerHTML=html;
+        modal.style.display="flex";
+        function renderMaterialList(catName){
+            const container=document.getElementById("detailMaterialList");
+            const catData=categoryMap.get(catName);
+            if(!catData || catData.items.length===0){ container.innerHTML='<div style="padding:30px;text-align:center;">暂无材料</div>'; return; }
+            let table='<table class="material-table"><thead><tr><th>序号</th><th>材料名称</th><th>形成时间</th><th>页数</th><th>备注</th><th>操作</th></tr></thead><tbody>';
+            catData.items.forEach((it,idx)=>{ table+=`<tr><td>${it.seq}</td><td>${it.name}</td><td>${it.formDate||''}</td><td>${it.pages}</td><td>${it.remark||''}</td><td><button class="preview-btn" data-file="${it.name}">预览</button></td></tr>`; });
+            table+='</tbody></table>';
+            container.innerHTML=table;
+            document.querySelectorAll('.preview-btn').forEach(btn=>{ btn.addEventListener('click',()=>alert(`预览材料：${btn.getAttribute('data-file')}\n实际开发将跳转文件预览页面。`)); });
+        }
+        renderMaterialList(currentCat);
+        document.querySelectorAll('.cat-item').forEach(el=>{ el.addEventListener('click',()=>{ document.querySelectorAll('.cat-item').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderMaterialList(el.getAttribute('data-cat')); }); });
+    }
+
+    let fulltextData=[], selectedPersonIdx=null, selectedCatKey=null;
+    function performFulltextSearch(){
+        const kw=document.getElementById("fulltextKeyword").value.trim();
+        if(!kw) return;
+        fulltextData=[{person:{code:"20260001",name:"张三"},matches:[{category:"一、履历类材料",count:3},{category:"四、学历学位、专业技术职务（职称）、学术评鉴和教育培训类材料",count:2}]},{person:{code:"20260002",name:"李四"},matches:[{category:"三、考核、鉴定类材料",count:5}]},{person:{code:"20260003",name:"王芳"},matches:[{category:"二、自传和思想类材料",count:1},{category:"九、工资、任免、出国和会议代表类材料",count:2}]}];
+        selectedPersonIdx=0; selectedCatKey=null;
+        renderFulltext();
+    }
+    function renderFulltext(){
+        const container=document.getElementById("fulltextResults");
+        if(!fulltextData.length){ container.innerHTML='<div style="padding:40px;text-align:center;">暂无结果</div>'; return; }
+        let leftHtml='<div class="panel-title">人员及大类汇总</div>';
+        fulltextData.forEach((item,idx)=>{ const total=item.matches.reduce((s,m)=>s+m.count,0); leftHtml+=`<div class="person-item ${selectedPersonIdx===idx?'active':''}" data-idx="${idx}">${item.person.name}(${item.person.code})<br><span style="font-size:12px;">匹配${total}条</span><span class="more-link" data-idx="${idx}" style="float:right;">更多</span></div>`; });
+        let middleHtml='<div class="panel-title">匹配大类</div>';
+        if(selectedPersonIdx!==null && fulltextData[selectedPersonIdx]){ fulltextData[selectedPersonIdx].matches.forEach((cat,ci)=>{ middleHtml+=`<div class="category-item ${selectedCatKey===cat.category?'active':''}" data-cat="${cat.category}">${cat.category}(${cat.count}条)<span class="more-link" data-cat="${cat.category}" style="float:right;">更多</span></div>`; }); } else middleHtml+='<div style="padding:16px;">请从左侧选择人员</div>';
+        let rightHtml='<div class="panel-title">匹配内容</div>';
+        if(selectedPersonIdx!==null && selectedCatKey!==null && fulltextData[selectedPersonIdx]){ const cat=fulltextData[selectedPersonIdx].matches.find(m=>m.category===selectedCatKey); if(cat){ for(let i=1;i<=cat.count;i++) rightHtml+=`<div class="content-item"><span class="keyword-highlight">${document.getElementById("fulltextKeyword").value}</span> 出现在《${selectedCatKey}》第${i}项材料中<button class="detail-link" style="margin-left:12px;" data-preview="true">查看详情</button></div>`; } else rightHtml+='<div style="padding:16px;">请选择大类</div>'; } else rightHtml+='<div style="padding:16px;">请从左侧选择人员</div>';
+        container.innerHTML=`<div class="result-panel">${leftHtml}</div><div class="result-panel">${middleHtml}</div><div class="result-panel">${rightHtml}</div>`;
+        document.querySelectorAll('.person-item').forEach(el=>{ const idx=parseInt(el.dataset.idx); el.addEventListener('click',(e)=>{ if(e.target.classList.contains('more-link'))return; selectedPersonIdx=idx; selectedCatKey=null; renderFulltext(); }); el.querySelector('.more-link')?.addEventListener('click',(e)=>{ e.stopPropagation(); selectedPersonIdx=idx; selectedCatKey=null; renderFulltext(); }); });
+        document.querySelectorAll('.category-item').forEach(el=>{ const cat=el.dataset.cat; el.addEventListener('click',(e)=>{ if(e.target.classList.contains('more-link'))return; selectedCatKey=cat; renderFulltext(); }); el.querySelector('.more-link')?.addEventListener('click',(e)=>{ e.stopPropagation(); selectedCatKey=cat; renderFulltext(); }); });
+        document.querySelectorAll('[data-preview="true"]').forEach(btn=>{ btn.addEventListener('click',()=>alert("跳转文件预览页面")); });
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const tab=btn.dataset.tab; document.getElementById("archivePanel").style.display=tab==='archive'?'block':'none'; document.getElementById("fulltextPanel").style.display=tab==='fulltext'?'block':'none'; }); });
+    document.getElementById("archiveSearchBtn").onclick=filterArchive;
+    document.getElementById("archiveResetBtn").onclick=resetArchive;
+    document.getElementById("fulltextSearchBtn").onclick=performFulltextSearch;
+    document.getElementById("closeModalBtn").onclick=()=>document.getElementById("detailModal").style.display="none";
+    window.onclick=(e)=>{ if(e.target===document.getElementById("detailModal")) document.getElementById("detailModal").style.display="none"; };
+    filterArchive();
+</script>
+</body>
+</html>

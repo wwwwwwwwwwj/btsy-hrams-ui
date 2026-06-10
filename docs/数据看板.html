@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 数据看板</title>
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1f2d3d;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 左右布局容器 */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* ========= 左侧菜单栏 (垂直排列) ========= */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e6edf4;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.02);
+            flex-shrink: 0;
+        }
+
+        .logo-area {
+            padding: 28px 20px 20px 24px;
+            border-bottom: 1px solid #f0f2f6;
+            margin-bottom: 20px;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e4668, #2c6e9e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 0 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #44546f;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .menu-item.active {
+            background: #ecf5fc;
+            color: #1e6f9f;
+            font-weight: 600;
+        }
+        .menu-item:hover:not(.active) {
+            background: #f8fafd;
+            color: #2c6e9e;
+        }
+
+        .user-bottom {
+            padding: 20px 20px 28px 24px;
+            border-top: 1px solid #ecf3fa;
+            margin-top: 10px;
+        }
+        .user-info-side {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #d9e6f2;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-detail {
+            font-size: 13px;
+        }
+        .role-text {
+            font-size: 12px;
+            color: #6c7e97;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+            scrollbar-width: thin;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border: 1px solid #eef2f8;
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #6c7a91;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stat-number {
+            font-size: 38px;
+            font-weight: 700;
+            color: #1e2f41;
+            line-height: 1.2;
+        }
+        .stat-desc {
+            font-size: 12px;
+            color: #8a99b0;
+            margin-top: 6px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 24px;
+            padding: 18px 16px 10px;
+            border: 1px solid #eef2f8;
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-left: 10px;
+            border-left: 4px solid #2c6e9e;
+        }
+        .chart-box {
+            width: 100%;
+            height: 270px;
+        }
+
+        .reminder-card-full {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #eef2f8;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .reminder-list {
+            list-style: none;
+        }
+        .reminder-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            gap: 14px;
+            font-size: 13.5px;
+            color: #2d3e5f;
+            align-items: flex-start;
+        }
+        .reminder-icon {
+            width: 30px;
+            height: 30px;
+            background: #f2f6fc;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .warning-text {
+            color: #e67e22;
+            font-weight: 500;
+        }
+        .overdue {
+            color: #d9534f;
+            font-weight: 500;
+        }
+        .small-note {
+            font-size: 12px;
+            color: #8b9ab0;
+            margin-top: 16px;
+            background: #fafcff;
+            padding: 10px 12px;
+            border-radius: 16px;
+        }
+        .badge {
+            background: #ecf5fc;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: #2c6e9e;
+        }
+        .stats-footer {
+            background: white;
+            border-radius: 20px;
+            padding: 14px 20px;
+            border: 1px solid #eef2f8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 1000px) {
+            .sidebar {
+                width: 220px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2,1fr);
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area">
+                <div class="logo-text">干部人事档案管理系统</div>
+            </div>
+            <div class="nav-menu">
+                <div class="menu-item active" data-page="dashboard">数据看板</div>
+                <div class="menu-item" data-page="person">人员管理</div>
+                <div class="menu-item" data-page="archive">档案管理</div>
+                <div class="menu-item" data-page="query">综合查询</div>
+                <div class="menu-item" data-page="utilize">档案利用</div>
+                <div class="menu-item" data-page="system">系统管理</div>
+            </div>
+        </div>
+        <div class="user-bottom">
+            <div class="user-info-side">
+                <div class="avatar"></div>
+                <div class="user-detail">
+                    <div>李敏</div>
+                    <div class="role-text">档案管理员</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- 人员数量卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">👥 在职人数</div>
+                <div class="stat-number">1,264</div>
+                <div class="stat-desc">当前在职干部总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">🚶 离职人数</div>
+                <div class="stat-number">89</div>
+                <div class="stat-desc">历史离职干部</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">👴 退休人数</div>
+                <div class="stat-number">203</div>
+                <div class="stat-desc">已办理退休</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">📄 本月归档</div>
+                <div class="stat-number">23</div>
+                <div class="stat-desc">较上月 +12%</div>
+            </div>
+        </div>
+
+        <!-- 统计图 -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-title">📊 干部年龄段统计图</div>
+                <div id="ageChart" class="chart-box"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🎓 干部学历分布图</div>
+                <div id="eduChart" class="chart-box"></div>
+            </div>
+        </div>
+
+        <!-- 任务提醒模块 -->
+        <div class="reminder-card-full">
+            <div class="card-header">
+                <span>⏰ 任务提醒</span>
+                <span class="badge">提前提醒天数可自定义</span>
+            </div>
+            <ul class="reminder-list">
+                <li class="reminder-item">
+                    <span class="reminder-icon">📄</span>
+                    <span><strong>档案编号 20240012 赵志远</strong> 的合同将于 <span class="warning-text">2026年08月15日到期！</span></span>
+                </li>
+                <li class="reminder-item">
+                    <span class="reminder-icon">🎂</span>
+                    <span><strong>档案编号 20210056 孙丽华</strong> 退休时间还有 <span class="warning-text">30天</span> (预计2026年07月04日)</span>
+                </li>
+                <li class="reminder-item">
+                    <span class="reminder-icon">📚</span>
+                    <span><strong>档案编号 20230089 李国栋</strong> 的档案借阅时间将于 <span class="warning-text">2026年06月10日到期</span>，请提醒及时归还</span>
+                </li>
+                <li class="reminder-item">
+                    <span class="reminder-icon">⚠️</span>
+                    <span><strong>档案编号 20220123 王瑞华</strong> 的档案已于 <span class="overdue">2026年05月20日到期未归还！</span> (逾期5天，系统每日提醒)</span>
+                </li>
+                <li class="reminder-item">
+                    <span class="reminder-icon">📌</span>
+                    <span><strong>档案编号 20241001 陈敏</strong> 退休倒计时 <span class="warning-text">45天</span>，合同续签材料待补充</span>
+                </li>
+                <li class="reminder-item">
+                    <span class="reminder-icon">⏳</span>
+                    <span><strong>档案编号 20201123 周文静</strong> 合同到期剩余 <span class="warning-text">15天</span> ，请及时办理续签归档</span>
+                </li>
+            </ul>
+            <div class="small-note">
+                ✅ 提醒规则：提前提醒天数可在“系统管理-任务提醒”自定义；逾期未还记录每天提醒一次，直至归还。
+            </div>
+        </div>
+
+        <!-- 档案利用台账统计 -->
+        <div class="stats-footer">
+            <div><span style="font-weight: 600;">📋 本月档案利用台账</span> &nbsp; 借阅中: 12卷 &nbsp;|&nbsp; 逾期未还: 3卷 &nbsp;|&nbsp; 已完成归还: 27卷</div>
+            <div><span class="badge">支持按日/周/月/年统计查阅次数 & 导出 Excel</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'dashboard') {
+                // 当前页面，无需跳转
+                return;
+            }
+            let targetUrl = '';
+            switch(page) {
+                case 'person': targetUrl = '人员管理.html'; break;
+                case 'archive': targetUrl = '档案管理.html'; break;
+                case 'query': targetUrl = '综合查询.html'; break;
+                case 'utilize': targetUrl = '档案利用.html'; break;
+                case 'system': targetUrl = '系统管理.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    // 图表渲染
+    var ageChart = echarts.init(document.getElementById('ageChart'));
+    ageChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}<br/>干部数量: {c}人' },
+        grid: { left: '8%', right: '5%', top: '12%', bottom: '6%', containLabel: true },
+        xAxis: { type: 'category', data: ['20-30岁', '30-40岁', '40-50岁', '50-60岁', '60岁以上'], axisLabel: { fontSize: 12 } },
+        yAxis: { type: 'value', name: '人数 (人)', nameLocation: 'middle', nameGap: 40 },
+        series: [{
+            name: '干部数量',
+            type: 'bar',
+            data: [86, 412, 503, 378, 94],
+            itemStyle: { borderRadius: [8,8,0,0], color: '#397faa' },
+            label: { show: true, position: 'top', fontWeight: 'bold' }
+        }]
+    });
+
+    var eduChart = echarts.init(document.getElementById('eduChart'));
+    eduChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {d}% ({c}人)' },
+        legend: { orient: 'vertical', left: 'left', data: ['博士', '硕士', '本科', '大专', '其他'], textStyle: { fontSize: 12 } },
+        series: [{
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '55%'],
+            data: [
+                { value: 48, name: '博士', itemStyle: { color: '#2c6e9e' } },
+                { value: 312, name: '硕士', itemStyle: { color: '#4f9da6' } },
+                { value: 712, name: '本科', itemStyle: { color: '#e9b35f' } },
+                { value: 298, name: '大专', itemStyle: { color: '#e9c46a' } },
+                { value: 103, name: '其他', itemStyle: { color: '#c27c54' } }
+            ],
+            label: { show: true, formatter: '{b}: {d}%', fontSize: 11 },
+            emphasis: { scale: true }
+        }]
+    });
+
+    window.addEventListener('resize', function() {
+        ageChart.resize();
+        eduChart.resize();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>干部人事档案管理系统 - 系统管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eef2f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2d3d; height: 100vh; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; width: 100%; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e6edf4; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; overflow-y: auto; }
+        .logo-area { padding: 28px 20px 20px 24px; border-bottom: 1px solid #f0f2f6; }
+        .logo-text { font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #1e4668, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-menu { flex: 1; padding: 12px 12px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: #44546f; cursor: pointer; transition: all 0.2s; }
+        .menu-item i { width: 20px; }
+        .menu-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 600; }
+        .sub-menu { margin-left: 36px; display: block; }
+        .sub-item { padding: 10px 16px; border-radius: 12px; font-size: 13px; color: #5a6e8a; cursor: pointer; transition: 0.2s; }
+        .sub-item:hover { background: #f0f4f9; color: #2c6e9e; }
+        .sub-item.active { background: #ecf5fc; color: #1e6f9f; font-weight: 500; }
+        .user-bottom { padding: 20px 24px; border-top: 1px solid #ecf3fa; }
+        .avatar { width: 40px; height: 40px; background: #d9e6f2; border-radius: 40px; display: flex; align-items: center; justify-content: center; }
+        .main-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+        .page-header { background: white; border-radius: 20px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid #eef2f8; display: flex; justify-content: space-between; align-items: center; }
+        .header-left .page-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .header-left .page-desc { font-size: 13px; color: #6c7e97; }
+        .btn-secondary { background: white; border: 1px solid #cfdfed; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #2c6e9e; color: white; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .card { background: white; border-radius: 24px; border: 1px solid #eef2f8; padding: 24px; margin-bottom: 24px; }
+        .card-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eef2f8; display: flex; justify-content: space-between; align-items: center; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
+        .form-field { display: flex; flex-direction: column; gap: 6px; }
+        .form-field label { font-size: 13px; font-weight: 500; }
+        .form-field input, .form-field select { padding: 8px 12px; border-radius: 12px; border: 1px solid #cfdfed; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #f0f3f8; }
+        th { background: #f9fbfe; font-weight: 600; }
+        .action-icons i { margin: 0 4px; cursor: pointer; color: #6f8fae; }
+        .badge { background: #e6f7e6; color: #2b6e3b; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+        .btn-full { width: 100%; justify-content: center; }
+        .modal { display: none; position: fixed; top:0;left:0; width:100%;height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 480px; border-radius: 24px; padding: 24px; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-weight: 600; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background: #2c6e9e; color: white; padding: 12px 20px; border-radius: 40px; z-index: 1200; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <div class="sidebar">
+        <div>
+            <div class="logo-area"><div class="logo-text">干部人事档案管理系统</div></div>
+            <div class="nav-menu">
+                <div class="menu-item" data-page="dashboard"><i class="fas fa-chalkboard-user"></i> 数据看板</div>
+                <div class="menu-item" data-page="person"><i class="fas fa-users"></i> 人员管理</div>
+                <div class="menu-item" data-page="archive"><i class="fas fa-folder-open"></i> 档案管理</div>
+                <div class="menu-item" data-page="query"><i class="fas fa-chart-line"></i> 综合查询</div>
+                <div class="menu-item" data-page="utilize"><i class="fas fa-book"></i> 档案利用</div>
+                <div class="menu-item active" data-page="system"><i class="fas fa-gear"></i> 系统管理</div>
+                <div class="sub-menu" id="systemSubMenu">
+                    <div class="sub-item active" data-sub="taskReminder">任务提醒</div>
+                    <div class="sub-item" data-sub="account">账号管理</div>
+                    <div class="sub-item" data-sub="role">角色管理</div>
+                    <div class="sub-item" data-sub="dict">字典配置</div>
+                    <div class="sub-item" data-sub="log">操作日志</div>
+                    <div class="sub-item" data-sub="backup">数据备份</div>
+                </div>
+            </div>
+        </div>
+        <div class="user-bottom"><div class="avatar"><i class="fas fa-user-shield"></i></div><div>李敏<br><span style="font-size:12px;">系统管理员</span></div></div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="header-left"><div class="page-title" id="pageTitle">系统管理 - 任务提醒</div><div class="page-desc">系统配置与运维管理</div></div>
+            <button class="btn-secondary" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> 返回首页</button>
+        </div>
+        <div id="contentArea"></div>
+    </div>
+</div>
+
+<div id="toastMsg" style="display:none;" class="toast-msg"></div>
+<div id="genericModal" class="modal"><div class="modal-content" id="modalContent"></div></div>
+
+<script>
+    // 左侧菜单跳转逻辑
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const page = item.dataset.page;
+            if (page === 'system') return;
+            let targetUrl = '';
+            switch(page) {
+                case 'dashboard': targetUrl = '数据看板.html'; break;
+                case 'person': targetUrl = '人员管理.html'; break;
+                case 'archive': targetUrl = '档案管理.html'; break;
+                case 'query': targetUrl = '综合查询.html'; break;
+                case 'utilize': targetUrl = '档案利用.html'; break;
+                default: return;
+            }
+            window.location.href = targetUrl;
+        });
+    });
+
+    document.getElementById('backToHomeBtn').onclick = () => { window.location.href = '数据看板.html'; };
+
+    let currentSub = "taskReminder";
+    function showMsg(msg) { const toast = document.getElementById("toastMsg"); toast.innerText = msg; toast.style.display = "block"; setTimeout(()=> toast.style.display = "none", 2500); }
+
+    document.querySelectorAll('.sub-item').forEach(sub => {
+        sub.addEventListener('click', () => {
+            document.querySelectorAll('.sub-item').forEach(s => s.classList.remove('active'));
+            sub.classList.add('active');
+            currentSub = sub.dataset.sub;
+            document.getElementById("pageTitle").innerText = `系统管理 - ${sub.innerText}`;
+            renderContent();
+        });
+    });
+
+    let reminderList = [{ id:1, type:"退休到期", date:"2026-08-15", days:30, content:"20260001张三的合同将于2026-08-15到期" }];
+    let accounts = [{ id:1, account:"admin", name:"李敏", role:"系统管理员", phone:"138****0000", email:"limin@example.com", status:"启用" }];
+    let roles = [{ id:1, name:"档案管理员", permissions:"人员管理、档案管理、综合查询、档案利用" }];
+    let dicts = [{ id:1, type:"学历", value:"本科" },{ id:2, type:"学历", value:"硕士" }];
+    let logs = [{ id:1, operator:"李敏", time:"2026-06-04 10:30", module:"人员管理", action:"新增人员 张三", result:"成功" }];
+    let backups = [{ id:1, time:"2026-06-01 02:00", size:"128MB", status:"成功" }];
+
+    function renderContent() {
+        const container = document.getElementById("contentArea");
+        let html = '';
+        if(currentSub === 'taskReminder') {
+            html = `<div class="card"><div class="card-header"><span>📌 新建任务提醒</span></div>
+                    <div class="form-grid">
+                        <div class="form-field"><label>提醒类型</label><select id="remindType"><option>退休到期</option><option>合同到期</option></select></div>
+                        <div class="form-field"><label>到期日期</label><input type="date" id="remindDate"></div>
+                        <div class="form-field"><label>提前提醒天数</label><input type="number" id="advanceDays" value="30"></div>
+                        <div class="form-field" style="justify-content: flex-end;"><button class="btn-primary btn-full" id="addRemindBtn" style="width:100%;">+ 新建提醒</button></div>
+                    </div>
+                </div>
+                <div class="card"><div class="card-header">📋 提醒记录</div><table><thead><tr><th>序号</th><th>提醒时间</th><th>提醒内容</th></tr></thead><tbody id="remindListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            const tbody = document.getElementById("remindListBody");
+            function renderRemind() { tbody.innerHTML = reminderList.map((r,idx)=>`<tr><td>${idx+1}</td><td>${new Date().toLocaleString()}</td><td>${r.content}</td></tr>`).join(''); }
+            renderRemind();
+            document.getElementById("addRemindBtn")?.addEventListener("click",()=>{
+                const type = document.getElementById("remindType").value;
+                const date = document.getElementById("remindDate").value;
+                const days = document.getElementById("advanceDays").value;
+                if(!date) { showMsg("请填写到期日期"); return; }
+                const newRemind = { id:Date.now(), type, date, days, content:`${type}提醒：将于${date}到期（提前${days}天）` };
+                reminderList.push(newRemind); renderRemind(); showMsg("提醒已创建，将同步至首页看板");
+            });
+        } 
+        else if(currentSub === 'account') {
+            html = `<div class="card"><div class="card-header"><span>👤 账号管理</span><button class="btn-primary" id="addAccountBtn">+ 新增账号</button></div><tr><thead><tr><th>账号</th><th>姓名</th><th>角色</th><th>联系电话</th><th>邮箱</th><th>状态</th><th>操作</th></tr></thead><tbody id="accountListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            function renderAccount() { document.getElementById("accountListBody").innerHTML = accounts.map(a=>`<tr><td>${a.account}</td><td>${a.name}</td><td>${a.role}</td><td>${a.phone}</td><td>${a.email}</td><td><span class="badge">${a.status}</span></td><td class="action-icons"><i class="fas fa-edit" data-id="${a.id}"></i><i class="fas fa-trash-alt" data-id="${a.id}"></i></td>`).join(''); }
+            renderAccount();
+            document.getElementById("addAccountBtn")?.addEventListener("click",()=>openModal("新增账号", `<div class="form-field"><label>账号</label><input id="accAccount"></div><div class="form-field"><label>姓名</label><input id="accName"></div><div class="form-field"><label>角色</label><select id="accRole"><option>档案管理员</option><option>系统管理员</option><option>安全管理员</option><option>安全审计员</option></select></div><div class="form-field"><label>联系电话</label><input id="accPhone"></div><div class="form-field"><label>邮箱</label><input id="accEmail"></div><div class="form-field"><label>状态</label><select id="accStatus"><option>启用</option><option>禁用</option></select></div>`, ()=>{ const newAcc = { id:Date.now(), account:document.getElementById("accAccount").value, name:document.getElementById("accName").value, role:document.getElementById("accRole").value, phone:document.getElementById("accPhone").value, email:document.getElementById("accEmail").value, status:document.getElementById("accStatus").value }; accounts.push(newAcc); renderAccount(); showMsg("账号新增成功"); }));
+        }
+        else if(currentSub === 'role') {
+            html = `<div class="card"><div class="card-header"><span>🔐 角色管理</span><button class="btn-primary" id="addRoleBtn">+ 新增角色</button></div><table><thead><tr><th>角色名称</th><th>权限分配</th><th>操作</th></tr></thead><tbody id="roleListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            function renderRole() { document.getElementById("roleListBody").innerHTML = roles.map(r=>`<tr><td>${r.name}</td><td>${r.permissions}</td><td class="action-icons"><i class="fas fa-edit" data-id="${r.id}"></i><i class="fas fa-trash-alt" data-id="${r.id}"></i></td></tr>`).join(''); }
+            renderRole();
+            document.getElementById("addRoleBtn")?.addEventListener("click",()=>openModal("新增角色", `<div class="form-field"><label>角色名称</label><input id="roleName"></div><div class="form-field"><label>权限分配</label><textarea id="rolePerms" rows="3" placeholder="菜单权限描述"></textarea></div>`, ()=>{ roles.push({ id:Date.now(), name:document.getElementById("roleName").value, permissions:document.getElementById("rolePerms").value }); renderRole(); showMsg("角色新增成功"); }));
+        }
+        else if(currentSub === 'dict') {
+            html = `<div class="card"><div class="card-header"><span>📖 字典配置</span><button class="btn-primary" id="addDictBtn">+ 新增字典项</button></div><table><thead><tr><th>字典类型</th><th>字典值</th><th>操作</th></tr></thead><tbody id="dictListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            function renderDict() { document.getElementById("dictListBody").innerHTML = dicts.map(d=>`<tr><td>${d.type}</td><td>${d.value}</td><td class="action-icons"><i class="fas fa-edit" data-id="${d.id}"></i><i class="fas fa-trash-alt" data-id="${d.id}"></i></td></tr>`).join(''); }
+            renderDict();
+            document.getElementById("addDictBtn")?.addEventListener("click",()=>openModal("新增字典项", `<div class="form-field"><label>字典类型</label><input id="dictType" placeholder="如:学历"></div><div class="form-field"><label>字典值</label><input id="dictValue" placeholder="如:本科"></div>`, ()=>{ dicts.push({ id:Date.now(), type:document.getElementById("dictType").value, value:document.getElementById("dictValue").value }); renderDict(); showMsg("字典项新增成功"); }));
+        }
+        else if(currentSub === 'log') {
+            html = `<div class="card"><div class="card-header">📋 操作日志</div><div style="margin-bottom:16px; display:flex; gap:12px; flex-wrap:wrap;"><input type="text" id="logSearch" placeholder="操作人" style="padding:6px 12px; border-radius:12px; border:1px solid #cfdfed; width:160px;"><input type="date" id="logStart" style="padding:6px 12px;"><span>-</span><input type="date" id="logEnd" style="padding:6px 12px;"><button class="btn-secondary" id="searchLogBtn">查询</button><button class="btn-secondary" id="exportLogBtn">导出Excel/PDF</button></div><table><thead><tr><th>操作人</th><th>操作时间</th><th>操作模块</th><th>操作内容</th><th>操作结果</th></tr></thead><tbody id="logListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            function renderLog() { document.getElementById("logListBody").innerHTML = logs.map(l=>`<tr><td>${l.operator}</td><td>${l.time}</td><td>${l.module}</td><td>${l.action}</td><td>${l.result}</td></tr>`).join(''); }
+            renderLog();
+            document.getElementById("searchLogBtn")?.addEventListener("click",()=>{ const kw = document.getElementById("logSearch").value.toLowerCase(); const filtered = logs.filter(l=>l.operator.toLowerCase().includes(kw)); document.getElementById("logListBody").innerHTML = filtered.map(l=>`<tr><td>${l.operator}</td><td>${l.time}</td><td>${l.module}</td><td>${l.action}</td><td>${l.result}</td></tr>`).join(''); showMsg("查询完成"); });
+            document.getElementById("exportLogBtn")?.addEventListener("click",()=>alert("导出日志功能（Excel/PDF）开发中"));
+        }
+        else if(currentSub === 'backup') {
+            html = `<div class="card"><div class="card-header"><span>💾 数据备份与恢复</span><button class="btn-primary" id="manualBackupBtn">手动即时备份</button></div><div style="margin-bottom:20px; display:flex; gap:16px; align-items:flex-end;"><div><label>自动备份设置：</label><select id="backupFreq"><option>每天</option><option>每周</option><option>每月</option></select></div><div><label>备份时间</label><input type="time" id="backupTime" value="02:00"></div><button class="btn-secondary" id="saveAutoBackup">保存设置</button></div><table><thead><tr><th>备份时间</th><th>备份大小</th><th>备份状态</th><th>操作</th></tr></thead><tbody id="backupListBody"></tbody></table></div>`;
+            container.innerHTML = html;
+            function renderBackup() { document.getElementById("backupListBody").innerHTML = backups.map(b=>`<tr><td>${b.time}</td><td>${b.size}</td><td>${b.status}<td><td class="action-icons"><i class="fas fa-database" data-id="${b.id}" title="恢复"></i><i class="fas fa-trash-alt" data-id="${b.id}" title="删除"></i></td></tr>`).join(''); }
+            renderBackup();
+            document.getElementById("manualBackupBtn")?.addEventListener("click",()=>{ const newBackup = { id:Date.now(), time:new Date().toLocaleString(), size:"156MB", status:"成功" }; backups.push(newBackup); renderBackup(); showMsg("手动备份成功"); });
+            document.getElementById("saveAutoBackup")?.addEventListener("click",()=>alert("自动备份设置已保存"));
+        }
+        container.innerHTML = html;
+        document.querySelectorAll('.fa-trash-alt').forEach(el => { if(el.dataset.id) el.addEventListener('click',()=>{ showMsg("删除功能开发中（模拟）"); }); });
+        document.querySelectorAll('.fa-edit').forEach(el => { if(el.dataset.id) el.addEventListener('click',()=>{ showMsg("编辑功能开发中（模拟）"); }); });
+        document.querySelectorAll('.fa-database').forEach(el => { if(el.dataset.id) el.addEventListener('click',()=>{ if(confirm("确认从此备份节点恢复数据？")) showMsg("数据恢复成功（模拟）"); }); });
+    }
+
+    function openModal(title, formHtml, onConfirm) {
+        const modal = document.getElementById("genericModal");
+        const content = document.getElementById("modalContent");
+        content.innerHTML = `<div class="modal-header"><span>${title}</span><span style="cursor:pointer;" id="closeModalBtn">&times;</span></div>${formHtml}<div class="modal-buttons"><button class="btn-secondary" id="cancelModalBtn">取消</button><button class="btn-primary" id="confirmModalBtn">确定</button></div>`;
+        modal.style.display = "flex";
+        document.getElementById("closeModalBtn").onclick = () => modal.style.display = "none";
+        document.getElementById("cancelModalBtn").onclick = () => modal.style.display = "none";
+        document.getElementById("confirmModalBtn").onclick = () => { onConfirm(); modal.style.display = "none"; };
+    }
+    renderContent();
+</script>
+</body>
+</html>
