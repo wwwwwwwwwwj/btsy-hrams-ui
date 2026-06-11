@@ -5,7 +5,7 @@ export const LOGIN_PATH = '/login';
 export const WHITE_LIST = [LOGIN_PATH, '/forget'];
 
 /** 首页路径, 为空则取第一个菜单的地址 */
-export const HOME_PATH = void 0;
+export const HOME_PATH = '/index';
 
 /** 外层布局的路由地址 */
 export const LAYOUT_PATH = '/';
@@ -33,3 +33,16 @@ export const ENCRYPT_HEADER_NAME = 'encrypt-key';
 
 /** 防止重复提交间隔时间 */
 export const REPEAT_SUBMIT_INTERVAL = 500;
+
+/** 侧栏隐藏的一级菜单 path（与库 sys_menu 停用项一致） */
+export const HIDDEN_TOP_MENU_PATHS = [
+  'tenant',
+  'monitor',
+  'tool',
+  'workflow',
+  'task',
+  'scan'
+];
+
+/** 一级菜单排在侧栏最后 */
+export const LAST_TOP_MENU_PATH = 'system';

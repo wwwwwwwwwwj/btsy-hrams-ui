@@ -1,27 +1,25 @@
 <template>
-  <ele-modal :form="true" :width="620" :title="isUpdate ? '编辑人员' : '新增人员'" :loading="loading" v-bind="modalProps">
+  <ele-modal :form="true" :width="640" :title="isUpdate ? '编辑人员' : '新增人员'" :loading="loading" v-bind="modalProps">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" @submit.prevent="">
+      <el-form-item v-if="isUpdate" label="档案编号"><el-input :model-value="form.archiveNo" disabled /></el-form-item>
       <el-form-item label="姓名" prop="name"><el-input v-model="form.name" /></el-form-item>
       <el-form-item label="性别">
         <el-select v-model="form.gender" style="width:100%"><el-option label="男" value="男" /><el-option label="女" value="女" /></el-select>
       </el-form-item>
-      <el-form-item label="出生年月"><el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" @change="calcAge" /></el-form-item>
-      <el-form-item label="年龄"><el-input :model-value="form.age" disabled /></el-form-item>
+      <el-form-item label="出生年月"><el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
       <el-form-item label="民族"><el-input v-model="form.nation" /></el-form-item>
-      <el-form-item label="籍贯"><el-input v-model="form.nativePlace" /></el-form-item>
       <el-form-item label="政治面貌"><el-input v-model="form.politicalStatus" /></el-form-item>
       <el-form-item label="身份证号" prop="idCard"><el-input v-model="form.idCard" maxlength="18" /></el-form-item>
-      <el-form-item label="学历">
-        <el-select v-model="form.education" style="width:100%"><el-option v-for="e in eduOptions" :key="e" :label="e" :value="e" /></el-select>
-      </el-form-item>
-      <el-form-item label="专业"><el-input v-model="form.major" /></el-form-item>
-      <el-form-item label="当前状态" prop="status">
-        <el-select v-model="form.status" style="width:100%">
+      <el-form-item label="部门"><el-input v-model="form.deptName" /></el-form-item>
+      <el-form-item label="职务"><el-input v-model="form.duty" /></el-form-item>
+      <el-form-item label="参加工作时间"><el-date-picker v-model="form.workStartDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+      <el-form-item label="人员状态" prop="personStatus">
+        <el-select v-model="form.personStatus" style="width:100%">
           <el-option label="在职" value="在职" /><el-option label="离职" value="离职" /><el-option label="退休" value="退休" />
         </el-select>
       </el-form-item>
       <el-form-item label="合同到期"><el-date-picker v-model="form.contractEndDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-      <el-form-item label="退休日期"><el-date-picker v-model="form.retireDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+      <el-form-item label="计划退休"><el-date-picker v-model="form.planRetireDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
       <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
       <el-divider v-if="fieldDefs.length">扩展字段</el-divider>
       <el-form-item v-for="f in fieldDefs" :key="f.fieldKey" :label="f.fieldLabel">
@@ -68,20 +66,6 @@
   const fieldDefs = ref([]);
   const showAddField = ref(false);
   const newField = ref({ fieldLabel: '', fieldType: 'text' });
-  const eduOptions = ['博士', '硕士', '本科', '大专', '其他'];
-
-  const calcAge = () => {
-    if (!form.value.birthDate) {
-      form.value.age = undefined;
-      return;
-    }
-    const birth = new Date(form.value.birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    form.value.age = age;
-  };
 
   const idCardRule = (_r, v, cb) => {
     if (!v) return cb();
@@ -91,6 +75,7 @@
 
   const rules = reactive({
     name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+    personStatus: [{ required: true, message: '请选择人员状态', trigger: 'change' }],
     idCard: [{ validator: idCardRule, trigger: 'blur' }]
   });
 
@@ -108,7 +93,7 @@
     if (d?.id) {
       await loadPerson(d.id);
     } else {
-      form.value = { status: '在职', ...(d || {}) };
+      form.value = { personStatus: '在职', ...(d || {}) };
       customFields.value = {};
       isUpdate.value = false;
     }

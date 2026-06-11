@@ -12,7 +12,7 @@
         </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="primary" v-permission="'hrams:remind:list'" @click="openEdit(row)">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>

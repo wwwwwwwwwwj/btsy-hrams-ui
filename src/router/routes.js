@@ -38,6 +38,83 @@ export function getMenuRoutes(menus, homePath) {
       path: REDIRECT_PATH + '/:path(.*)',
       component: RedirectLayout,
       meta: { hideFooter: true }
+    },
+  // 旧首页 / 看板地址兼容
+    {
+      path: '/dashboard',
+      redirect: '/index',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/dashboard',
+      redirect: '/index',
+      meta: { hide: true, hideFooter: true }
+    },
+  // 旧 /hrams/* 路由兼容（业务菜单已改为一级）
+    {
+      path: '/hrams/person',
+      redirect: '/person',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive/material',
+      redirect: '/material',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/scan',
+      redirect: '/material',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/material/scan',
+      redirect: '/material',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive/scan',
+      redirect: '/material',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive',
+      redirect: '/archive',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/query',
+      redirect: '/query',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/utilize',
+      redirect: '/utilize',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/remind',
+      redirect: '/system/hrams-remind',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/backup',
+      redirect: '/system/hrams-backup',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive/mount',
+      redirect: '/archive',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive/pool',
+      redirect: '/material',
+      meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/hrams/archive/feedback',
+      redirect: '/archive',
+      meta: { hide: true, hideFooter: true }
     }
   ];
   const layoutRoutes = [

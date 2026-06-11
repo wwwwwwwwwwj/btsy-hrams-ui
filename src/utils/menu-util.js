@@ -1,4 +1,8 @@
 import { mapTree, isExternalLink } from 'ele-admin-plus';
+import {
+  HIDDEN_TOP_MENU_PATHS,
+  LAST_TOP_MENU_PATH
+} from '@/config/setting';
 
 /** 若依默认菜单图标名称转换 */
 const ruoYiIcons = {
@@ -38,7 +42,12 @@ const ruoYiIcons = {
   'process-definition': 'IconProAppstoreAddOutlined',
   category: 'IconProApplicationOutlined',
   workflow: 'IconProClusterOutlined',
-  input: 'IconProEllipsisOutlined'
+  input: 'IconProEllipsisOutlined',
+  documentation: 'IconProFileOutlined',
+  folder: 'IconProFolderOutlined',
+  search: 'IconProCityOutlined',
+  education: 'IconProBookOutlined',
+  download: 'IconProLogOutlined'
 };
 
 /**
@@ -185,9 +194,34 @@ function parseMenuMeta(item) {
  * 处理用户菜单数据以兼容若依
  * @param userMenu 用户菜单
  */
+function isTopMenu(item) {
+  const pid = item.parentId ?? item.parent_id;
+  return pid === 0 || pid === '0';
+}
+
+/** 隐藏无关一级菜单，系统管理置底（与 hrams_mysql 种子一致） */
+function adjustTopLevelMenus(list) {
+  if (!Array.isArray(list)) {
+    return list;
+  }
+  const hidden = new Set(HIDDEN_TOP_MENU_PATHS);
+  let menus = list.filter(
+    (item) => !(isTopMenu(item) && hidden.has(item.path))
+  );
+  const idx = menus.findIndex(
+    (m) => isTopMenu(m) && m.path === LAST_TOP_MENU_PATH
+  );
+  if (idx >= 0) {
+    const [sys] = menus.splice(idx, 1);
+    menus.push(sys);
+  }
+  return menus;
+}
+
 export function formatUserMenu(userMenu) {
   // 修改图标
-  const data = mapTree(userMenu, (item) => {
+  const data = adjustTopLevelMenus(
+    mapTree(userMenu, (item) => {
     const meta = parseMenuMeta(item);
     const temp = { ...item, meta: { ...meta, icon: getRuoYiIcon(meta.icon) } };
     // 修改内嵌格式
@@ -197,7 +231,8 @@ export function formatUserMenu(userMenu) {
       temp.component = import.meta.env.VITE_APP_SNAILJOB_ADMIN;
     }
     return temp;
-  });
+    })
+  );
   // 一级菜单去掉父级
   data.forEach((item, i) => {
     if (item.path === '/' && item.children && item.children.length) {
@@ -211,13 +246,13 @@ export function formatUserMenu(userMenu) {
       };
     }
   });
-  // 增加首页
+  // 首页：干部数据看板（不入库菜单，侧栏不展示）
   data.unshift({
-    path: '/index',
-    component: 'index',
-    meta: { title: '首页', icon: 'IconProHomeOutlined' }
+    path: 'index',
+    component: 'hrams/dashboard/index',
+    hidden: true,
+    meta: { title: '首页', icon: 'IconProAnalysisOutlined' }
   });
-  // 增加个人中心
   data.push({
     path: '/profile',
     component: 'profile',
@@ -227,11 +262,6 @@ export function formatUserMenu(userMenu) {
       active: '/index',
       hide: true
     }
-  });
-  // 增加EleAdmin链接
-  data.push({
-    path: 'https://plus.eleadmin.com',
-    meta: { title: 'EleAdmin', icon: 'IconProLinkOutlined' }
   });
   return formatMenus(data);
 }

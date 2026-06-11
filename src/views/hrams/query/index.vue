@@ -11,9 +11,16 @@
             <el-form-item label="年龄"><el-input-number v-model="where.age" :min="0" :max="120" controls-position="right" /></el-form-item>
             <el-form-item label="民族"><el-input v-model="where.nation" clearable /></el-form-item>
             <el-form-item label="政治面貌"><el-input v-model="where.politicalStatus" clearable /></el-form-item>
-            <el-form-item label="学历"><el-input v-model="where.education" clearable /></el-form-item>
             <el-form-item label="身份证"><el-input v-model="where.idCard" clearable /></el-form-item>
-            <el-form-item label="状态"><el-select v-model="where.status" clearable><el-option label="在职" value="在职" /><el-option label="离职" value="离职" /><el-option label="退休" value="退休" /></el-select></el-form-item>
+            <el-form-item label="部门"><el-input v-model="where.deptName" clearable /></el-form-item>
+            <el-form-item label="人员状态">
+              <el-select v-model="where.personStatus" clearable>
+                <el-option label="在职" value="在职" /><el-option label="离职" value="离职" /><el-option label="退休" value="退休" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="档案状态">
+              <dict-data code="hrams_archive_status" v-model="where.archiveStatus" placeholder="全部" />
+            </el-form-item>
             <el-form-item><el-button type="primary" @click="reload(where, 1)">查询</el-button><el-button @click="resetWhere">重置</el-button></el-form-item>
           </el-form>
           <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
@@ -22,7 +29,7 @@
         </el-tab-pane>
         <el-tab-pane label="全文检索" name="fulltext">
           <el-input v-model="keyword" placeholder="关键字" style="max-width:360px" />
-          <el-button type="primary" style="margin-left:8px" @click="doFulltext">检索</el-button>
+          <el-button type="primary" v-permission="'hrams:search:fulltext'" style="margin-left:8px" @click="doFulltext">检索</el-button>
           <el-button v-permission="'hrams:search:reindex'" style="margin-left:8px" @click="doReindex">重建索引</el-button>
           <el-tag v-if="ftData" style="margin-left:8px" :type="ftData.esEnabled ? 'success' : 'info'">
             {{ ftData.esEnabled ? 'ES 已启用' : 'Tika+库内正文' }}
@@ -75,7 +82,10 @@
           <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
           <el-descriptions-item label="姓名">{{ detail.person.name }}</el-descriptions-item>
           <el-descriptions-item label="性别">{{ detail.person.gender }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ detail.person.status }}</el-descriptions-item>
+          <el-descriptions-item label="人员状态">{{ detail.person.personStatus }}</el-descriptions-item>
+          <el-descriptions-item label="档案状态">
+            <dict-data code="hrams_archive_status" type="text" :model-value="detail.person.archiveStatus" />
+          </el-descriptions-item>
         </el-descriptions>
         <el-row :gutter="12" style="margin-top:16px">
           <el-col :span="8">
@@ -108,6 +118,9 @@
   import { EleMessage } from 'ele-admin-plus';
   import { pageQueryPerson, getQueryPersonDetail, fulltextSearch, reindexFulltext, qaChat } from '@/api/hrams/query';
   import { previewMaterial } from '@/api/hrams/archive';
+  import { useDictData } from '@/utils/use-dict-data';
+
+  useDictData(['hrams_archive_status']);
 
   defineOptions({ name: 'HramsQuery' });
   const router = useRouter();
@@ -156,8 +169,8 @@
     { prop: 'birthDate', label: '出生年月', minWidth: 110 },
     { prop: 'age', label: '年龄', width: 70 },
     { prop: 'nation', label: '民族', width: 80 },
-    { prop: 'education', label: '学历', minWidth: 90 },
-    { prop: 'status', label: '状态', width: 90 },
+    { prop: 'deptName', label: '部门', minWidth: 100 },
+    { prop: 'personStatus', label: '人员状态', width: 90 },
     { columnKey: 'action', label: '操作', width: 110, slot: 'action' }
   ]);
 
@@ -195,7 +208,7 @@
     const p = detail.value.person;
     if (!p?.id) return;
     router.push({
-      path: '/hrams/archive/material',
+      path: '/material',
       query: { personId: p.id, archiveNo: p.archiveNo, name: p.name }
     });
   };
