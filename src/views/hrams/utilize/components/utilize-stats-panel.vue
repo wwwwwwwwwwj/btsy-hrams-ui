@@ -27,24 +27,39 @@
 </template>
 
 <script setup>
-  import { nextTick, onMounted, ref } from 'vue';
+  import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
   import * as echarts from 'echarts';
   import { borrowStatistics, exportBorrowStatistics } from '@/api/hrams/borrow';
 
   const chartTimeRef = ref(null);
   const chartPersonRef = ref(null);
   const chartStatusRef = ref(null);
+  const charts = [];
+  let renderGeneration = 0;
 
   const exportStats = () => exportBorrowStatistics('month');
 
+  const resizeCharts = () => charts.forEach((c) => c?.resize());
+
+  const disposeCharts = () => {
+    charts.forEach((c) => c?.dispose());
+    charts.length = 0;
+  };
+
   const renderStats = async () => {
+    const gen = ++renderGeneration;
+    disposeCharts();
     const data = await borrowStatistics('month');
+    if (gen !== renderGeneration) {
+      return;
+    }
     const byStatus = data.byStatus || {};
     const byWeek = data.byWeek || [];
     const byPersonTop = data.byPersonTop || [];
 
     if (chartTimeRef.value) {
       const c = echarts.init(chartTimeRef.value);
+      charts.push(c);
       c.setOption({
         tooltip: { trigger: 'axis' },
         grid: { left: '8%', right: '5%', containLabel: true },
@@ -60,6 +75,7 @@
     }
     if (chartPersonRef.value) {
       const c = echarts.init(chartPersonRef.value);
+      charts.push(c);
       c.setOption({
         tooltip: { trigger: 'axis' },
         grid: { left: '8%', right: '5%', bottom: '12%', containLabel: true },
@@ -75,6 +91,7 @@
     }
     if (chartStatusRef.value) {
       const c = echarts.init(chartStatusRef.value);
+      charts.push(c);
       c.setOption({
         tooltip: { trigger: 'item' },
         series: [{ type: 'pie', radius: '60%', data: [
@@ -86,7 +103,17 @@
     }
   };
 
-  onMounted(() => nextTick(renderStats));
+  onMounted(() => {
+    nextTick(renderStats);
+    window.addEventListener('resize', resizeCharts);
+  });
+
+  onBeforeUnmount(() => {
+    renderGeneration += 1;
+    window.removeEventListener('resize', resizeCharts);
+    disposeCharts();
+  });
+
   defineExpose({ renderStats });
 </script>
 

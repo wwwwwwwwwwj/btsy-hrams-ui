@@ -246,12 +246,12 @@ export function formatUserMenu(userMenu) {
       };
     }
   });
-  // 首页：干部数据看板（不入库菜单，侧栏不展示）
+  // 旧 RuoYi 工作台：侧栏不展示，仅 /index 直链（静态路由亦注册）
   data.unshift({
     path: 'index',
-    component: 'hrams/dashboard/index',
+    component: 'index/index',
     hidden: true,
-    meta: { title: '首页', icon: 'IconProAnalysisOutlined' }
+    meta: { title: '工作台', icon: 'IconProAppstoreOutlined' }
   });
   data.push({
     path: '/profile',
@@ -259,7 +259,7 @@ export function formatUserMenu(userMenu) {
     meta: {
       title: '个人中心',
       icon: 'IconProUserOutlined',
-      active: '/index',
+      active: '/workbench/dashboard',
       hide: true
     }
   });

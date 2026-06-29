@@ -1,5 +1,6 @@
 <template>
   <div class="material-person-pick">
+    <p class="pick-steps">步骤：1. 查询并选择干部 → 2. 按材料分类上传与维护</p>
     <div class="hrams-v2-card hrams-v2-filter">
       <el-form :inline="true" :model="pickWhere" class="ele-form-search">
         <el-form-item label="档案编号"><el-input v-model="pickWhere.archiveNo" clearable /></el-form-item>
@@ -42,3 +43,11 @@
     pickReload(pickWhere.value, 1);
   };
 </script>
+
+<style scoped>
+  .pick-steps {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #6c7e97;
+  }
+</style>

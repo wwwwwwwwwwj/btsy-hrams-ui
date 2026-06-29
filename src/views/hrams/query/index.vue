@@ -8,46 +8,23 @@
         </div>
       </div>
       <div class="hrams-v2-card hrams-v2-filter">
-        <el-form :inline="true" :model="where" class="ele-form-search">
-            <el-form-item label="档案编号"><el-input v-model="where.archiveNo" clearable /></el-form-item>
-            <el-form-item label="姓名"><el-input v-model="where.name" clearable /></el-form-item>
-            <el-form-item label="身份证号"><el-input v-model="where.idCard" clearable /></el-form-item>
-            <el-form-item label="性别">
-              <dict-data v-model="where.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
-            </el-form-item>
-            <el-form-item label="出生年月"><el-date-picker v-model="where.birthDate" type="month" value-format="YYYY-MM-DD" /></el-form-item>
-            <el-form-item label="年龄"><el-input-number v-model="where.age" :min="0" :max="120" controls-position="right" /></el-form-item>
-            <el-form-item label="民族">
-              <dict-data v-model="where.nation" code="hrams_nation" type="select" placeholder="全部" filterable clearable style="width:120px" />
-            </el-form-item>
-            <el-form-item label="政治面貌">
-              <dict-data v-model="where.politicalStatus" code="hrams_political_status" type="select" placeholder="全部" filterable clearable style="width:140px" />
-            </el-form-item>
-            <el-form-item label="学历">
-              <dict-data v-model="where.education" code="hrams_education" type="select" placeholder="全部" clearable style="width:100px" />
-            </el-form-item>
-            <el-form-item label="当前状态">
-              <dict-data v-model="where.personStatus" code="hrams_person_status" type="select" placeholder="全部" clearable style="width:100px" />
-            </el-form-item>
-            <el-form-item label="材料完整性">
-              <el-select v-model="where.integrityStatus" clearable>
-                <el-option label="完整" value="complete" />
-                <el-option label="缺项" value="missing" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="档案状态">
-              <el-select v-model="where.archiveStatus" clearable>
-                <el-option v-for="d in archiveStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
-              </el-select>
-            </el-form-item>
-            <el-form-item><el-button type="primary" @click="reload(where, 1)">查询</el-button><el-button @click="resetWhere">重置</el-button></el-form-item>
-      </el-form>
+        <person-archive-search-form
+          v-model:model="where"
+          show-integrity
+          show-archive-status
+          @search="reload(where, 1)"
+          @reset="resetWhere"
+        />
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
         <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
         <template #integrityStatus="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
-        <template #action="{ row }"><el-button link type="primary" @click="showDetail(row)">查看详情</el-button></template>
+        <template #action="{ row }">
+          <el-button link type="primary" @click="showDetail(row)">查看详情</el-button>
+          <el-button link type="primary" @click="goFulltext(row)">全文检索</el-button>
+          <el-button link type="primary" @click="goQa(row)">智能问答</el-button>
+        </template>
       </ele-pro-table>
       </div>
     </div>
@@ -56,6 +33,8 @@
         <div class="drawer-actions">
           <el-button type="primary" @click="exportMaterials">导出档案材料</el-button>
           <el-button @click="exportCatalog">导出档案目录</el-button>
+          <el-button @click="goFulltext(detail.person)">全文检索此人</el-button>
+          <el-button @click="goQa(detail.person)">智能问答</el-button>
         </div>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
@@ -95,14 +74,18 @@
 </template>
 
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
-  import DictData from '@/components/DictData/index.vue';
+  import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pageQueryPerson, getQueryPersonDetail } from '@/api/hrams/query';
   import { previewMaterial, downloadMaterialsZip, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsQuery' });
+  const route = useRoute();
+  const router = useRouter();
   const tableRef = ref(null);
   const where = ref({});
   const drawer = ref(false);
@@ -137,8 +120,22 @@
     { prop: 'personStatus', label: '当前状态', width: 90 },
     { prop: 'archiveStatus', label: '档案状态', width: 100, slot: 'archiveStatus' },
     { prop: 'integrityStatus', label: '完整性', width: 90, slot: 'integrityStatus' },
-    { columnKey: 'action', label: '操作', width: 110, slot: 'action' }
+    { columnKey: 'action', label: '操作', width: 260, slot: 'action' }
   ]);
+
+  const goFulltext = (row) => {
+    router.push({
+      path: '/query-search/fulltext',
+      query: { keyword: row.name || row.archiveNo || '', personId: row.id }
+    });
+  };
+
+  const goQa = (row) => {
+    router.push({
+      path: '/query-search/qa',
+      query: { personId: row.id, name: row.name, archiveNo: row.archiveNo }
+    });
+  };
 
   const datasource = ({ pages, where: w }) => pageQueryPerson({ ...w, ...pages });
   const reload = (w, page) => tableRef.value?.reload?.({ where: w, page });
@@ -149,10 +146,14 @@
   };
 
   const showDetail = async (row) => {
-    detail.value = await getQueryPersonDetail(row.id);
-    detailCat.value = flatCats.value[0]?.code || '1';
-    filterDetailMaterials();
-    drawer.value = true;
+    try {
+      detail.value = await getQueryPersonDetail(row.id);
+      detailCat.value = flatCats.value[0]?.code || '1';
+      filterDetailMaterials();
+      drawer.value = true;
+    } catch (e) {
+      EleMessage.error({ message: e.message || '加载档案详情失败', plain: true });
+    }
   };
 
   const exportMaterials = () => {
@@ -169,6 +170,13 @@
       exportCatalogApi(p.id);
     }
   };
+
+  onMounted(async () => {
+    const pid = route.query.personId;
+    if (pid != null && String(pid).trim() !== '') {
+      await showDetail({ id: String(pid).trim() });
+    }
+  });
 </script>
 
 <style scoped>

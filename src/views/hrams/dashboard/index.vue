@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-  import { onMounted, ref } from 'vue';
+  import { onBeforeUnmount, onMounted, ref } from 'vue';
   import * as echarts from 'echarts';
   import { getDashboardSummary } from '@/api/hrams/dashboard';
   import '../styles/v2.scss';
@@ -69,6 +69,9 @@
   const summary = ref({});
   const ageChartRef = ref(null);
   const eduChartRef = ref(null);
+  let ageChart;
+  let eduChart;
+  let chartMounted = false;
 
   const mapToChart = (obj) =>
     Object.entries(obj || {}).map(([name, value]) => ({
@@ -76,15 +79,25 @@
       value
     }));
 
+  const resizeCharts = () => {
+    ageChart?.resize();
+    eduChart?.resize();
+  };
+
   const renderCharts = () => {
     if (ageChartRef.value) {
-      const c = echarts.init(ageChartRef.value);
+      ageChart?.dispose();
+      ageChart = echarts.init(ageChartRef.value);
       const chart = summary.value.ageChart || {};
-      c.setOption({
+      const keys = Object.keys(chart);
+      ageChart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         grid: { left: '8%', right: '5%', top: '15%', bottom: '8%', containLabel: true },
-        xAxis: { type: 'category', data: Object.keys(chart) },
+        xAxis: { type: 'category', data: keys },
         yAxis: { type: 'value', minInterval: 1, name: '人数' },
+        graphic: keys.length
+          ? undefined
+          : [{ type: 'text', left: 'center', top: 'middle', style: { text: '暂无数据', fill: '#999', fontSize: 14 } }],
         series: [{
           name: '干部数量',
           type: 'bar',
@@ -95,15 +108,20 @@
       });
     }
     if (eduChartRef.value) {
-      const c = echarts.init(eduChartRef.value);
-      c.setOption({
+      eduChart?.dispose();
+      eduChart = echarts.init(eduChartRef.value);
+      const pieData = mapToChart(summary.value.educationChart);
+      eduChart.setOption({
         tooltip: { trigger: 'item', formatter: '{b}: {d}% ({c}人)' },
         legend: { orient: 'vertical', left: 'left', textStyle: { fontSize: 12 } },
+        graphic: pieData.length
+          ? undefined
+          : [{ type: 'text', left: 'center', top: 'middle', style: { text: '暂无数据', fill: '#999', fontSize: 14 } }],
         series: [{
           type: 'pie',
           radius: ['40%', '65%'],
           center: ['50%', '55%'],
-          data: mapToChart(summary.value.educationChart),
+          data: pieData,
           label: { show: true, formatter: '{b}: {d}%', fontSize: 11 }
         }]
       });
@@ -111,8 +129,22 @@
   };
 
   onMounted(async () => {
+    chartMounted = true;
     summary.value = await getDashboardSummary();
+    if (!chartMounted) {
+      return;
+    }
     renderCharts();
+    window.addEventListener('resize', resizeCharts);
+  });
+
+  onBeforeUnmount(() => {
+    chartMounted = false;
+    window.removeEventListener('resize', resizeCharts);
+    ageChart?.dispose();
+    eduChart?.dispose();
+    ageChart = undefined;
+    eduChart = undefined;
   });
 </script>
 

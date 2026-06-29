@@ -1,9 +1,17 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
+      <div v-if="singleMode" class="hrams-v2-header" style="margin-bottom: 0">
+        <div>
+          <div class="hrams-v2-title">{{ singleTitle }}</div>
+        </div>
+      </div>
       <div class="hrams-v2-card utilize-card">
         <div v-if="!singleMode" class="page-head">
-          <div><div class="title">档案利用</div><div class="desc">调阅登记 · 调阅记录 · 台账统计</div></div>
+          <div>
+            <div class="hrams-v2-title">档案利用</div>
+            <div class="hrams-v2-desc">调阅登记 · 调阅记录 · 台账统计</div>
+          </div>
         </div>
         <el-tabs v-model="tab" :class="{ 'tabs-single': singleMode }">
           <el-tab-pane label="调阅登记" name="register">
@@ -42,6 +50,11 @@
     return 'register';
   };
   const singleMode = computed(() => !!route.query.tab);
+  const singleTitle = computed(() => {
+    if (tab.value === 'records') return '调阅记录';
+    if (tab.value === 'stats') return '台账统计';
+    return '调阅登记';
+  });
   const tab = ref(resolveTab());
 
   const onRegistered = () => {
@@ -71,6 +84,4 @@
   .tabs-single :deep(.el-tabs__header) { display: none; }
   .utilize-card { padding: 20px 24px; }
   .page-head { margin-bottom: 16px; }
-  .title { font-size: 18px; font-weight: 600; }
-  .desc { font-size: 13px; color: #666; }
 </style>

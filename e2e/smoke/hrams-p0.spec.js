@@ -10,7 +10,7 @@ test.describe('HRAMS P0 菜单冒烟', () => {
   for (const item of P0_SMOKE_ROUTES) {
     test(`${item.caseId} ${item.title}`, async ({ page }) => {
       await page.goto(item.path);
-      await expect(page.locator('.ele-admin-layout, .ele-page, .hrams-v2-page').first()).toBeVisible();
+      await expect(page.locator('.hrams-v2-page, .ele-page').first()).toBeVisible();
       const body = await page.locator('body').innerText();
       expect(body.length).toBeGreaterThan(10);
     });

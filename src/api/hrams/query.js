@@ -40,8 +40,8 @@ export async function listSearchSyncLogs(limit = 30) {
   return Promise.reject(new Error(res.data.msg));
 }
 
-export async function qaChat(question) {
-  const res = await request.post('/hrams/qa/chat', { question });
+export async function qaChat(question, messages = []) {
+  const res = await request.post('/hrams/qa/chat', { question, messages });
   if (res.data.code === 200) {
     return res.data.data;
   }

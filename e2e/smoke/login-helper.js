@@ -60,4 +60,6 @@ export async function loginViaUi(page) {
     () => localStorage.getItem('token') || sessionStorage.getItem('token'),
     { timeout: 15_000 }
   );
+
+  await page.waitForURL(/workbench\/dashboard/, { timeout: 20_000 });
 }

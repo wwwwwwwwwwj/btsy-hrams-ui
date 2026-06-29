@@ -9,33 +9,13 @@
         </div>
       </div>
       <div class="hrams-v2-card hrams-v2-filter">
-        <el-form :inline="true" :model="search" class="ele-form-search">
-          <el-form-item label="档案编号"><el-input v-model="search.archiveNo" clearable /></el-form-item>
-          <el-form-item label="姓名"><el-input v-model="search.name" clearable /></el-form-item>
-          <el-form-item label="身份证号"><el-input v-model="search.idCard" clearable /></el-form-item>
-          <el-form-item label="当前状态">
-            <el-select v-model="search.personStatus" clearable>
-              <el-option v-for="d in personStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="学历">
-            <el-select v-model="search.education" clearable>
-              <el-option v-for="d in educationDicts" :key="d.value" :label="d.label" :value="d.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="材料完整性">
-            <el-select v-model="search.integrityStatus" clearable>
-              <el-option label="完整" value="complete" />
-              <el-option label="缺项" value="missing" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="档案状态">
-            <el-select v-model="search.archiveStatus" clearable>
-              <el-option v-for="d in archiveStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item><el-button type="primary" @click="reload(search, 1)">查询</el-button><el-button @click="resetSearch">重置</el-button></el-form-item>
-        </el-form>
+        <person-archive-search-form
+          v-model:model="search"
+          show-integrity
+          show-archive-status
+          @search="reload(search, 1)"
+          @reset="resetSearch"
+        />
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
         <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
@@ -63,6 +43,7 @@
   import { pageArchivePersons, exportCatalog } from '@/api/hrams/archive';
   import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
+  import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsArchive' });
@@ -74,11 +55,7 @@
   const drawerVisible = ref(false);
   const currentPersonId = ref(null);
 
-  const [personStatusDicts, educationDicts, archiveStatusDicts] = useDictData([
-    'hrams_person_status',
-    'hrams_education',
-    'hrams_archive_status'
-  ]);
+  const [,, archiveStatusDicts] = useDictData(['hrams_person_status', 'hrams_education', 'hrams_archive_status']);
 
   const archiveStatusLabel = (code) => {
     const d = archiveStatusDicts.value?.find((x) => x.value === code);

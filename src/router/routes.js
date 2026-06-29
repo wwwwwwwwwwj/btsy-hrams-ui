@@ -48,8 +48,13 @@ export function getMenuRoutes(menus, homePath) {
   // 旧首页 / 看板地址兼容
     {
       path: '/dashboard',
-      redirect: '/index',
+      redirect: HOME_PATH,
       meta: { hide: true, hideFooter: true }
+    },
+    {
+      path: '/index',
+      component: () => import('@/views/index/index.vue'),
+      meta: { title: '工作台', hide: true, hideFooter: true }
     },
     {
       path: '/hrams/dashboard',

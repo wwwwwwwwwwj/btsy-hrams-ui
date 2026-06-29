@@ -10,36 +10,11 @@
         </div>
       </div>
       <div class="hrams-v2-card hrams-v2-filter">
-        <el-form :inline="true" :model="where" class="ele-form-search">
-        <el-form-item label="档案编号"><el-input v-model="where.archiveNo" clearable /></el-form-item>
-        <el-form-item label="姓名"><el-input v-model="where.name" clearable /></el-form-item>
-        <el-form-item label="身份证号"><el-input v-model="where.idCard" clearable /></el-form-item>
-        <el-form-item label="性别">
-          <dict-data v-model="where.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
-        </el-form-item>
-        <el-form-item label="出生日期"><el-date-picker v-model="where.birthDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
-        <el-form-item label="年龄"><el-input-number v-model="where.age" :min="0" :max="120" controls-position="right" /></el-form-item>
-        <el-form-item label="民族">
-          <dict-data v-model="where.nation" code="hrams_nation" type="select" placeholder="全部" filterable clearable style="width:120px" />
-        </el-form-item>
-        <el-form-item label="政治面貌">
-          <dict-data v-model="where.politicalStatus" code="hrams_political_status" type="select" placeholder="全部" filterable clearable style="width:140px" />
-        </el-form-item>
-        <el-form-item label="学历">
-          <el-select v-model="where.education" clearable>
-            <el-option v-for="d in educationDicts" :key="d.value" :label="d.label" :value="d.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="当前状态">
-          <el-select v-model="where.personStatus" clearable>
-            <el-option v-for="d in personStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="reload(where, 1)">查询</el-button>
-          <el-button @click="resetWhere">重置</el-button>
-        </el-form-item>
-      </el-form>
+        <person-archive-search-form
+          v-model:model="where"
+          @search="reload(where, 1)"
+          @reset="resetWhere"
+        />
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
@@ -71,8 +46,7 @@
   import { useRouter } from 'vue-router';
   import { ElMessageBox } from 'element-plus';
   import { EleMessage, useModal } from 'ele-admin-plus';
-  import { useDictData } from '@/utils/use-dict-data';
-  import DictData from '@/components/DictData/index.vue';
+  import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pagePerson, removePerson, exportPerson, importPerson } from '@/api/hrams/person';
   import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import '../styles/v2.scss';
@@ -85,7 +59,6 @@
   const where = ref({});
   const importVisible = ref(false);
   const importResult = ref({ total: 0, successCount: 0, failCount: 0, errors: [] });
-  const [personStatusDicts, educationDicts] = useDictData(['hrams_person_status', 'hrams_education']);
 
   const columns = ref([
     { type: 'selection', width: 50 },

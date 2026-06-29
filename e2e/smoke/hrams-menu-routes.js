@@ -1,9 +1,11 @@
 /**
  * 与 script/sql/hrams_mysql.sql 菜单 path 一致（V2）
+ * 调阅登记/记录/统计共用 hrams/utilize/index，通过 query.tab 区分
  */
 export const HRAMS_MENU_ROUTES = [
   { title: '统计看板', path: '/workbench/dashboard', component: 'hrams/dashboard/index' },
   { title: '人员管理', path: '/person-archive/person', component: 'hrams/person/index' },
+  { title: '字段配置', path: '/person-archive/field-config', component: 'hrams/person/field-config/index' },
   { title: '档案管理', path: '/person-archive/archive', component: 'hrams/archive/index' },
   { title: '材料维护', path: '/archive-material/maintain', component: 'hrams/archive/material/index' },
   { title: '上传批次', path: '/archive-material/batch', component: 'hrams/material/batch/index' },

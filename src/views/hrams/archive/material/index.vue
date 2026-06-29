@@ -4,7 +4,10 @@
       <div class="hrams-v2-header">
         <div>
           <div class="hrams-v2-title">材料维护</div>
-          <div class="hrams-v2-desc">{{ pageDesc }}</div>
+          <div class="hrams-v2-desc">
+            {{ pageDesc }}
+            <el-tag v-if="readOnly" type="info" size="small" class="readonly-tag">只读查阅</el-tag>
+          </div>
         </div>
         <div v-if="personId" class="hrams-v2-actions">
           <el-button @click="clearPerson">更换干部</el-button>
@@ -145,3 +148,10 @@
     doDownload
   } = useMaterialMaintain();
 </script>
+
+<style scoped>
+  .readonly-tag {
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+</style>
