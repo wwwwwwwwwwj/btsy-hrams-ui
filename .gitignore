@@ -22,4 +22,7 @@ pnpm-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+/playwright-report/
+/test-results/
+/e2e/.auth/
+/blob-report/

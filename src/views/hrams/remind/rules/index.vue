@@ -17,15 +17,6 @@
         </el-table-column>
       </el-table>
     </ele-card>
-    <ele-card header="提醒记录" style="margin-top:16px">
-      <el-table :data="records">
-        <el-table-column prop="remindType" label="类型" width="120">
-          <template #default="{ row }">{{ typeLabel(row.remindType) }}</template>
-        </el-table-column>
-        <el-table-column prop="content" label="内容" min-width="200" />
-        <el-table-column prop="remindTime" label="时间" width="170" />
-      </el-table>
-    </ele-card>
     <el-dialog v-model="editVisible" title="编辑规则" width="400px">
       <el-form :model="editForm" label-width="90px">
         <el-form-item label="提前天数"><el-input-number v-model="editForm.advanceDays" :min="1" :max="365" /></el-form-item>
@@ -44,19 +35,18 @@
 <script setup>
   import { onMounted, ref } from 'vue';
   import { EleMessage } from 'ele-admin-plus';
-  import { listRemindRules, listRemindRecords, scanRemind, saveRemindRule } from '@/api/hrams/remind';
+  import { listRemindRules, scanRemind, saveRemindRule } from '@/api/hrams/remind';
+  import { remindTypeLabel } from '../remind-shared';
 
-  defineOptions({ name: 'HramsRemind' });
+  defineOptions({ name: 'HramsRemindRules' });
   const rules = ref([]);
-  const records = ref([]);
   const editVisible = ref(false);
   const editForm = ref({});
 
-  const typeLabel = (t) => ({ contract: '合同到期', retire: '退休提醒', borrow: '借阅到期' }[t] || t);
+  const typeLabel = remindTypeLabel;
 
   const load = async () => {
     rules.value = await listRemindRules();
-    records.value = await listRemindRecords();
   };
 
   const scan = async () => {

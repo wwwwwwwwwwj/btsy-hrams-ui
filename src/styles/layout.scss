@@ -105,6 +105,12 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* 侧栏/顶栏仅显示系统名称，不展示 logo 图 */
+.ele-admin-logo img,
+.ele-admin-logo .ele-admin-logo-image {
+  display: none !important;
+}
+
 /* 主色顶栏 logo 增加白色滤镜 */
 .ele-admin-header.is-primary .ele-admin-logo img {
   filter: contrast(0%) brightness(1000%);

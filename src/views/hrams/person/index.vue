@@ -1,51 +1,60 @@
 <template>
   <ele-page hide-footer flex-table="auto">
-    <ele-card bordered>
-      <el-form :inline="true" :model="where" class="ele-form-search">
+    <div class="hrams-v2-page">
+      <div class="hrams-v2-header">
+        <div class="hrams-v2-title">人员管理</div>
+        <div class="hrams-v2-actions">
+          <el-button type="primary" v-permission="'hrams:person:add'" @click="() => handleEdit()">新增人员</el-button>
+          <el-button v-permission="'hrams:person:import'" @click="handleImport">批量导入</el-button>
+          <el-button v-permission="'hrams:person:export'" @click="handleExport">批量导出</el-button>
+        </div>
+      </div>
+      <div class="hrams-v2-card hrams-v2-filter">
+        <el-form :inline="true" :model="where" class="ele-form-search">
         <el-form-item label="档案编号"><el-input v-model="where.archiveNo" clearable /></el-form-item>
         <el-form-item label="姓名"><el-input v-model="where.name" clearable /></el-form-item>
-        <el-form-item label="性别"><el-select v-model="where.gender" clearable><el-option label="男" value="男" /><el-option label="女" value="女" /></el-select></el-form-item>
-        <el-form-item label="民族"><el-input v-model="where.nation" clearable /></el-form-item>
-        <el-form-item label="政治面貌"><el-input v-model="where.politicalStatus" clearable /></el-form-item>
-        <el-form-item label="部门"><el-input v-model="where.deptName" clearable /></el-form-item>
-        <el-form-item label="身份证"><el-input v-model="where.idCard" clearable /></el-form-item>
-        <el-form-item label="人员状态">
-          <el-select v-model="where.personStatus" clearable>
-            <el-option label="在职" value="在职" /><el-option label="离职" value="离职" /><el-option label="退休" value="退休" />
+        <el-form-item label="身份证号"><el-input v-model="where.idCard" clearable /></el-form-item>
+        <el-form-item label="性别">
+          <dict-data v-model="where.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
+        </el-form-item>
+        <el-form-item label="出生日期"><el-date-picker v-model="where.birthDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
+        <el-form-item label="年龄"><el-input-number v-model="where.age" :min="0" :max="120" controls-position="right" /></el-form-item>
+        <el-form-item label="民族">
+          <dict-data v-model="where.nation" code="hrams_nation" type="select" placeholder="全部" filterable clearable style="width:120px" />
+        </el-form-item>
+        <el-form-item label="政治面貌">
+          <dict-data v-model="where.politicalStatus" code="hrams_political_status" type="select" placeholder="全部" filterable clearable style="width:140px" />
+        </el-form-item>
+        <el-form-item label="学历">
+          <el-select v-model="where.education" clearable>
+            <el-option v-for="d in educationDicts" :key="d.value" :label="d.label" :value="d.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="档案状态">
-          <dict-data code="hrams_archive_status" v-model="where.archiveStatus" placeholder="全部" />
+        <el-form-item label="当前状态">
+          <el-select v-model="where.personStatus" clearable>
+            <el-option v-for="d in personStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="reload(where, 1)">查询</el-button>
           <el-button @click="resetWhere">重置</el-button>
         </el-form-item>
       </el-form>
-    </ele-card>
-    <ele-card bordered flex-table="auto" :body-style="{ paddingTop: '8px' }">
+      </div>
+      <div class="hrams-v2-card hrams-v2-table-card">
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
-        <template #toolbar>
-          <btn-items :items="[
-            { preset: 'add', permission: 'hrams:person:add', onClick: () => handleEdit() },
-            { preset: 'del', permission: 'hrams:person:remove', onClick: () => handleRemove() },
-            { preset: 'export', permission: 'hrams:person:export', onClick: handleExport },
-            { title: '导入', permission: 'hrams:person:import', onClick: handleImport }
-          ]" />
-        </template>
-        <template #archiveStatus="{ row }">
-          <dict-data code="hrams_archive_status" type="text" :model-value="row.archiveStatus" />
-        </template>
         <template #action="{ row }">
           <btn-items type="link" :divider="true" :items="[
             { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
-            { title: '管理材料', permission: 'hrams:material:list', onClick: () => goMaterial(row) },
             { preset: 'edit', permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
+            { title: '管理材料', permission: 'hrams:archive:upload', onClick: () => goMaterial(row) },
+            { title: '查看档案', permission: 'hrams:archive:list', onClick: () => goArchive(row) },
             { preset: 'del', permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
           ]" />
         </template>
       </ele-pro-table>
-    </ele-card>
+      </div>
+    </div>
     <el-dialog v-model="importVisible" title="导入结果" width="640px">
       <p>共 {{ importResult.total }} 行，成功 {{ importResult.successCount }}，失败 {{ importResult.failCount }}</p>
       <el-table v-if="importResult.errors?.length" :data="importResult.errors" size="small" max-height="320">
@@ -59,13 +68,14 @@
 
 <script setup>
   import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { ElMessageBox } from 'element-plus';
   import { EleMessage, useModal } from 'ele-admin-plus';
-  import { useRouter } from 'vue-router';
-  import { pagePerson, removePerson, exportPerson, importPerson } from '@/api/hrams/person';
   import { useDictData } from '@/utils/use-dict-data';
-
-  useDictData(['hrams_archive_status']);
+  import DictData from '@/components/DictData/index.vue';
+  import { pagePerson, removePerson, exportPerson, importPerson } from '@/api/hrams/person';
+  import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
+  import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsPerson' });
   const router = useRouter();
@@ -75,18 +85,24 @@
   const where = ref({});
   const importVisible = ref(false);
   const importResult = ref({ total: 0, successCount: 0, failCount: 0, errors: [] });
+  const [personStatusDicts, educationDicts] = useDictData(['hrams_person_status', 'hrams_education']);
 
   const columns = ref([
     { type: 'selection', width: 50 },
     { type: 'index', width: 50 },
     { prop: 'archiveNo', label: '档案编号', minWidth: 120 },
     { prop: 'name', label: '姓名', minWidth: 100 },
+    { prop: 'idCard', label: '身份证号', minWidth: 170 },
     { prop: 'gender', label: '性别', width: 70 },
-    { prop: 'deptName', label: '部门', minWidth: 120 },
-    { prop: 'personStatus', label: '人员状态', width: 90 },
-    { columnKey: 'archiveStatus', label: '档案状态', width: 100, slot: 'archiveStatus' },
-    { prop: 'materialCount', label: '材料份数', width: 90 },
-    { columnKey: 'action', label: '操作', width: 260, slot: 'action', align: 'center' }
+    { prop: 'birthDate', label: '出生日期', width: 110 },
+    { prop: 'age', label: '年龄', width: 70 },
+    { prop: 'nation', label: '民族', width: 90 },
+    { prop: 'politicalStatus', label: '政治面貌', minWidth: 110 },
+    { prop: 'education', label: '学历', width: 90 },
+    { prop: 'nativePlace', label: '籍贯', minWidth: 100 },
+    { prop: 'major', label: '专业', minWidth: 100 },
+    { prop: 'personStatus', label: '当前状态', width: 90 },
+    { columnKey: 'action', label: '操作', width: 280, slot: 'action', align: 'center' }
   ]);
 
   const datasource = ({ pages, where: w }) => pagePerson({ ...w, ...pages });
@@ -101,19 +117,23 @@
     });
   };
 
-  const goMaterial = (row) => {
-    router.push({
-      path: '/material',
-      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
-    });
-  };
-
   const handleView = (row) => {
     openModal({
       custom: true,
       asyncComponent: () => import('./components/person-detail.vue'),
       componentProps: { personId: row.id }
     });
+  };
+
+  const goMaterial = (row) => {
+    router.push({
+      path: HRAMS_MATERIAL_MAINTAIN_PATH,
+      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
+    });
+  };
+
+  const goArchive = (row) => {
+    router.push({ path: '/person-archive/archive', query: { viewId: row.id } });
   };
 
   const handleRemove = (row) => {

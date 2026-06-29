@@ -1,0 +1,86 @@
+.hrams-v2-page {
+  min-height: 100%;
+  padding: 24px 28px;
+  background: #eef2f6;
+  color: #1f2d3d;
+}
+
+.hrams-v2-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.hrams-v2-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2d3d;
+}
+
+.hrams-v2-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6c7e97;
+}
+
+.hrams-v2-card {
+  background: #fff;
+  border: 1px solid #eef2f8;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 2%);
+}
+
+.hrams-v2-filter {
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.hrams-v2-table-card {
+  padding: 8px 0 0;
+}
+
+.hrams-v2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.hrams-v2-primary,
+.hrams-v2-page :deep(.el-button--primary) {
+  border-color: #2c6e9e;
+  background: #2c6e9e;
+}
+
+.hrams-v2-page :deep(.el-button) {
+  border-radius: 30px;
+}
+
+.hrams-v2-page :deep(.el-input__wrapper),
+.hrams-v2-page :deep(.el-select__wrapper),
+.hrams-v2-page :deep(.el-date-editor.el-input__wrapper),
+.hrams-v2-page :deep(.el-textarea__inner) {
+  border-radius: 12px;
+}
+
+.hrams-v2-page :deep(.el-card),
+.hrams-v2-page :deep(.ele-card) {
+  border-radius: 24px;
+}
+
+.hrams-v2-page :deep(.ele-pro-table),
+.hrams-v2-page :deep(.el-table) {
+  border-radius: 24px;
+}
+
+.hrams-v2-page :deep(.el-table th.el-table__cell) {
+  background: #f9fbfe;
+  color: #1f2d3d;
+  font-weight: 600;
+}
+
+.hrams-v2-page :deep(.el-dialog),
+.hrams-v2-page :deep(.el-drawer) {
+  border-radius: 24px;
+}

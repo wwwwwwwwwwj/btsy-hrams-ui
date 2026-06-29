@@ -12,5 +12,5 @@ export async function pageAccessLog(params) {
 export async function exportAccessLog(params) {
   const res = await request.get('/hrams/access-log/export', { params, responseType: 'blob' });
   await checkDownloadRes(res);
-  download(res.data, '查阅审计.xlsx');
+  download(res.data, '操作日志.xlsx');
 }

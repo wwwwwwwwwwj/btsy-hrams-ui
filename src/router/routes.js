@@ -1,5 +1,11 @@
 import { menuToRoutes, eachTree } from 'ele-admin-plus';
 import {
+  HRAMS_ARCHIVE_ATTACH,
+  HRAMS_LEGACY_REDIRECTS,
+  HRAMS_MATERIAL_MAINTAIN_PATH,
+  HRAMS_UTILIZE_REGISTER
+} from '@/utils/hrams-routes';
+import {
   LOGIN_PATH,
   HOME_PATH,
   LAYOUT_PATH,
@@ -47,75 +53,34 @@ export function getMenuRoutes(menus, homePath) {
     },
     {
       path: '/hrams/dashboard',
-      redirect: '/index',
+      redirect: '/workbench/dashboard',
       meta: { hide: true, hideFooter: true }
     },
-  // 旧 /hrams/* 路由兼容（业务菜单已改为一级）
+    { path: '/person', redirect: '/person-archive/person', meta: { hide: true, hideFooter: true } },
+    { path: '/archive', redirect: '/person-archive/archive', meta: { hide: true, hideFooter: true } },
+    { path: '/material', redirect: '/person-archive/archive', meta: { hide: true, hideFooter: true } },
+    { path: '/query', redirect: '/query-search/person-query', meta: { hide: true, hideFooter: true } },
+    { path: '/utilize', redirect: `${HRAMS_UTILIZE_REGISTER}?tab=register`, meta: { hide: true, hideFooter: true } },
+    { path: '/system/hrams-remind', redirect: HRAMS_LEGACY_REDIRECTS['/system/hrams-remind'], meta: { hide: true, hideFooter: true } },
+    { path: '/system/hrams-backup', redirect: '/hrams-ops/backup', meta: { hide: true, hideFooter: true } },
+    { path: '/system/hrams-access-log', redirect: '/hrams-ops/access-log', meta: { hide: true, hideFooter: true } },
     {
-      path: '/hrams/person',
-      redirect: '/person',
-      meta: { hide: true, hideFooter: true }
+      path: HRAMS_MATERIAL_MAINTAIN_PATH,
+      component: () => import('@/views/hrams/archive/material/index.vue'),
+      meta: { title: '材料维护', hide: true, hideFooter: true }
     },
     {
-      path: '/hrams/archive/material',
-      redirect: '/material',
-      meta: { hide: true, hideFooter: true }
+      path: HRAMS_ARCHIVE_ATTACH,
+      component: () => import('@/views/hrams/archive/attach/index.vue'),
+      meta: { title: '材料挂接', hide: true, hideFooter: true }
     },
-    {
-      path: '/scan',
-      redirect: '/material',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/material/scan',
-      redirect: '/material',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/archive/scan',
-      redirect: '/material',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/archive',
-      redirect: '/archive',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/query',
-      redirect: '/query',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/utilize',
-      redirect: '/utilize',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/remind',
-      redirect: '/system/hrams-remind',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/backup',
-      redirect: '/system/hrams-backup',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/archive/mount',
-      redirect: '/archive',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/archive/pool',
-      redirect: '/material',
-      meta: { hide: true, hideFooter: true }
-    },
-    {
-      path: '/hrams/archive/feedback',
-      redirect: '/archive',
-      meta: { hide: true, hideFooter: true }
-    }
+    { path: '/hrams/person', redirect: '/person-archive/person', meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/archive/material', redirect: HRAMS_MATERIAL_MAINTAIN_PATH, meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/archive', redirect: '/person-archive/archive', meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/query', redirect: '/query-search/person-query', meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/utilize', redirect: `${HRAMS_UTILIZE_REGISTER}?tab=register`, meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/remind', redirect: HRAMS_LEGACY_REDIRECTS['/hrams/remind'], meta: { hide: true, hideFooter: true } },
+    { path: '/hrams/backup', redirect: '/hrams-ops/backup', meta: { hide: true, hideFooter: true } }
   ];
   const layoutRoutes = [
     {

@@ -1,82 +1,146 @@
 <template>
   <ele-page hide-footer flex-table="auto">
-    <ele-card bordered>
-      <el-form :inline="true" :model="search" class="ele-form-search">
-        <el-form-item label="档案编号"><el-input v-model="search.archiveNo" clearable /></el-form-item>
-        <el-form-item label="姓名"><el-input v-model="search.name" clearable /></el-form-item>
-        <el-form-item label="性别"><el-select v-model="search.gender" clearable><el-option label="男" value="男" /><el-option label="女" value="女" /></el-select></el-form-item>
-        <el-form-item label="人员状态">
-          <el-select v-model="search.personStatus" clearable>
-            <el-option label="在职" value="在职" />
-            <el-option label="离职" value="离职" />
-            <el-option label="退休" value="退休" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="身份证"><el-input v-model="search.idCard" clearable /></el-form-item>
-        <el-form-item label="档案状态">
-          <dict-data code="hrams_archive_status" v-model="search.archiveStatus" placeholder="全部" />
-        </el-form-item>
-        <el-form-item label="完整性">
-          <el-select v-model="search.integrityStatus" clearable placeholder="全部">
-            <el-option label="完整" value="complete" />
-            <el-option label="缺项" value="missing" />
-          </el-select>
-        </el-form-item>
-        <el-form-item><el-button type="primary" @click="reload(search, 1)">查询</el-button><el-button @click="resetSearch">重置</el-button></el-form-item>
-      </el-form>
-    </ele-card>
-    <ele-card bordered flex-table="auto" :body-style="{ paddingTop: '8px' }">
-      <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
-        <template #archiveStatus="{ row }">
-          <dict-data code="hrams_archive_status" type="text" :model-value="row.archiveStatus" />
-        </template>
-        <template #integrity="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
-        <template #action="{ row }">
-          <el-button link type="primary" v-permission="'hrams:archive:material'" @click="goMaterial(row)">查阅材料</el-button>
-          <el-button link v-permission="'hrams:archive:catalog:export'" @click="exportCatalog(row.id)">导出目录</el-button>
-        </template>
-      </ele-pro-table>
-    </ele-card>
+    <div class="hrams-v2-page">
+      <div class="hrams-v2-header">
+        <div class="hrams-v2-title">档案管理</div>
+        <div class="hrams-v2-actions">
+          <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
+          <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
+        </div>
+      </div>
+      <div class="hrams-v2-card hrams-v2-filter">
+        <el-form :inline="true" :model="search" class="ele-form-search">
+          <el-form-item label="档案编号"><el-input v-model="search.archiveNo" clearable /></el-form-item>
+          <el-form-item label="姓名"><el-input v-model="search.name" clearable /></el-form-item>
+          <el-form-item label="身份证号"><el-input v-model="search.idCard" clearable /></el-form-item>
+          <el-form-item label="当前状态">
+            <el-select v-model="search.personStatus" clearable>
+              <el-option v-for="d in personStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="学历">
+            <el-select v-model="search.education" clearable>
+              <el-option v-for="d in educationDicts" :key="d.value" :label="d.label" :value="d.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="材料完整性">
+            <el-select v-model="search.integrityStatus" clearable>
+              <el-option label="完整" value="complete" />
+              <el-option label="缺项" value="missing" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="档案状态">
+            <el-select v-model="search.archiveStatus" clearable>
+              <el-option v-for="d in archiveStatusDicts" :key="d.value" :label="d.label" :value="d.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item><el-button type="primary" @click="reload(search, 1)">查询</el-button><el-button @click="resetSearch">重置</el-button></el-form-item>
+        </el-form>
+      </div>
+      <div class="hrams-v2-card hrams-v2-table-card">
+        <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
+          <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
+          <template #integrityStatus="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
+          <template #action="{ row }">
+            <btn-items type="link" :divider="true" :items="[
+              { title: '查看档案', permission: 'hrams:archive:material', onClick: () => viewArchive(row) },
+              { title: '导出目录', permission: 'hrams:archive:catalog:export', onClick: () => handleExportCatalog(row) },
+              { title: '材料管理', permission: 'hrams:archive:material', onClick: () => goMaterial(row) }
+            ]" />
+          </template>
+        </ele-pro-table>
+      </div>
+    </div>
+    <archive-detail-drawer v-model="drawerVisible" :person-id="currentPersonId" />
   </ele-page>
 </template>
 
 <script setup>
-  import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
-  import { pageArchivePersons, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
+  import { ref, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
-  import { integrityLabel } from '@/utils/hrams-labels';
-
-  useDictData(['hrams_archive_status']);
+  import { pageArchivePersons, exportCatalog } from '@/api/hrams/archive';
+  import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
+  import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
+  import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsArchive' });
   const router = useRouter();
+  const route = useRoute();
   const tableRef = ref(null);
   const search = ref({});
+  const selections = ref([]);
+  const drawerVisible = ref(false);
+  const currentPersonId = ref(null);
+
+  const [personStatusDicts, educationDicts, archiveStatusDicts] = useDictData([
+    'hrams_person_status',
+    'hrams_education',
+    'hrams_archive_status'
+  ]);
+
+  const archiveStatusLabel = (code) => {
+    const d = archiveStatusDicts.value?.find((x) => x.value === code);
+    return d?.label || code || '—';
+  };
+  const integrityLabel = (s) => (s === 'complete' ? '完整' : s === 'missing' ? '缺项' : '—');
 
   const columns = ref([
+    { type: 'selection', width: 50 },
+    { type: 'index', width: 50 },
     { prop: 'archiveNo', label: '档案编号', minWidth: 120 },
     { prop: 'name', label: '姓名', minWidth: 100 },
     { prop: 'gender', label: '性别', width: 70 },
     { prop: 'birthDate', label: '出生年月', width: 110 },
     { prop: 'personStatus', label: '当前状态', width: 90 },
-    { columnKey: 'archiveStatus', label: '档案状态', width: 100, slot: 'archiveStatus' },
+    { prop: 'archiveStatus', label: '档案状态', width: 100, slot: 'archiveStatus' },
     { prop: 'materialCount', label: '材料数量', width: 90 },
-    { columnKey: 'integrity', label: '完整性', width: 80, slot: 'integrity' },
-    { prop: 'updateTime', label: '最近更新', width: 170 },
-    { columnKey: 'action', label: '操作', width: 180, slot: 'action' }
+    { prop: 'integrityStatus', label: '完整性', width: 90, slot: 'integrityStatus' },
+    { prop: 'updateTime', label: '最近更新', minWidth: 160 },
+    { columnKey: 'action', label: '操作', width: 260, slot: 'action', align: 'center' }
   ]);
 
   const datasource = ({ pages, where: w }) => pageArchivePersons({ ...search.value, ...w, ...pages });
   const reload = (w, page) => tableRef.value?.reload?.({ where: w, page });
   const resetSearch = () => { search.value = {}; reload(search.value, 1); };
 
-  const goMaterial = (row) => {
+  const goAttach = (mode) => {
+    if (!selections.value.length) {
+      EleMessage.error({ message: '请先勾选需要挂接的档案人员', plain: true });
+      return;
+    }
     router.push({
-      path: '/material',
-      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name, view: 'archive' }
+      path: '/person-archive/archive/attach',
+      query: { mode, ids: selections.value.map((p) => p.id).join(',') }
     });
   };
 
-  const exportCatalog = (personId) => exportCatalogApi(personId);
+  const goMaterial = (row) => {
+    router.push({
+      path: HRAMS_MATERIAL_MAINTAIN_PATH,
+      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
+    });
+  };
+
+  const viewArchive = (row) => {
+    currentPersonId.value = row.id;
+    drawerVisible.value = true;
+  };
+
+  const handleExportCatalog = async (row) => {
+    try {
+      await exportCatalog(row.id);
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
+  };
+
+  onMounted(() => {
+    const viewId = route.query.viewId;
+    if (viewId) {
+      currentPersonId.value = Number(viewId);
+      drawerVisible.value = true;
+    }
+  });
 </script>

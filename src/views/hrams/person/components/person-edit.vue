@@ -1,47 +1,34 @@
 <template>
-  <ele-modal :form="true" :width="640" :title="isUpdate ? '编辑人员' : '新增人员'" :loading="loading" v-bind="modalProps">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" @submit.prevent="">
+  <ele-modal :form="true" :width="720" :title="isUpdate ? '编辑人员' : '新增人员'" :loading="loading" v-bind="modalProps">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" @submit.prevent="">
       <el-form-item v-if="isUpdate" label="档案编号"><el-input :model-value="form.archiveNo" disabled /></el-form-item>
-      <el-form-item label="姓名" prop="name"><el-input v-model="form.name" /></el-form-item>
+      <el-form-item label="身份证号" prop="idCard"><el-input v-model="form.idCard" maxlength="18" placeholder="请输入身份证号" /></el-form-item>
+      <el-form-item label="姓名" prop="name"><el-input v-model="form.name" placeholder="请输入姓名" /></el-form-item>
       <el-form-item label="性别">
-        <el-select v-model="form.gender" style="width:100%"><el-option label="男" value="男" /><el-option label="女" value="女" /></el-select>
+        <dict-data v-model="form.gender" code="hrams_gender" type="select" placeholder="请选择性别" style="width:100%" />
       </el-form-item>
-      <el-form-item label="出生年月"><el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-      <el-form-item label="民族"><el-input v-model="form.nation" /></el-form-item>
-      <el-form-item label="政治面貌"><el-input v-model="form.politicalStatus" /></el-form-item>
-      <el-form-item label="身份证号" prop="idCard"><el-input v-model="form.idCard" maxlength="18" /></el-form-item>
-      <el-form-item label="部门"><el-input v-model="form.deptName" /></el-form-item>
-      <el-form-item label="职务"><el-input v-model="form.duty" /></el-form-item>
+      <el-form-item label="出生日期"><el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+      <el-form-item label="民族">
+        <dict-data v-model="form.nation" code="hrams_nation" type="select" placeholder="请选择民族" filterable style="width:100%" />
+      </el-form-item>
+      <el-form-item label="籍贯"><el-input v-model="form.nativePlace" placeholder="省/市" /></el-form-item>
+      <el-form-item label="政治面貌">
+        <dict-data v-model="form.politicalStatus" code="hrams_political_status" type="select" placeholder="请选择政治面貌" filterable style="width:100%" />
+      </el-form-item>
+      <el-form-item label="学历">
+        <dict-data v-model="form.education" code="hrams_education" type="select" placeholder="请选择学历" style="width:100%" />
+      </el-form-item>
+      <el-form-item label="专业"><el-input v-model="form.major" placeholder="请输入专业" /></el-form-item>
+      <el-form-item label="所在部门/单位"><el-input v-model="form.deptName" placeholder="请输入部门或单位" /></el-form-item>
+      <el-form-item label="职务"><el-input v-model="form.duty" placeholder="请输入职务" /></el-form-item>
       <el-form-item label="参加工作时间"><el-date-picker v-model="form.workStartDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+      <el-form-item label="合同到期日"><el-date-picker v-model="form.contractEndDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+      <el-form-item label="计划退休日期"><el-date-picker v-model="form.planRetireDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
       <el-form-item label="人员状态" prop="personStatus">
-        <el-select v-model="form.personStatus" style="width:100%">
-          <el-option label="在职" value="在职" /><el-option label="离职" value="离职" /><el-option label="退休" value="退休" />
-        </el-select>
+        <dict-data v-model="form.personStatus" code="hrams_person_status" type="select" placeholder="请选择人员状态" style="width:100%" />
       </el-form-item>
-      <el-form-item label="合同到期"><el-date-picker v-model="form.contractEndDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-      <el-form-item label="计划退休"><el-date-picker v-model="form.planRetireDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
       <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
-      <el-divider v-if="fieldDefs.length">扩展字段</el-divider>
-      <el-form-item v-for="f in fieldDefs" :key="f.fieldKey" :label="f.fieldLabel">
-        <el-date-picker v-if="f.fieldType === 'date'" v-model="customFields[f.fieldKey]" type="date" value-format="YYYY-MM-DD" style="width:100%" />
-        <el-input v-else v-model="customFields[f.fieldKey]" />
-      </el-form-item>
-      <el-form-item>
-        <el-button link type="primary" @click="showAddField = true">+ 新增自定义字段</el-button>
-      </el-form-item>
     </el-form>
-    <el-dialog v-model="showAddField" title="新增自定义字段" width="400px" append-to-body>
-      <el-form label-width="80px">
-        <el-form-item label="名称"><el-input v-model="newField.fieldLabel" /></el-form-item>
-        <el-form-item label="类型">
-          <el-select v-model="newField.fieldType"><el-option label="文本" value="text" /><el-option label="日期" value="date" /></el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showAddField=false">取消</el-button>
-        <el-button type="primary" @click="createField">确定</el-button>
-      </template>
-    </el-dialog>
     <template #footer>
       <btn-items :items="[
         { preset: 'cancel', onClick: () => closeModal() },
@@ -52,9 +39,10 @@
 </template>
 
 <script setup>
-  import { onMounted, reactive, ref, watch } from 'vue';
+  import { reactive, ref, watch } from 'vue';
   import { EleMessage, useModal } from 'ele-admin-plus';
-  import { addPerson, updatePerson, getPerson, listPersonFieldDefs, addPersonFieldDef } from '@/api/hrams/person';
+  import DictData from '@/components/DictData/index.vue';
+  import { addPerson, updatePerson, getPerson } from '@/api/hrams/person';
 
   const props = defineProps({ data: Object, onDone: Function });
   const { modalProps, closeModal } = useModal();
@@ -62,10 +50,6 @@
   const loading = ref(false);
   const formRef = ref(null);
   const form = ref({});
-  const customFields = ref({});
-  const fieldDefs = ref([]);
-  const showAddField = ref(false);
-  const newField = ref({ fieldLabel: '', fieldType: 'text' });
 
   const idCardRule = (_r, v, cb) => {
     if (!v) return cb();
@@ -76,42 +60,32 @@
   const rules = reactive({
     name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
     personStatus: [{ required: true, message: '请选择人员状态', trigger: 'change' }],
-    idCard: [{ validator: idCardRule, trigger: 'blur' }]
+    idCard: [
+      { required: true, message: '请输入身份证号', trigger: 'blur' },
+      { validator: idCardRule, trigger: 'blur' }
+    ]
   });
-
-  const loadDefs = async () => { fieldDefs.value = await listPersonFieldDefs(); };
 
   const loadPerson = async (id) => {
     const p = await getPerson(id);
     form.value = { ...p };
-    customFields.value = { ...(p.customFields || {}) };
     isUpdate.value = true;
   };
 
   watch(() => props.data, async (d) => {
-    await loadDefs();
     if (d?.id) {
       await loadPerson(d.id);
     } else {
       form.value = { personStatus: '在职', ...(d || {}) };
-      customFields.value = {};
       isUpdate.value = false;
     }
   }, { immediate: true });
-
-  const createField = async () => {
-    await addPersonFieldDef(newField.value);
-    showAddField.value = false;
-    newField.value = { fieldLabel: '', fieldType: 'text' };
-    await loadDefs();
-    EleMessage.success({ message: '字段已添加', plain: true });
-  };
 
   const handleSave = () => {
     formRef.value?.validate?.(async (valid) => {
       if (!valid) return;
       loading.value = true;
-      const payload = { ...form.value, customFields: customFields.value };
+      const payload = { ...form.value };
       try {
         if (isUpdate.value) await updatePerson(payload);
         else await addPerson(payload);
@@ -125,6 +99,4 @@
       }
     });
   };
-
-  onMounted(loadDefs);
 </script>

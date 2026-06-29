@@ -64,10 +64,7 @@
     @bodySizeChange="handleBodySizeChange"
   >
     <router-layout />
-    <!-- logo -->
-    <template #logo>
-      <img src="@/assets/logo.png" style="width: 28px; height: 28px" />
-    </template>
+    <template #logo />
     <template #logoTitle>
       <h1>{{ PROJECT_NAME }}</h1>
     </template>

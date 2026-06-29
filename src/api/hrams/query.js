@@ -32,6 +32,14 @@ export async function reindexFulltext() {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function listSearchSyncLogs(limit = 30) {
+  const res = await request.get('/hrams/search/sync-logs', { params: { limit } });
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function qaChat(question) {
   const res = await request.post('/hrams/qa/chat', { question });
   if (res.data.code === 200) {

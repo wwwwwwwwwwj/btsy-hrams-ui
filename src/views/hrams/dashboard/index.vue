@@ -1,89 +1,211 @@
 <template>
   <ele-page hide-footer>
-    <el-row :gutter="16" class="stat-row">
-      <el-col :span="6"><ele-card><div class="stat-title">在职</div><div class="stat-num">{{ summary.onJob ?? 0 }}</div></ele-card></el-col>
-      <el-col :span="6"><ele-card><div class="stat-title">离职</div><div class="stat-num">{{ summary.leaveJob ?? 0 }}</div></ele-card></el-col>
-      <el-col :span="6"><ele-card><div class="stat-title">退休</div><div class="stat-num">{{ summary.retired ?? 0 }}</div></ele-card></el-col>
-      <el-col :span="6"><ele-card><div class="stat-title">本月归档材料</div><div class="stat-num">{{ summary.monthArchive ?? 0 }}</div></ele-card></el-col>
-    </el-row>
-    <el-row :gutter="16" style="margin-top:16px">
-      <el-col :span="12"><ele-card header="年龄分布"><div ref="ageChartRef" class="chart-box" /></ele-card></el-col>
-      <el-col :span="12"><ele-card header="档案状态分布"><div ref="statusChartRef" class="chart-box" /></ele-card></el-col>
-    </el-row>
-    <el-row :gutter="16" style="margin-top:16px">
-      <el-col :span="12">
-        <ele-card header="调阅概况">
-          <div class="borrow-line">借出中：{{ summary.borrowSummary?.borrowing ?? 0 }}</div>
-          <div class="borrow-line">已逾期：{{ summary.borrowSummary?.overdue ?? 0 }}</div>
-          <div class="borrow-line">已归还：{{ summary.borrowSummary?.returned ?? 0 }}</div>
-        </ele-card>
-      </el-col>
-      <el-col :span="12">
-        <ele-card header="近期提醒">
-          <el-table :data="reminds" size="small" max-height="280">
-            <el-table-column prop="remindType" label="类型" width="100" />
-            <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="remindTime" label="时间" width="160" />
-          </el-table>
-        </ele-card>
-      </el-col>
-    </el-row>
+    <div class="hrams-v2-page dashboard-page">
+      <div class="stats-grid">
+        <div class="hrams-v2-card stat-card">
+          <div class="stat-title">在职人数</div>
+          <div class="stat-num">{{ summary.onJob ?? 0 }}</div>
+          <div class="stat-desc">当前在职干部总数</div>
+        </div>
+        <div class="hrams-v2-card stat-card">
+          <div class="stat-title">离职人数</div>
+          <div class="stat-num">{{ summary.leaveJob ?? 0 }}</div>
+          <div class="stat-desc">历史离职干部</div>
+        </div>
+        <div class="hrams-v2-card stat-card">
+          <div class="stat-title">退休人数</div>
+          <div class="stat-num">{{ summary.retired ?? 0 }}</div>
+          <div class="stat-desc">已办理退休</div>
+        </div>
+        <div class="hrams-v2-card stat-card">
+          <div class="stat-title">本月新增档案材料</div>
+          <div class="stat-num">{{ summary.monthArchive ?? 0 }}</div>
+          <div class="stat-desc">本自然月入库有效材料</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="hrams-v2-card chart-card">
+          <div class="chart-title">干部年龄段统计图</div>
+          <div ref="ageChartRef" class="chart-box" />
+        </div>
+        <div class="hrams-v2-card chart-card">
+          <div class="chart-title">干部学历分布图</div>
+          <div ref="eduChartRef" class="chart-box" />
+        </div>
+      </div>
+
+      <div class="hrams-v2-card stats-footer">
+        <div>
+          <span class="footer-title">本月档案利用台账</span>
+          <span>借阅中: {{ summary.borrowSummary?.borrowing ?? 0 }}卷</span>
+          <span class="divider">|</span>
+          <span>逾期未还: {{ summary.borrowSummary?.overdue ?? 0 }}卷</span>
+          <span class="divider">|</span>
+          <span>已完成归还: {{ summary.borrowSummary?.returned ?? 0 }}卷</span>
+        </div>
+        <span class="badge">实时统计</span>
+      </div>
+
+      <div class="hrams-v2-card remind-card">
+        <div class="chart-title">近期提醒</div>
+        <el-table :data="summary.recentReminds || []" size="small" border empty-text="暂无提醒">
+          <el-table-column prop="remindTime" label="时间" width="170" />
+          <el-table-column prop="remindType" label="类型" width="120" />
+          <el-table-column prop="content" label="内容" min-width="280" show-overflow-tooltip />
+        </el-table>
+      </div>
+    </div>
   </ele-page>
 </template>
 
 <script setup>
   import { onMounted, ref } from 'vue';
   import * as echarts from 'echarts';
-  import { getDashboardSummary, getDashboardReminds } from '@/api/hrams/dashboard';
-  import { useDictData } from '@/utils/use-dict-data';
-
-  const [archiveStatusDict] = useDictData(['hrams_archive_status']);
+  import { getDashboardSummary } from '@/api/hrams/dashboard';
+  import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsDashboard' });
   const summary = ref({});
-  const reminds = ref([]);
   const ageChartRef = ref(null);
-  const statusChartRef = ref(null);
+  const eduChartRef = ref(null);
 
-  const statusLabel = (code) =>
-    archiveStatusDict.value?.find((d) => d.value === code)?.label || code || '未知';
-
-  const mapToChart = (obj, labelFn) =>
+  const mapToChart = (obj) =>
     Object.entries(obj || {}).map(([name, value]) => ({
-      name: labelFn ? labelFn(name) : name,
+      name,
       value
     }));
 
   const renderCharts = () => {
     if (ageChartRef.value) {
       const c = echarts.init(ageChartRef.value);
+      const chart = summary.value.ageChart || {};
       c.setOption({
-        tooltip: { trigger: 'item' },
-        series: [{ type: 'pie', radius: ['40%', '70%'], data: mapToChart(summary.value.ageChart) }]
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '8%', right: '5%', top: '15%', bottom: '8%', containLabel: true },
+        xAxis: { type: 'category', data: Object.keys(chart) },
+        yAxis: { type: 'value', minInterval: 1, name: '人数' },
+        series: [{
+          name: '干部数量',
+          type: 'bar',
+          data: Object.values(chart),
+          itemStyle: { color: '#397faa', borderRadius: [8, 8, 0, 0] },
+          label: { show: true, position: 'top', fontWeight: 'bold' }
+        }]
       });
     }
-    if (statusChartRef.value) {
-      const c = echarts.init(statusChartRef.value);
-      const chart = summary.value.archiveStatusChart || {};
+    if (eduChartRef.value) {
+      const c = echarts.init(eduChartRef.value);
       c.setOption({
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: Object.keys(chart).map(statusLabel) },
-        yAxis: { type: 'value', minInterval: 1 },
-        series: [{ type: 'bar', data: Object.values(chart), itemStyle: { color: '#2c6e9e', borderRadius: [6, 6, 0, 0] } }]
+        tooltip: { trigger: 'item', formatter: '{b}: {d}% ({c}人)' },
+        legend: { orient: 'vertical', left: 'left', textStyle: { fontSize: 12 } },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '65%'],
+          center: ['50%', '55%'],
+          data: mapToChart(summary.value.educationChart),
+          label: { show: true, formatter: '{b}: {d}%', fontSize: 11 }
+        }]
       });
     }
   };
 
   onMounted(async () => {
     summary.value = await getDashboardSummary();
-    reminds.value = await getDashboardReminds();
     renderCharts();
   });
 </script>
 
 <style scoped>
-  .stat-title { color: #666; font-size: 14px; }
-  .stat-num { font-size: 32px; font-weight: 700; margin-top: 8px; }
-  .chart-box { height: 280px; width: 100%; }
-  .borrow-line { line-height: 2; font-size: 14px; }
+  .dashboard-page {
+    overflow-y: auto;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-title {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #6c7a91;
+  }
+
+  .stat-num {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1e2f41;
+  }
+
+  .stat-desc {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #8a99b0;
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .chart-card,
+  .remind-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 18px 14px;
+  }
+
+  .remind-card {
+    margin-bottom: 24px;
+  }
+
+  .chart-title {
+    padding-left: 10px;
+    margin-bottom: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border-left: 4px solid #2c6e9e;
+  }
+
+  .chart-box {
+    width: 100%;
+    height: 320px;
+  }
+
+  .stats-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+  }
+
+  .footer-title {
+    margin-right: 16px;
+    font-weight: 600;
+  }
+
+  .divider {
+    margin: 0 12px;
+    color: #c6d2df;
+  }
+
+  .badge {
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #2c6e9e;
+    background: #ecf5fc;
+    border-radius: 30px;
+  }
 </style>
