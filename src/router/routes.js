@@ -81,6 +81,7 @@ export function getMenuRoutes(menus, homePath) {
     },
     { path: '/hrams/person', redirect: '/person-archive/person', meta: { hide: true, hideFooter: true } },
     { path: '/hrams/archive/material', redirect: HRAMS_MATERIAL_MAINTAIN_PATH, meta: { hide: true, hideFooter: true } },
+    { path: '/archive-material/category', redirect: '/system/hrams-catalog', meta: { hide: true, hideFooter: true } },
     { path: '/hrams/archive', redirect: '/person-archive/archive', meta: { hide: true, hideFooter: true } },
     { path: '/hrams/query', redirect: '/query-search/person-query', meta: { hide: true, hideFooter: true } },
     { path: '/hrams/utilize', redirect: `${HRAMS_UTILIZE_REGISTER}?tab=register`, meta: { hide: true, hideFooter: true } },

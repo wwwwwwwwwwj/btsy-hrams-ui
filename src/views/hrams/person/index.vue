@@ -12,6 +12,7 @@
       <div class="hrams-v2-card hrams-v2-filter">
         <person-archive-search-form
           v-model:model="where"
+          simple
           @search="reload(where, 1)"
           @reset="resetWhere"
         />
@@ -20,11 +21,11 @@
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
         <template #action="{ row }">
           <btn-items type="link" :divider="true" :items="[
-            { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
-            { preset: 'edit', permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
-            { title: '管理材料', permission: 'hrams:archive:upload', onClick: () => goMaterial(row) },
+            // { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
             { title: '查看档案', permission: 'hrams:archive:list', onClick: () => goArchive(row) },
-            { preset: 'del', permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
+            { title: '管理材料', icon: false, permission: 'hrams:archive:upload', onClick: () => goMaterial(row) },
+            { preset: 'edit', icon: false, permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
+            { preset: 'del', icon: false, permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
           ]" />
         </template>
       </ele-pro-table>
@@ -50,6 +51,7 @@
   import { pagePerson, removePerson, exportPerson, importPerson } from '@/api/hrams/person';
   import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import '../styles/v2.scss';
+  import { formatDateDay } from '@/utils/hrams-date';
 
   defineOptions({ name: 'HramsPerson' });
   const router = useRouter();
@@ -62,12 +64,16 @@
 
   const columns = ref([
     { type: 'selection', width: 50 },
-    { type: 'index', width: 50 },
-    { prop: 'archiveNo', label: '档案编号', minWidth: 120 },
-    { prop: 'name', label: '姓名', minWidth: 100 },
-    { prop: 'idCard', label: '身份证号', minWidth: 170 },
+    { prop: 'archiveNo', label: '档案编号', minWidth: 120, fixed: 'left' },
+    { prop: 'name', label: '姓名', minWidth: 100, fixed: 'left' },
+    { prop: 'idCard', label: '身份证号', minWidth: 180 },
     { prop: 'gender', label: '性别', width: 70 },
-    { prop: 'birthDate', label: '出生日期', width: 110 },
+    {
+      prop: 'birthDate',
+      label: '出生日期',
+      width: 110,
+      formatter: (row) => formatDateDay(row.birthDate)
+    },
     { prop: 'age', label: '年龄', width: 70 },
     { prop: 'nation', label: '民族', width: 90 },
     { prop: 'politicalStatus', label: '政治面貌', minWidth: 110 },

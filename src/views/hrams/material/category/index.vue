@@ -3,8 +3,8 @@
     <div class="hrams-v2-page">
       <div class="hrams-v2-header">
         <div>
-          <div class="hrams-v2-title">材料大类配置</div>
-          <div class="hrams-v2-desc">启用大类与档案完整性必备项</div>
+          <div class="hrams-v2-title">目录管理</div>
+          <div class="hrams-v2-desc">干部档案固定目录：启用大类与完整性必备项</div>
         </div>
         <div class="hrams-v2-actions">
           <el-button type="primary" v-permission="'hrams:material:category:config'" @click="save">保存</el-button>

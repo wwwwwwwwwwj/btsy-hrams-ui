@@ -11,7 +11,7 @@
       <div class="hrams-v2-card hrams-v2-filter">
         <person-archive-search-form
           v-model:model="search"
-          show-integrity
+          simple
           show-archive-status
           @search="reload(search, 1)"
           @reset="resetSearch"
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, watch, onActivated } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
@@ -45,6 +45,8 @@
   import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import '../styles/v2.scss';
+  import { formatDateDay } from '@/utils/hrams-date';
+  import { dictLabel } from '@/utils/hrams-dict';
 
   defineOptions({ name: 'HramsArchive' });
   const router = useRouter();
@@ -57,24 +59,30 @@
 
   const [,, archiveStatusDicts] = useDictData(['hrams_person_status', 'hrams_education', 'hrams_archive_status']);
 
-  const archiveStatusLabel = (code) => {
-    const d = archiveStatusDicts.value?.find((x) => x.value === code);
-    return d?.label || code || '—';
-  };
+  const archiveStatusLabel = (code) => dictLabel(archiveStatusDicts.value, code);
   const integrityLabel = (s) => (s === 'complete' ? '完整' : s === 'missing' ? '缺项' : '—');
 
   const columns = ref([
     { type: 'selection', width: 50 },
-    { type: 'index', width: 50 },
-    { prop: 'archiveNo', label: '档案编号', minWidth: 120 },
-    { prop: 'name', label: '姓名', minWidth: 100 },
+    { prop: 'archiveNo', label: '档案编号', minWidth: 120, fixed: 'left' },
+    { prop: 'name', label: '姓名', minWidth: 100, fixed: 'left' },
     { prop: 'gender', label: '性别', width: 70 },
-    { prop: 'birthDate', label: '出生年月', width: 110 },
+    {
+      prop: 'birthDate',
+      label: '出生日期',
+      width: 110,
+      formatter: (row) => formatDateDay(row.birthDate)
+    },
     { prop: 'personStatus', label: '当前状态', width: 90 },
     { prop: 'archiveStatus', label: '档案状态', width: 100, slot: 'archiveStatus' },
     { prop: 'materialCount', label: '材料数量', width: 90 },
     { prop: 'integrityStatus', label: '完整性', width: 90, slot: 'integrityStatus' },
-    { prop: 'updateTime', label: '最近更新', minWidth: 160 },
+    {
+      prop: 'updateTime',
+      label: '最近更新',
+      minWidth: 120,
+      formatter: (row) => formatDateDay(row.updateTime)
+    },
     { columnKey: 'action', label: '操作', width: 260, slot: 'action', align: 'center' }
   ]);
 
@@ -105,6 +113,32 @@
     drawerVisible.value = true;
   };
 
+  const syncViewIdFromRoute = () => {
+    const viewId = route.query.viewId;
+    if (viewId == null || viewId === '') {
+      return;
+    }
+    const id = Number(viewId);
+    if (Number.isNaN(id)) {
+      return;
+    }
+    currentPersonId.value = id;
+    drawerVisible.value = true;
+  };
+
+  watch(() => route.query.viewId, syncViewIdFromRoute, { immediate: true });
+
+  onActivated(syncViewIdFromRoute);
+
+  watch(drawerVisible, (visible) => {
+    if (visible || route.query.viewId == null || route.query.viewId === '') {
+      return;
+    }
+    const q = { ...route.query };
+    delete q.viewId;
+    router.replace({ path: route.path, query: q });
+  });
+
   const handleExportCatalog = async (row) => {
     try {
       await exportCatalog(row.id);
@@ -112,12 +146,4 @@
       EleMessage.error({ message: e.message, plain: true });
     }
   };
-
-  onMounted(() => {
-    const viewId = route.query.viewId;
-    if (viewId) {
-      currentPersonId.value = Number(viewId);
-      drawerVisible.value = true;
-    }
-  });
 </script>

@@ -2,6 +2,7 @@
   <el-form :inline="true" :model="model" class="ele-form-search">
     <el-form-item label="档案编号"><el-input v-model="model.archiveNo" clearable /></el-form-item>
     <el-form-item label="姓名"><el-input v-model="model.name" clearable /></el-form-item>
+    <template v-if="!simple">
     <el-form-item label="身份证号"><el-input v-model="model.idCard" clearable /></el-form-item>
     <el-form-item label="性别">
       <dict-data v-model="model.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
@@ -32,6 +33,7 @@
     <el-form-item label="当前状态">
       <dict-data v-model="model.personStatus" code="hrams_person_status" type="select" placeholder="全部" clearable style="width:100px" />
     </el-form-item>
+    </template>
     <el-form-item v-if="showIntegrity" label="材料完整性">
       <el-select v-model="model.integrityStatus" clearable>
         <el-option label="完整" value="complete" />
@@ -57,6 +59,7 @@
   const model = defineModel('model', { type: Object, required: true });
 
   defineProps({
+    simple: { type: Boolean, default: false },
     showIntegrity: { type: Boolean, default: false },
     showArchiveStatus: { type: Boolean, default: false }
   });

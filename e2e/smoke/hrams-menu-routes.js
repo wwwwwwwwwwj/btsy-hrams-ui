@@ -9,7 +9,7 @@ export const HRAMS_MENU_ROUTES = [
   { title: '档案管理', path: '/person-archive/archive', component: 'hrams/archive/index' },
   { title: '材料维护', path: '/archive-material/maintain', component: 'hrams/archive/material/index' },
   { title: '上传批次', path: '/archive-material/batch', component: 'hrams/material/batch/index' },
-  { title: '材料分类', path: '/archive-material/category', component: 'hrams/material/category/index' },
+  { title: '目录管理', path: '/system/hrams-catalog', component: 'hrams/material/category/index' },
   { title: '调阅登记', path: '/archive-utilize/register?tab=register', component: 'hrams/utilize/index' },
   { title: '调阅记录', path: '/archive-utilize/records?tab=records', component: 'hrams/utilize/index' },
   { title: '调阅统计', path: '/archive-utilize/stats?tab=stats', component: 'hrams/utilize/index' },

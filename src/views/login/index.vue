@@ -7,10 +7,6 @@
     }"
   >
     <div class="login-header">
-      <div class="login-logo">
-        <img src="@/assets/logo.png" />
-        <h1 class="login-title">{{ PROJECT_NAME }}</h1>
-      </div>
       <div class="login-tools">
         <div class="login-tool">
           <ele-dropdown
@@ -171,17 +167,6 @@
                   登录
                 </el-button>
               </el-form-item>
-              <div class="auth-app-list">
-                <el-icon
-                  v-for="item in authApps"
-                  :key="item.type"
-                  :title="item.name"
-                  class="auth-app-item"
-                  @click="handleAuthLogin(item.type)"
-                >
-                  <component :is="item.icon" :style="item.iconStyle" />
-                </el-icon>
-              </div>
             </el-form>
           </div>
         </div>
@@ -230,9 +215,7 @@
   import { useThemeStore } from '@/store/modules/theme';
   import { useLogin } from '@/utils/use-login';
   import { getCaptcha, getTenantList } from '@/api/login';
-  import { bindAuth } from '@/api/system/social/auth';
   import loginBg from '@/assets/login-bg.png';
-  const PROJECT_NAME = import.meta.env.VITE_APP_NAME;
 
   const { login, checkLogin } = useLogin();
   const themeStore = useThemeStore();
@@ -266,39 +249,6 @@
   /** 租户开关 */
   const tenantEnabled = ref(true);
 
-  /** 第三方应用 */
-  const authApps = ref([
-    {
-      name: '微信登录',
-      type: 'wechat',
-      icon: 'IconProWechatFilled',
-      iconStyle: { transform: 'scale(1.1)', color: '#4daf29' }
-    },
-    {
-      name: 'MaxKey登录',
-      type: 'maxkey',
-      icon: 'IconProMaxkeyLogo',
-      iconStyle: { transform: 'scale(1.58)', filter: 'saturate(2.6)' }
-    },
-    {
-      name: 'TopIam登录',
-      type: 'topiam',
-      icon: 'IconProTopiamLogo',
-      iconStyle: { transform: 'translateY(1px)' }
-    },
-    {
-      name: 'Gitee登录',
-      type: 'gitee',
-      icon: 'IconProGiteeLogo',
-      iconStyle: { transform: 'scale(1.05)', transformOrigin: '0 0' }
-    },
-    {
-      name: 'GitHub登录',
-      type: 'github',
-      icon: 'IconProGithubLogo'
-    }
-  ]);
-
   /** 获取图形验证码 */
   const queryCaptcha = () => {
     if (!captchaEnabled.value) {
@@ -331,22 +281,6 @@
         queryCaptcha();
       });
     });
-  };
-
-  /** 第三方应用登录 */
-  const handleAuthLogin = (type) => {
-    const loading = EleMessage.loading({
-      message: '请求中..',
-      plain: true
-    });
-    bindAuth(type, form.tenantId)
-      .then((url) => {
-        location.href = url;
-      })
-      .catch((e) => {
-        loading.close();
-        EleMessage.error({ message: e.message, plain: true });
-      });
   };
 
   /** 切换布局方向 */
@@ -434,6 +368,7 @@
       padding: 8px 8px 0 16px;
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       box-sizing: border-box;
       position: absolute;
       left: 0;
@@ -441,33 +376,10 @@
       z-index: 4;
     }
 
-    /* logo */
-    .login-logo {
-      display: flex;
-      align-items: center;
-
-      & > img {
-        width: 30px;
-        height: 30px;
-      }
-    }
-
-    .login-title {
-      font-size: 20px;
-      font-weight: 500;
-      font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-        Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-      margin: 0 0 0 6px;
-    }
-
-    /* 顶栏右侧 */
     .login-tools {
       display: flex;
       align-items: center;
       padding: 4px 8px;
-      margin-left: auto;
       border-radius: 42px;
       background: rgba(255, 255, 255, 0.28);
       box-shadow:
@@ -744,28 +656,6 @@
     }
   }
 
-  /* 第三方应用 */
-  .auth-app-list {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 18px;
-  }
-
-  .auth-app-item {
-    width: 26px;
-    height: 26px;
-    font-size: 15px;
-    margin-left: 8px;
-    border-radius: 50%;
-    border: 1px solid var(--el-border-color);
-    transition: all 0.2s;
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--el-color-primary);
-    }
-  }
 </style>
 
 <style lang="scss">

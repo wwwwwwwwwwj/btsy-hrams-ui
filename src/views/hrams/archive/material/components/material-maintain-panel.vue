@@ -1,7 +1,7 @@
 <template>
   <div class="material-maintain">
     <div class="hrams-v2-card hrams-v2-filter">
-      <el-form :inline="true" class="ele-form-search" @submit.prevent="">
+      <el-form :inline="true" class="ele-form-search material-search-form" @submit.prevent="">
         <el-form-item label="材料名称">
           <el-input
             :model-value="keyword"
@@ -21,21 +21,21 @@
             <el-radio-button value="createTime">按上传时间</el-radio-button>
           </el-radio-group>
         </el-form-item>
+        <el-form-item v-if="!readOnly" class="material-batch-actions">
+          <el-button v-permission="'hrams:archive:download'" :disabled="!hasSelectedUploaded" @click="$emit('batch-download')">
+            批量下载
+          </el-button>
+          <el-button type="danger" v-permission="'hrams:archive:remove'" :disabled="!hasSelection" @click="$emit('batch-delete')">
+            批量删除
+          </el-button>
+        </el-form-item>
       </el-form>
-      <div v-if="!readOnly" class="hrams-v2-actions material-toolbar">
-        <el-button v-permission="'hrams:archive:download'" :disabled="!hasSelectedUploaded" @click="$emit('batch-download')">
-          批量下载
-        </el-button>
-        <el-button type="danger" v-permission="'hrams:archive:remove'" :disabled="!hasSelection" @click="$emit('batch-delete')">
-          批量删除
-        </el-button>
-      </div>
     </div>
 
     <div class="hrams-v2-card hrams-v2-table-card material-workspace">
       <el-row :gutter="16">
-        <el-col :md="5" :sm="24" class="material-tree-col">
-          <div class="tree-head">材料目录</div>
+        <el-col :md="7" :sm="24" class="material-tree-col">
+          <div class="tree-head">档案目录</div>
           <el-tree
             class="category-tree"
             :data="categoryTree"
@@ -47,31 +47,18 @@
             @node-click="onTreeClick"
           >
             <template #default="{ data }">
-              <span class="tree-node">{{ data.name }} ({{ data.fileCount || 0 }})</span>
+              <span class="tree-node" :title="data.name">{{ data.name }} ({{ data.fileCount || 0 }})</span>
             </template>
           </el-tree>
           <div class="summary">总份数 {{ panel.totalFiles || 0 }}，总页数 {{ panel.totalPages || 0 }}</div>
         </el-col>
-        <el-col :md="19" :sm="24">
+        <el-col :md="17" :sm="24">
           <el-table
             :data="materials"
             :row-class-name="rowClass"
             @selection-change="(rows) => $emit('selection-change', rows)"
           >
             <el-table-column v-if="!readOnly" type="selection" width="48" :selectable="rowSelectable" />
-            <el-table-column label="缩略图" width="72" align="center">
-              <template #default="{ row }">
-                <el-image
-                  v-if="isImageMaterial(row)"
-                  :src="row.previewUrl"
-                  fit="cover"
-                  class="mat-thumb"
-                  :preview-src-list="[]"
-                />
-                <el-icon v-else-if="row.fileStatus === 'uploaded'" class="mat-file-icon"><Document /></el-icon>
-                <span v-else class="mat-empty">—</span>
-              </template>
-            </el-table-column>
             <el-table-column prop="pageNo" label="页号" width="70" />
             <el-table-column prop="displayNo" label="显示序号" width="90" />
             <el-table-column prop="materialName" label="材料名称" min-width="160" show-overflow-tooltip />
@@ -97,8 +84,6 @@
 </template>
 
 <script setup>
-  import { Document } from '@element-plus/icons-vue';
-
   const props = defineProps({
     readOnly: Boolean,
     panel: { type: Object, default: () => ({}) },
@@ -110,8 +95,7 @@
     hasSelectedUploaded: Boolean,
     hasSelection: Boolean,
     rowClass: { type: Function, required: true },
-    rowSelectable: { type: Function, required: true },
-    isImageMaterial: { type: Function, required: true }
+    rowSelectable: { type: Function, required: true }
   });
 
   const emit = defineEmits([
@@ -169,10 +153,20 @@
 </script>
 
 <style scoped>
-  .material-toolbar {
-    margin-top: 4px;
-    padding-top: 12px;
-    border-top: 1px solid #eef2f8;
+  .material-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 8px;
+  }
+
+  .material-batch-actions {
+    margin-left: auto;
+  }
+
+  .material-batch-actions :deep(.el-form-item__content) {
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .material-workspace {
@@ -192,10 +186,34 @@
     border: 1px solid #eef2f8;
     border-radius: 12px;
     padding: 8px;
+    box-sizing: border-box;
   }
 
   .tree-node {
+    display: block;
     font-size: 13px;
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .category-tree :deep(.el-tree-node__content) {
+    height: auto;
+    min-height: 32px;
+    align-items: flex-start;
+    padding: 4px 8px 4px 0;
+  }
+
+  .category-tree :deep(.el-tree-node__label) {
+    flex: 1;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.45;
+    word-break: break-all;
+  }
+
+  .category-tree :deep(.el-tree-node.is-current > .el-tree-node__content) {
+    border-radius: 8px;
   }
 
   .summary {
@@ -206,21 +224,6 @@
 
   .material-tree-col {
     margin-bottom: 12px;
-  }
-
-  .mat-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-  }
-
-  .mat-file-icon {
-    font-size: 28px;
-    color: #8a99b0;
-  }
-
-  .mat-empty {
-    color: #ccc;
   }
 
   :deep(.is-disabled) {

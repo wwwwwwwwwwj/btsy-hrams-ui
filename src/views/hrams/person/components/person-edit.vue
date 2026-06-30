@@ -2,7 +2,14 @@
   <ele-modal :form="true" :width="720" :title="isUpdate ? '编辑人员' : '新增人员'" :loading="loading" v-bind="modalProps">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" @submit.prevent="">
       <el-form-item v-if="isUpdate" label="档案编号"><el-input :model-value="form.archiveNo" disabled /></el-form-item>
-      <el-form-item label="身份证号" prop="idCard"><el-input v-model="form.idCard" maxlength="18" placeholder="请输入身份证号" /></el-form-item>
+      <el-form-item label="身份证号" prop="idCard">
+        <el-input
+          v-model="form.idCard"
+          maxlength="18"
+          placeholder="请输入身份证号"
+          @blur="fillFromIdCard"
+        />
+      </el-form-item>
       <el-form-item label="姓名" prop="name"><el-input v-model="form.name" placeholder="请输入姓名" /></el-form-item>
       <el-form-item label="性别">
         <dict-data v-model="form.gender" code="hrams_gender" type="select" placeholder="请选择性别" style="width:100%" />
@@ -43,6 +50,7 @@
   import { EleMessage, useModal } from 'ele-admin-plus';
   import DictData from '@/components/DictData/index.vue';
   import { addPerson, updatePerson, getPerson } from '@/api/hrams/person';
+  import { parseIdCardInfo } from '@/utils/hrams-id-card';
 
   const props = defineProps({ data: Object, onDone: Function });
   const { modalProps, closeModal } = useModal();
@@ -80,6 +88,13 @@
       isUpdate.value = false;
     }
   }, { immediate: true });
+
+  const fillFromIdCard = () => {
+    const parsed = parseIdCardInfo(form.value.idCard);
+    if (!parsed) return;
+    form.value.birthDate = parsed.birthDate;
+    form.value.gender = parsed.gender;
+  };
 
   const handleSave = () => {
     formRef.value?.validate?.(async (valid) => {

@@ -45,6 +45,9 @@ export function useMaterialMaintain() {
   const PAGE_TITLE = '材料维护';
 
   const syncLayoutTitle = () => {
+    if (route.path !== HRAMS_MATERIAL_MAINTAIN_PATH) {
+      return;
+    }
     activeMenu(HRAMS_MATERIAL_MAINTAIN_PATH);
     setPageTabTitle(PAGE_TITLE);
     setPageTitle(PAGE_TITLE);
@@ -83,16 +86,35 @@ export function useMaterialMaintain() {
   const activeBatchNo = ref('');
   const intakePreview = ref({});
   const intakeLoading = ref(false);
+  const pendingUploadFiles = ref([]);
+  const uploadSubmitting = ref(false);
 
-  const isImageMaterial = (row) => {
-    const name = (row.fileName || '').toLowerCase();
-    return row.fileStatus === 'uploaded' && row.previewUrl && /\.(jpe?g|png|bmp)$/i.test(name);
+  const fileNameStem = (name) => (name ? String(name).replace(/\.[^.]+$/, '') : '');
+
+  const nextPendingKey = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const addToPending = (file, materialName) => {
+    if (!file) return;
+    pendingUploadFiles.value.push({
+      key: nextPendingKey(),
+      file,
+      materialName: materialName || fileNameStem(file.name) || ''
+    });
+  };
+
+  const removePendingUpload = (key) => {
+    pendingUploadFiles.value = pendingUploadFiles.value.filter((p) => p.key !== key);
+  };
+
+  const clearPendingUpload = () => {
+    pendingUploadFiles.value = [];
   };
 
   const closeUploadDialog = () => {
     uploadVisible.value = false;
     activeBatchId.value = null;
     activeBatchNo.value = '';
+    clearPendingUpload();
   };
 
   const sortedMaterials = computed(() => {
@@ -139,7 +161,12 @@ export function useMaterialMaintain() {
 
   watch(
     () => route.fullPath,
-    () => nextTick(syncLayoutTitle),
+    () => {
+      if (route.path !== HRAMS_MATERIAL_MAINTAIN_PATH) {
+        return;
+      }
+      nextTick(syncLayoutTitle);
+    },
     { immediate: true }
   );
 
@@ -179,17 +206,19 @@ export function useMaterialMaintain() {
     activeBatchNo.value = '';
     uploadForm.value = { categoryCode: categoryCode.value, pageNo: 1, materialName: '', pageCount: 1, formDate: '', file: null };
     intakePreview.value = {};
+    clearPendingUpload();
     suggestPageNo();
     uploadVisible.value = true;
   };
 
   const runIntakePreview = async () => {
-    if (!uploadForm.value.file) {
+    const file = pendingUploadFiles.value[0]?.file;
+    if (!file) {
       return EleMessage.error({ message: '请先选择文件', plain: true });
     }
     intakeLoading.value = true;
     try {
-      intakePreview.value = await previewMaterialIntake(uploadForm.value.file);
+      intakePreview.value = await previewMaterialIntake(file);
       if (intakePreview.value.suggestMaterialName && !uploadForm.value.materialName) {
         uploadForm.value.materialName = intakePreview.value.suggestMaterialName;
       }
@@ -206,58 +235,118 @@ export function useMaterialMaintain() {
       doReplace();
       return;
     }
-    uploadForm.value.file = file;
-    suggestPageNo();
+    addToPending(file);
   };
 
   const pickImageForEditor = (file, target) => {
     if (!file) return;
     const isImg = /^image\//i.test(file.type) || /\.(jpe?g|png|bmp)$/i.test(file.name || '');
+    if (target === 'replace') {
+      replaceForm.value.file = file;
+      if (isImg) {
+        editorFile.value = file;
+        editorTarget.value = target;
+        editorVisible.value = true;
+      }
+      return;
+    }
     if (isImg) {
       editorFile.value = file;
       editorTarget.value = target;
       editorVisible.value = true;
       return;
     }
-    if (target === 'upload') uploadForm.value.file = file;
-    else replaceForm.value.file = file;
+    addToPending(file);
   };
 
   const onUploadFile = (e) => {
-    const f = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = '';
-    pickImageForEditor(f, 'upload');
+    if (!files.length) return;
+    if (files.length === 1) {
+      pickImageForEditor(files[0], 'upload');
+      return;
+    }
+    files.forEach((f) => addToPending(f));
+    EleMessage.success({ message: `已加入 ${files.length} 个文件，请确认后上传`, plain: true });
+  };
+
+  const resolveMaterialName = (item, singleInBatch) => {
+    if (uploadForm.value.materialName?.trim()) {
+      if (singleInBatch) {
+        return uploadForm.value.materialName.trim();
+      }
+      if (pendingUploadFiles.value.length === 1) {
+        return uploadForm.value.materialName.trim();
+      }
+    }
+    const fromItem = item.materialName?.trim() || fileNameStem(item.file?.name);
+    return fromItem || '';
   };
 
   const doUpload = async () => {
-    if (!uploadForm.value.file) return EleMessage.error({ message: '请选择文件', plain: true });
-    if (!uploadForm.value.materialName?.trim()) return EleMessage.error({ message: '请填写材料名称', plain: true });
-    if (!uploadForm.value.formDate) return EleMessage.error({ message: '请选择形成日期', plain: true });
+    const queue = [...pendingUploadFiles.value];
+    if (!queue.length) {
+      return EleMessage.error({ message: '请先选择文件', plain: true });
+    }
+    if (!uploadForm.value.formDate) {
+      return EleMessage.error({ message: '请选择形成日期', plain: true });
+    }
     if (!uploadForm.value.pageCount || uploadForm.value.pageCount < 1) {
       return EleMessage.error({ message: '请填写页数', plain: true });
     }
-    const fd = new FormData();
-    fd.append('categoryCode', uploadForm.value.categoryCode);
-    fd.append('pageNo', uploadForm.value.pageNo);
-    fd.append('materialName', uploadForm.value.materialName.trim());
-    fd.append('pageCount', uploadForm.value.pageCount);
-    fd.append('formDate', uploadForm.value.formDate);
-    if (activeBatchId.value) fd.append('batchId', activeBatchId.value);
-    fd.append('file', uploadForm.value.file);
+    const singleInBatch = queue.length === 1;
+    if (singleInBatch && !resolveMaterialName(queue[0], true)) {
+      return EleMessage.error({ message: '请填写材料名称', plain: true });
+    }
+
+    uploadSubmitting.value = true;
+    let pageNo = uploadForm.value.pageNo;
+    let successCount = 0;
     try {
-      const saved = await uploadMaterial(personId.value, fd);
-      if (saved?.batchId) {
-        activeBatchId.value = saved.batchId;
-        activeBatchNo.value = saved.batchNo || '';
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        const materialName = resolveMaterialName(item, singleInBatch);
+        if (!materialName) {
+          throw new Error(`第 ${i + 1} 个文件缺少材料名称`);
+        }
+        const fd = new FormData();
+        fd.append('categoryCode', uploadForm.value.categoryCode);
+        fd.append('pageNo', pageNo);
+        fd.append('materialName', materialName);
+        fd.append('pageCount', uploadForm.value.pageCount);
+        fd.append('formDate', uploadForm.value.formDate);
+        if (activeBatchId.value) fd.append('batchId', activeBatchId.value);
+        fd.append('file', item.file);
+        const saved = await uploadMaterial(personId.value, fd);
+        if (saved?.batchId) {
+          activeBatchId.value = saved.batchId;
+          activeBatchNo.value = saved.batchNo || '';
+        }
+        pageNo += 1;
+        successCount += 1;
       }
-      uploadForm.value.file = null;
+      clearPendingUpload();
       uploadForm.value.materialName = '';
       uploadForm.value.formDate = '';
-      suggestPageNo();
-      EleMessage.success({ message: '上传成功，可继续选择下一张', plain: true });
-      load();
+      uploadForm.value.pageNo = pageNo;
+      await load();
+      EleMessage.success({
+        message: successCount > 1 ? `本批已上传 ${successCount} 份材料` : '上传成功，可继续选择文件',
+        plain: true
+      });
     } catch (e) {
-      EleMessage.error({ message: e.message, plain: true });
+      if (successCount > 0) {
+        pendingUploadFiles.value = queue.slice(successCount);
+        uploadForm.value.pageNo = pageNo;
+        await load();
+      }
+      EleMessage.error({
+        message: successCount > 0 ? `已上传 ${successCount} 份，后续失败：${e.message}` : e.message,
+        plain: true
+      });
+    } finally {
+      uploadSubmitting.value = false;
     }
   };
 
@@ -351,12 +440,14 @@ export function useMaterialMaintain() {
     uploadForm,
     editForm,
     pageNoForm,
+    replaceForm,
     activeBatchNo,
     intakePreview,
     intakeLoading,
+    pendingUploadFiles,
+    uploadSubmitting,
     editorVisible,
     editorFile,
-    isImageMaterial,
     rowClass,
     rowSelectable,
     selectPerson,
@@ -369,6 +460,7 @@ export function useMaterialMaintain() {
     closeUploadDialog,
     suggestPageNo,
     onUploadFile,
+    removePendingUpload,
     runIntakePreview,
     doUpload,
     saveEdit,

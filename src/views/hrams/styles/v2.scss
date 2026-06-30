@@ -37,7 +37,21 @@
 }
 
 .hrams-v2-table-card {
-  padding: 8px 0 0;
+  padding: 12px 20px 20px;
+  overflow: hidden;
+
+  :deep(.ele-pro-table) {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  :deep(.ele-toolbar.is-plain) {
+    margin: 0 0 4px;
+  }
+
+  :deep(.ele-toolbar .ele-toolbar-tools) {
+    padding-right: 2px;
+  }
 }
 
 .hrams-v2-actions {
@@ -69,9 +83,8 @@
   border-radius: 24px;
 }
 
-.hrams-v2-page :deep(.ele-pro-table),
-.hrams-v2-page :deep(.el-table) {
-  border-radius: 24px;
+.hrams-v2-page :deep(.hrams-v2-table-card .el-table) {
+  border-radius: 16px;
 }
 
 .hrams-v2-page :deep(.el-table th.el-table__cell) {

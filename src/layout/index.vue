@@ -64,6 +64,7 @@
     @bodySizeChange="handleBodySizeChange"
   >
     <router-layout />
+    <material-preview-host />
     <template #logo />
     <template #logoTitle>
       <h1>{{ PROJECT_NAME }}</h1>
@@ -189,6 +190,7 @@
   import { useIsSimpleTheme } from '@/components/IconSelect/util';
   import HeaderRight from './components/header-right.vue';
   import PageFooter from './components/page-footer.vue';
+  import MaterialPreviewHost from '@/views/hrams/components/material-preview-host.vue';
   const PROJECT_NAME = import.meta.env.VITE_APP_NAME;
 
   defineOptions({ name: 'Layout' });

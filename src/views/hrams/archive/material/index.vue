@@ -37,7 +37,6 @@
         :has-selection="hasSelection"
         :row-class="rowClass"
         :row-selectable="rowSelectable"
-        :is-image-material="isImageMaterial"
         @select-category="onSelectCat"
         @search="loadMaterials"
         @reset-search="resetSearch"
@@ -62,12 +61,16 @@
       :upload-form="uploadForm"
       :edit-form="editForm"
       :page-no-form="pageNoForm"
+      :replace-form="replaceForm"
       :active-batch-no="activeBatchNo"
       :intake-preview="intakePreview"
       :intake-loading="intakeLoading"
+      :pending-upload-files="pendingUploadFiles"
+      :upload-submitting="uploadSubmitting"
       @close-upload="closeUploadDialog"
       @suggest-page-no="suggestPageNo"
       @upload-file="onUploadFile"
+      @remove-pending="removePendingUpload"
       @intake-preview="runIntakePreview"
       @do-upload="doUpload"
       @save-edit="saveEdit"
@@ -113,12 +116,14 @@
     uploadForm,
     editForm,
     pageNoForm,
+    replaceForm,
     activeBatchNo,
     intakePreview,
     intakeLoading,
+    pendingUploadFiles,
+    uploadSubmitting,
     editorVisible,
     editorFile,
-    isImageMaterial,
     rowClass,
     rowSelectable,
     selectPerson,
@@ -131,6 +136,7 @@
     closeUploadDialog,
     suggestPageNo,
     onUploadFile,
+    removePendingUpload,
     runIntakePreview,
     doUpload,
     saveEdit,

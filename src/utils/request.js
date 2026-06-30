@@ -45,10 +45,11 @@ export function requestInterceptor(config) {
     config.params = {};
   }
 
-  // 防止数据重复提交
+  // 防止数据重复提交（FormData 无法可靠序列化，不参与比对）
   if (
     config.headers?.repeatSubmit !== false &&
-    (config.method === 'post' || config.method === 'put')
+    (config.method === 'post' || config.method === 'put') &&
+    !(config.data instanceof FormData)
   ) {
     const requestObj = {
       url: config.url,

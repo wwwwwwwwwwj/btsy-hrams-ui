@@ -1,5 +1,6 @@
 import request from '@/utils/request';
 import { download, toFormData, checkDownloadRes } from '@/utils/common';
+import { openMaterialPreview } from '@/views/hrams/composables/use-material-preview';
 
 export async function pageArchivePersons(params) {
   const res = await request.get('/hrams/archive/persons', { params });
@@ -115,19 +116,8 @@ export async function deleteMaterialFile(materialId) {
   return Promise.reject(new Error(res.data.msg));
 }
 
-export async function previewMaterial(materialId) {
-  const res = await request.get(`/hrams/archive/materials/${materialId}/preview`, {
-    responseType: 'blob'
-  });
-  await checkDownloadRes(res);
-  const type = res.headers['content-type'] || 'application/octet-stream';
-  const url = URL.createObjectURL(new Blob([res.data], { type }));
-  const win = window.open(url, '_blank');
-  if (!win) {
-    URL.revokeObjectURL(url);
-    return Promise.reject(new Error('请允许浏览器弹窗以预览'));
-  }
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+export function previewMaterial(materialId) {
+  return openMaterialPreview(materialId);
 }
 
 /** 打印材料（服务端记 print 审计），图片/PDF 弹窗并叠加水印后调起打印 */
@@ -163,8 +153,28 @@ export async function printMaterial(materialId, { archiveNo, operatorName } = {}
   setTimeout(() => URL.revokeObjectURL(url), 120_000);
 }
 
+export async function exportArchivePackage(personId) {
+  const res = await request.get(`/hrams/archive/${personId}/archive/export`, { responseType: 'blob' });
+  await checkDownloadRes(res);
+  const name = parseFilenameFromDisposition(res.headers['content-disposition']) || `archive_${personId}.zip`;
+  download(res.data, name);
+}
+
+function parseFilenameFromDisposition(disposition) {
+  if (!disposition) return '';
+  const m = /filename\*=utf-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
+  const raw = m?.[1] || m?.[2];
+  if (!raw) return '';
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export async function exportCatalog(personId) {
   const res = await request.get(`/hrams/archive/${personId}/catalog/export`, { responseType: 'blob' });
   await checkDownloadRes(res);
-  download(res.data, `catalog_${personId}.xlsx`);
+  const name = parseFilenameFromDisposition(res.headers['content-disposition']) || `catalog_${personId}.xlsx`;
+  download(res.data, name);
 }
