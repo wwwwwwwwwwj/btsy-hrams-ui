@@ -1,12 +1,6 @@
 <template>
   <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">操作日志</div>
-          <div class="hrams-v2-desc">系统操作全留痕管理</div>
-        </div>
-      </div>
     <div class="hrams-v2-card hrams-v2-filter">
       <el-form :inline="true" :model="where" class="ele-form-search">
         <el-form-item label="操作人"><el-input v-model="where.operatorName" clearable /></el-form-item>

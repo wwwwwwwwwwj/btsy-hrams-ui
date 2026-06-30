@@ -1,12 +1,6 @@
 <template>
   <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">综合查询</div>
-          <div class="hrams-v2-desc">档案查询 · 材料查看 · 目录导出</div>
-        </div>
-      </div>
       <div class="hrams-v2-card hrams-v2-filter">
         <person-archive-search-form
           v-model:model="where"

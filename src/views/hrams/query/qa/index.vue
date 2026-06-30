@@ -1,15 +1,6 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page qa-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">智能问答</div>
-          <div class="hrams-v2-desc">基于档案统计与配置的问答助手</div>
-        </div>
-        <div v-if="messages.length" class="hrams-v2-actions">
-          <el-button @click="clearSession">清空会话</el-button>
-        </div>
-      </div>
       <div class="hrams-v2-card qa-card">
         <div v-if="messages.length" class="qa-messages">
           <div
@@ -42,6 +33,7 @@
           class="qa-input"
         />
         <div class="qa-actions">
+          <el-button v-if="messages.length" @click="clearSession">清空会话</el-button>
           <el-button type="primary" :loading="loading" v-permission="'hrams:qa:chat'" @click="doQa">提问</el-button>
         </div>
         <div class="qa-samples">

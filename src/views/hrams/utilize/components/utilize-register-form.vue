@@ -25,7 +25,7 @@
     </el-form-item>
     <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
     <el-form-item label="申请表"><input type="file" accept=".pdf,.jpg,.jpeg" @change="onFile" /></el-form-item>
-    <el-form-item>
+    <el-form-item v-if="!inDialog">
       <el-button @click="resetForm">重置</el-button>
       <el-button type="primary" v-permission="'hrams:borrow:add'" @click="submit">提交</el-button>
     </el-form-item>
@@ -39,6 +39,10 @@
   import { useUserStore } from '@/store/modules/user';
   import { registerBorrowForm, lookupBorrowPerson } from '@/api/hrams/borrow';
   import { listCategories } from '@/api/hrams/archive';
+
+  defineProps({
+    inDialog: { type: Boolean, default: false }
+  });
 
   const emit = defineEmits(['submitted']);
   const userStore = useUserStore();
@@ -93,4 +97,6 @@
   };
 
   onMounted(resetForm);
+
+  defineExpose({ submit, resetForm });
 </script>

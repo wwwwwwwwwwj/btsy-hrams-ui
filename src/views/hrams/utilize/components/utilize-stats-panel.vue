@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-button v-permission="'hrams:borrow:export'" style="margin-bottom:12px" @click="exportStats">导出统计 Excel</el-button>
+    <el-button v-permission="'hrams:borrow:export'" class="export-btn" @click="exportStats">导出统计 Excel</el-button>
     <el-row :gutter="16">
       <el-col :span="12">
         <div class="stats-card">
@@ -118,6 +118,7 @@
 </script>
 
 <style scoped>
+  .export-btn { margin-bottom: 12px; }
   .chart-box { height: 300px; width: 100%; }
   .stats-card {
     border: 1px solid #eef2f8;

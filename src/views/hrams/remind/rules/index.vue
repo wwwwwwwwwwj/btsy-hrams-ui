@@ -1,16 +1,10 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">提醒规则</div>
-          <div class="hrams-v2-desc">到期扫描与提前提醒天数配置</div>
-        </div>
-        <div class="hrams-v2-actions">
+      <div class="hrams-v2-card" style="padding: 16px 20px">
+        <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:remind:list'" @click="scan">立即扫描</el-button>
         </div>
-      </div>
-      <div class="hrams-v2-card" style="padding: 16px 20px">
         <el-table :data="rules">
           <el-table-column prop="remindType" label="类型" width="140">
             <template #default="{ row }">{{ typeLabel(row.remindType) }}</template>

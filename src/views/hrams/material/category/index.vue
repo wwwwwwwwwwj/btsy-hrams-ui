@@ -1,16 +1,10 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">目录管理</div>
-          <div class="hrams-v2-desc">干部档案固定目录：启用大类与完整性必备项</div>
-        </div>
-        <div class="hrams-v2-actions">
+      <div class="hrams-v2-card" style="padding: 16px 20px">
+        <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:material:category:config'" @click="save">保存</el-button>
         </div>
-      </div>
-      <div class="hrams-v2-card" style="padding: 16px 20px">
         <el-table :data="rows" size="small" v-loading="loading">
           <el-table-column prop="name" label="大类" min-width="280" />
           <el-table-column label="启用" width="80">

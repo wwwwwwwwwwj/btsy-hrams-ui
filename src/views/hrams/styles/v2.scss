@@ -1,7 +1,7 @@
 .hrams-v2-page {
-  min-height: 100%;
-  padding: 24px 28px;
-  background: #eef2f6;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
   color: #1f2d3d;
 }
 
@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .hrams-v2-title {
@@ -32,8 +32,30 @@
 }
 
 .hrams-v2-filter {
-  padding: 20px 24px;
+  padding: 16px 20px;
   margin-bottom: 24px;
+}
+
+/* 列表页：筛选区 + 表格区合并为一张主卡片 */
+.hrams-v2-page > .hrams-v2-card.hrams-v2-filter,
+.material-person-pick > .hrams-v2-card.hrams-v2-filter,
+.material-maintain > .hrams-v2-card.hrams-v2-filter,
+.utilize-records > .hrams-v2-card.hrams-v2-filter {
+  margin-bottom: 0;
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+}
+
+.hrams-v2-page > .hrams-v2-card.hrams-v2-filter + .hrams-v2-card.hrams-v2-table-card,
+.material-person-pick > .hrams-v2-card.hrams-v2-filter + .hrams-v2-card.hrams-v2-table-card,
+.material-maintain > .hrams-v2-card.hrams-v2-filter + .hrams-v2-card.hrams-v2-table-card,
+.utilize-records > .hrams-v2-card.hrams-v2-filter + .hrams-v2-card.hrams-v2-table-card {
+  margin-top: 0;
+  padding-top: 4px;
+  border-top: 1px solid #eef2f8;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 }
 
 .hrams-v2-table-card {
@@ -41,7 +63,7 @@
   overflow: hidden;
 
   :deep(.ele-pro-table) {
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
   }
 
@@ -59,6 +81,23 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+
+.hrams-v2-filter-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.hrams-v2-card-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .hrams-v2-primary,
@@ -84,7 +123,7 @@
 }
 
 .hrams-v2-page :deep(.hrams-v2-table-card .el-table) {
-  border-radius: 16px;
+  border-radius: 12px;
 }
 
 .hrams-v2-page :deep(.el-table th.el-table__cell) {

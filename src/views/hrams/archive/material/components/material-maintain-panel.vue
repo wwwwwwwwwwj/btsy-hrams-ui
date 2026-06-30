@@ -14,6 +14,7 @@
         <el-form-item>
           <el-button type="primary" @click="$emit('search')">查询</el-button>
           <el-button @click="$emit('reset-search')">重置</el-button>
+          <slot name="search-extra" />
         </el-form-item>
         <el-form-item label="排序">
           <el-radio-group :model-value="sortMode" size="small" @update:model-value="$emit('update:sortMode', $event)">
@@ -63,7 +64,9 @@
             <el-table-column prop="displayNo" label="显示序号" width="90" />
             <el-table-column prop="materialName" label="材料名称" min-width="160" show-overflow-tooltip />
             <el-table-column prop="fileName" label="文件名" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="formDate" label="形成时间" width="120" />
+            <el-table-column label="形成日期" width="110">
+              <template #default="{ row }">{{ formatDateDay(row.formDate) }}</template>
+            </el-table-column>
             <el-table-column prop="pageCount" label="页数" width="70" />
             <el-table-column prop="batchNo" label="上传批次" min-width="130" show-overflow-tooltip />
             <el-table-column prop="createTime" label="上传时间" width="165" />
@@ -84,6 +87,8 @@
 </template>
 
 <script setup>
+  import { formatDateDay } from '@/utils/hrams-date';
+
   const props = defineProps({
     readOnly: Boolean,
     panel: { type: Object, default: () => ({}) },

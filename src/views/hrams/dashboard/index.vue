@@ -35,6 +35,11 @@
         </div>
       </div>
 
+      <div class="hrams-v2-card borrow-stats-wrap">
+        <div class="chart-title">档案调阅统计（本月）</div>
+        <utilize-stats-panel ref="borrowStatsRef" />
+      </div>
+
       <div class="hrams-v2-card stats-footer">
         <div>
           <span class="footer-title">本月档案利用台账</span>
@@ -60,15 +65,17 @@
 </template>
 
 <script setup>
-  import { onBeforeUnmount, onMounted, ref } from 'vue';
+  import { onActivated, onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
   import * as echarts from 'echarts';
   import { getDashboardSummary } from '@/api/hrams/dashboard';
+  import UtilizeStatsPanel from '../utilize/components/utilize-stats-panel.vue';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsDashboard' });
   const summary = ref({});
   const ageChartRef = ref(null);
   const eduChartRef = ref(null);
+  const borrowStatsRef = ref(null);
   let ageChart;
   let eduChart;
   let chartMounted = false;
@@ -128,14 +135,26 @@
     }
   };
 
-  onMounted(async () => {
-    chartMounted = true;
+  const loadDashboard = async () => {
     summary.value = await getDashboardSummary();
     if (!chartMounted) {
       return;
     }
     renderCharts();
+    await nextTick();
+    borrowStatsRef.value?.renderStats?.();
+  };
+
+  onMounted(async () => {
+    chartMounted = true;
+    await loadDashboard();
     window.addEventListener('resize', resizeCharts);
+  });
+
+  onActivated(() => {
+    if (chartMounted) {
+      loadDashboard();
+    }
   });
 
   onBeforeUnmount(() => {
@@ -187,6 +206,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .borrow-stats-wrap {
+    padding: 20px 18px 14px;
     margin-bottom: 28px;
   }
 

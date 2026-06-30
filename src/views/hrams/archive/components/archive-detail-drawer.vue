@@ -3,6 +3,7 @@
     :model-value="modelValue"
     title="档案详情"
     size="72%"
+    append-to-body
     class="archive-detail-drawer"
     @update:model-value="(v) => emit('update:modelValue', v)"
   >
@@ -160,7 +161,8 @@
       if (id != null && id !== '') {
         loadDetail();
       }
-    }
+    },
+    { immediate: true }
   );
 
   const openPreview = (id) => {
@@ -234,13 +236,11 @@
   }
 
   .tree-node {
-    display: inline-block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: block;
     font-size: 13px;
-    vertical-align: middle;
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .summary {
@@ -251,15 +251,21 @@
 
   :deep(.el-tree-node__content) {
     height: auto;
-    min-height: 30px;
-    padding: 4px 0;
+    min-height: 32px;
+    padding: 4px 8px 4px 0;
     align-items: flex-start;
   }
 
   :deep(.el-tree-node__label) {
+    flex: 1;
+    min-width: 0;
     white-space: normal;
-    line-height: 1.4;
-    word-break: break-all;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  :deep(.el-tree-node.is-current > .el-tree-node__content) {
+    border-radius: 8px;
   }
 </style>
 

@@ -1,21 +1,22 @@
 <template>
-  <ele-page hide-footer flex-table="auto">
+  <ele-page hide-footer flex-table="auto" :multi-card="false">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div class="hrams-v2-title">人员管理</div>
-        <div class="hrams-v2-actions">
-          <el-button type="primary" v-permission="'hrams:person:add'" @click="() => handleEdit()">新增人员</el-button>
-          <el-button v-permission="'hrams:person:import'" @click="handleImport">批量导入</el-button>
-          <el-button v-permission="'hrams:person:export'" @click="handleExport">批量导出</el-button>
-        </div>
-      </div>
       <div class="hrams-v2-card hrams-v2-filter">
         <person-archive-search-form
           v-model:model="where"
           simple
           @search="reload(where, 1)"
           @reset="resetWhere"
-        />
+        >
+          <template #extra>
+            <span class="hrams-v2-filter-actions">
+              <el-button type="primary" v-permission="'hrams:person:add'" @click="() => handleEdit()">新增人员</el-button>
+              <el-button v-permission="'hrams:person:import'" @click="handleImport">批量导入</el-button>
+              <el-button v-permission="'hrams:person:export'" @click="handleExport">批量导出</el-button>
+              <el-button v-permission="'hrams:person:import'" @click="handleDownloadTemplate">下载导入模板</el-button>
+            </span>
+          </template>
+        </person-archive-search-form>
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
@@ -48,7 +49,7 @@
   import { ElMessageBox } from 'element-plus';
   import { EleMessage, useModal } from 'ele-admin-plus';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
-  import { pagePerson, removePerson, exportPerson, importPerson } from '@/api/hrams/person';
+  import { pagePerson, removePerson, exportPerson, importPerson, downloadPersonImportTemplate } from '@/api/hrams/person';
   import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import '../styles/v2.scss';
   import { formatDateDay } from '@/utils/hrams-date';
@@ -112,7 +113,10 @@
   };
 
   const goArchive = (row) => {
-    router.push({ path: '/person-archive/archive', query: { viewId: row.id } });
+    router.push({
+      path: '/person-archive/archive',
+      query: { viewId: String(row.id) }
+    });
   };
 
   const handleRemove = (row) => {
@@ -128,6 +132,12 @@
 
   const handleExport = () => {
     tableRef.value?.fetch?.(({ where: w, pages }) => exportPerson({ ...w, ...pages }));
+  };
+
+  const handleDownloadTemplate = () => {
+    downloadPersonImportTemplate().catch((e) => {
+      EleMessage.error({ message: e.message, plain: true });
+    });
   };
 
   const handleImport = () => {

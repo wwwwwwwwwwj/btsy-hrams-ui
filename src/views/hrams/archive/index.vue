@@ -1,13 +1,6 @@
 <template>
-  <ele-page hide-footer flex-table="auto">
+  <ele-page hide-footer flex-table="auto" :multi-card="false">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div class="hrams-v2-title">档案管理</div>
-        <div class="hrams-v2-actions">
-          <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
-          <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
-        </div>
-      </div>
       <div class="hrams-v2-card hrams-v2-filter">
         <person-archive-search-form
           v-model:model="search"
@@ -15,7 +8,14 @@
           show-archive-status
           @search="reload(search, 1)"
           @reset="resetSearch"
-        />
+        >
+          <template #extra>
+            <span class="hrams-v2-filter-actions">
+              <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
+              <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
+            </span>
+          </template>
+        </person-archive-search-form>
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
         <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-  import { ref, watch, onActivated } from 'vue';
+  import { ref, watch, onActivated, onMounted, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
@@ -113,25 +113,38 @@
     drawerVisible.value = true;
   };
 
-  const syncViewIdFromRoute = () => {
-    const viewId = route.query.viewId;
-    if (viewId == null || viewId === '') {
+  const openArchiveDrawer = (id) => {
+    if (id == null || id === '') {
       return;
     }
-    const id = Number(viewId);
-    if (Number.isNaN(id)) {
-      return;
-    }
-    currentPersonId.value = id;
+    currentPersonId.value = String(id);
     drawerVisible.value = true;
+  };
+
+  const syncViewIdFromRoute = () => {
+    const raw = route.query.viewId;
+    if (raw == null || raw === '') {
+      return;
+    }
+    const id = Array.isArray(raw) ? raw[0] : raw;
+    openArchiveDrawer(id);
   };
 
   watch(() => route.query.viewId, syncViewIdFromRoute, { immediate: true });
 
-  onActivated(syncViewIdFromRoute);
+  onMounted(() => {
+    nextTick(syncViewIdFromRoute);
+  });
+
+  onActivated(() => {
+    nextTick(syncViewIdFromRoute);
+  });
 
   watch(drawerVisible, (visible) => {
-    if (visible || route.query.viewId == null || route.query.viewId === '') {
+    if (visible) {
+      return;
+    }
+    if (route.query.viewId == null || route.query.viewId === '') {
       return;
     }
     const q = { ...route.query };

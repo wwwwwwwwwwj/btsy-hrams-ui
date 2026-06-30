@@ -1,12 +1,6 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">全文检索</div>
-          <div class="hrams-v2-desc">人员汇总 · 大类筛选 · 匹配片段预览</div>
-        </div>
-      </div>
       <div class="hrams-v2-card ft-toolbar">
         <el-input v-model="keyword" placeholder="关键字" style="max-width:360px" @keyup.enter="doFulltext" />
         <el-button type="primary" :loading="loading" v-permission="'hrams:search:fulltext'" @click="doFulltext">检索</el-button>

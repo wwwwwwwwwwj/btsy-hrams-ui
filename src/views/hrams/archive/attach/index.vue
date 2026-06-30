@@ -1,11 +1,7 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page attach-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">材料挂接</div>
-          <div class="hrams-v2-desc">{{ mode === 'incremental' ? '增补挂接 · 新旧目录校验' : '批量挂接 · 首次建档材料归档' }}</div>
-        </div>
+      <div class="hrams-v2-card-toolbar" style="margin-bottom: 12px">
         <el-button @click="goBack">返回档案管理</el-button>
       </div>
 

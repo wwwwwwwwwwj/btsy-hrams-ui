@@ -12,7 +12,7 @@
       <el-descriptions-item label="政治面貌">{{ person.politicalStatus }}</el-descriptions-item>
       <el-descriptions-item label="学历">{{ person.education }}</el-descriptions-item>
       <el-descriptions-item label="专业">{{ person.major }}</el-descriptions-item>
-      <el-descriptions-item label="所在部门/单位">{{ person.deptName }}</el-descriptions-item>
+      <el-descriptions-item label="所在部门">{{ person.deptName }}</el-descriptions-item>
       <el-descriptions-item label="职务">{{ person.duty }}</el-descriptions-item>
       <el-descriptions-item label="参加工作时间">{{ formatDateDay(person.workStartDate) }}</el-descriptions-item>
       <el-descriptions-item label="合同到期日">{{ formatDateDay(person.contractEndDate) }}</el-descriptions-item>

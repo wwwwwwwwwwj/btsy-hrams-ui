@@ -77,3 +77,13 @@ export async function importPerson(file) {
   }
   return Promise.reject(new Error(res.data.msg));
 }
+
+export async function downloadPersonImportTemplate() {
+  const res = await request({
+    url: '/hrams/person/importTemplate',
+    method: 'POST',
+    responseType: 'blob'
+  });
+  await checkDownloadRes(res);
+  download(res.data, `person_import_template_${Date.now()}.xlsx`);
+}

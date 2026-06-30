@@ -26,7 +26,9 @@
         <dict-data v-model="form.education" code="hrams_education" type="select" placeholder="请选择学历" style="width:100%" />
       </el-form-item>
       <el-form-item label="专业"><el-input v-model="form.major" placeholder="请输入专业" /></el-form-item>
-      <el-form-item label="所在部门/单位"><el-input v-model="form.deptName" placeholder="请输入部门或单位" /></el-form-item>
+      <el-form-item label="所在部门">
+        <dept-select v-model="selectedDeptId" placeholder="请选择所在部门" />
+      </el-form-item>
       <el-form-item label="职务"><el-input v-model="form.duty" placeholder="请输入职务" /></el-form-item>
       <el-form-item label="参加工作时间"><el-date-picker v-model="form.workStartDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
       <el-form-item label="合同到期日"><el-date-picker v-model="form.contractEndDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
@@ -49,6 +51,8 @@
   import { reactive, ref, watch } from 'vue';
   import { EleMessage, useModal } from 'ele-admin-plus';
   import DictData from '@/components/DictData/index.vue';
+  import DeptSelect from '@/views/system/dept/components/dept-select.vue';
+  import { listDept } from '@/api/system/dept';
   import { addPerson, updatePerson, getPerson } from '@/api/hrams/person';
   import { parseIdCardInfo } from '@/utils/hrams-id-card';
 
@@ -58,6 +62,35 @@
   const loading = ref(false);
   const formRef = ref(null);
   const form = ref({});
+  const selectedDeptId = ref();
+  const deptList = ref([]);
+
+  const deptNameById = (id) => {
+    if (id == null || id === '') return '';
+    const row = deptList.value.find((d) => String(d.deptId) === String(id));
+    return row?.deptName ?? '';
+  };
+
+  const syncDeptIdFromName = () => {
+    const name = form.value.deptName;
+    if (!name) {
+      selectedDeptId.value = undefined;
+      return;
+    }
+    const row = deptList.value.find((d) => d.deptName === name);
+    selectedDeptId.value = row?.deptId;
+  };
+
+  listDept()
+    .then((data) => {
+      deptList.value = data || [];
+      syncDeptIdFromName();
+    })
+    .catch((e) => EleMessage.error({ message: e.message, plain: true }));
+
+  watch(selectedDeptId, (id) => {
+    form.value.deptName = deptNameById(id);
+  });
 
   const idCardRule = (_r, v, cb) => {
     if (!v) return cb();
@@ -77,6 +110,7 @@
   const loadPerson = async (id) => {
     const p = await getPerson(id);
     form.value = { ...p };
+    syncDeptIdFromName();
     isUpdate.value = true;
   };
 
@@ -85,6 +119,8 @@
       await loadPerson(d.id);
     } else {
       form.value = { personStatus: '在职', ...(d || {}) };
+      selectedDeptId.value = undefined;
+      syncDeptIdFromName();
       isUpdate.value = false;
     }
   }, { immediate: true });

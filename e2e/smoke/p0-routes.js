@@ -5,7 +5,7 @@ const P0_PATHS = {
   'TC-PERSON-001': '/person-archive/person',
   'TC-ARCH-001': '/person-archive/archive',
   'TC-MAT-001': '/archive-material/maintain',
-  'TC-UTIL-001': '/archive-utilize/register?tab=register',
+  'TC-UTIL-001': '/archive-utilize/register',
   'TC-QUERY-001': '/query-search/person-query',
   'TC-BATCH-001': '/archive-material/batch',
   'TC-FT-001': '/query-search/fulltext',

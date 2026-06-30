@@ -1,27 +1,6 @@
 <template>
   <ele-page hide-footer :flex-table="personId ? void 0 : 'auto'">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">材料维护</div>
-          <div class="hrams-v2-desc">
-            {{ pageDesc }}
-            <el-tag v-if="readOnly" type="info" size="small" class="readonly-tag">只读查阅</el-tag>
-          </div>
-        </div>
-        <div v-if="personId" class="hrams-v2-actions">
-          <el-button @click="clearPerson">更换干部</el-button>
-          <el-button
-            v-if="!readOnly"
-            type="primary"
-            v-permission="'hrams:archive:upload'"
-            @click="openUpload"
-          >
-            上传材料
-          </el-button>
-        </div>
-      </div>
-
       <material-person-pick v-if="!personId" @select="selectPerson" />
 
       <material-maintain-panel
@@ -49,7 +28,22 @@
         @open-page-no="openPageNo"
         @remove-file="removeFile"
         @remove-row="removeRow"
-      />
+      >
+        <template #search-extra>
+          <span class="hrams-v2-filter-actions">
+            <el-tag v-if="readOnly" type="info" size="small">只读查阅</el-tag>
+            <el-button @click="clearPerson">更换干部</el-button>
+            <el-button
+              v-if="!readOnly"
+              type="primary"
+              v-permission="'hrams:archive:upload'"
+              @click="openUpload"
+            >
+              上传材料
+            </el-button>
+          </span>
+        </template>
+      </material-maintain-panel>
     </div>
 
     <material-form-dialogs
@@ -100,7 +94,6 @@
   const {
     personId,
     readOnly,
-    pageDesc,
     panel,
     categoryCode,
     flatCategories,

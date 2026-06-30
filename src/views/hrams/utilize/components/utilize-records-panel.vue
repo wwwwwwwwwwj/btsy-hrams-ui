@@ -1,31 +1,35 @@
 <template>
-  <div>
-    <el-form :inline="true" :model="where" class="ele-form-search">
-      <el-form-item label="档案编号"><el-input v-model="where.archiveNo" clearable /></el-form-item>
-      <el-form-item label="被查阅人"><el-input v-model="where.personName" clearable /></el-form-item>
-      <el-form-item label="借阅日期">
-        <el-date-picker
-          v-model="borrowDateRange"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          start-placeholder="开始"
-          end-placeholder="结束"
-          style="width: 260px"
-        />
-      </el-form-item>
-      <el-form-item label="状态">
-        <el-select v-model="where.status" clearable>
-          <el-option label="借阅中" value="borrowing" />
-          <el-option label="逾期未还" value="overdue" />
-          <el-option label="已归还" value="returned" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="reloadRecords">查询</el-button>
-        <el-button @click="resetRecords">重置</el-button>
-      </el-form-item>
-    </el-form>
-    <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
+  <div class="utilize-records">
+    <div class="hrams-v2-card hrams-v2-filter">
+      <el-form :inline="true" :model="where" class="ele-form-search">
+        <el-form-item label="档案编号"><el-input v-model="where.archiveNo" clearable /></el-form-item>
+        <el-form-item label="被查阅人"><el-input v-model="where.personName" clearable /></el-form-item>
+        <el-form-item label="借阅日期">
+          <el-date-picker
+            v-model="borrowDateRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            style="width: 260px"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="where.status" clearable>
+            <el-option label="借阅中" value="borrowing" />
+            <el-option label="逾期未还" value="overdue" />
+            <el-option label="已归还" value="returned" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="reloadRecords">查询</el-button>
+          <el-button @click="resetRecords">重置</el-button>
+          <slot name="extra" />
+        </el-form-item>
+      </el-form>
+    </div>
+    <div class="hrams-v2-card hrams-v2-table-card">
+      <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
       <template #borrowScope="{ row }">{{ borrowScopeLabel(row) }}</template>
       <template #status="{ row }"><el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
       <template #attach="{ row }">
@@ -35,7 +39,8 @@
       <template #action="{ row }">
         <el-button v-if="row.status !== 'returned'" link type="primary" v-permission="'hrams:borrow:return'" @click="doReturn(row)">归还</el-button>
       </template>
-    </ele-pro-table>
+      </ele-pro-table>
+    </div>
   </div>
 </template>
 

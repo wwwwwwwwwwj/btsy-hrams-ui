@@ -1,12 +1,6 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">人员扩展字段</div>
-          <div class="hrams-v2-desc">自定义人员信息项定义</div>
-        </div>
-      </div>
       <div class="hrams-v2-card" style="padding: 20px 24px">
         <el-table :data="defs" size="small">
           <el-table-column prop="fieldKey" label="字段键" width="140" />

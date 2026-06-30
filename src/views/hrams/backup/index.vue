@@ -1,16 +1,10 @@
 <template>
   <ele-page hide-footer>
     <div class="hrams-v2-page">
-      <div class="hrams-v2-header">
-        <div>
-          <div class="hrams-v2-title">数据备份</div>
-          <div class="hrams-v2-desc">备份含 manifest.json + OSS 附件包；增量恢复回灌数据，全量恢复会清空本租户业务数据并尝试回传附件</div>
-        </div>
-        <div class="hrams-v2-actions">
+      <div class="hrams-v2-card" style="padding: 16px 20px">
+        <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:backup:create'" @click="doCreate">立即备份</el-button>
         </div>
-      </div>
-      <div class="hrams-v2-card" style="padding: 16px 20px">
         <el-table :data="jobs" size="small">
           <el-table-column prop="backupTime" label="备份时间" min-width="160" />
           <el-table-column prop="triggerType" label="触发" width="90">
