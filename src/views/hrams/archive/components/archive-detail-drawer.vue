@@ -11,7 +11,7 @@
     <template v-else-if="detail.person">
       <div class="drawer-actions">
         <el-button v-permission="'hrams:archive:download'" type="primary" @click="exportMaterials">导出档案材料</el-button>
-        <el-button v-permission="'hrams:archive:catalog:export'" @click="exportCatalogFile">导出档案目录</el-button>
+        <el-button v-permission="'hrams:catalog:export'" @click="exportCatalogFile">导出档案目录</el-button>
       </div>
       <el-descriptions :column="3" border size="small" class="drawer-summary">
         <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
@@ -115,15 +115,49 @@
     return nodes?.[0]?.code || '';
   };
 
-  const filterMaterials = () => {
-    const code = detailCat.value;
-    detailMaterials.value = (detail.value.materials || []).filter((m) => m.categoryCode === code);
+  const findTreeNode = (nodes, code) => {
+    if (!code || !nodes?.length) {
+      return null;
+    }
+    for (const n of nodes) {
+      if (n.code === code) {
+        return n;
+      }
+      if (n.children?.length) {
+        const found = findTreeNode(n.children, code);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const collectCategoryCodes = (node) => {
+    if (!node) {
+      return [];
+    }
+    const codes = node.code ? [node.code] : [];
+    if (node.children?.length) {
+      return [...codes, ...node.children.flatMap((child) => collectCategoryCodes(child))];
+    }
+    return codes;
+  };
+
+  const filterMaterials = (node) => {
+    const codes = node ? collectCategoryCodes(node) : [];
+    if (!codes.length) {
+      detailMaterials.value = [];
+      return;
+    }
+    const set = new Set(codes);
+    detailMaterials.value = (detail.value.materials || []).filter((m) => set.has(m.categoryCode));
   };
 
   const onTreeClick = (data) => {
     if (!data?.code) return;
     detailCat.value = data.code;
-    filterMaterials();
+    filterMaterials(data);
   };
 
   const loadDetail = async () => {
@@ -142,7 +176,8 @@
         materials
       };
       detailCat.value = firstSelectableCode(panel?.categories);
-      filterMaterials();
+      const firstNode = findTreeNode(panel?.categories, detailCat.value);
+      filterMaterials(firstNode);
     } catch (e) {
       detail.value = {};
       EleMessage.error({ message: e.message, plain: true });

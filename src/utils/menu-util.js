@@ -259,7 +259,7 @@ export function formatUserMenu(userMenu) {
     meta: {
       title: '个人中心',
       icon: 'IconProUserOutlined',
-      active: '/workbench/dashboard',
+      active: '/dashboard',
       hide: true
     }
   });

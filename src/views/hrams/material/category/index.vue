@@ -3,7 +3,7 @@
     <div class="hrams-v2-page">
       <div class="hrams-v2-card" style="padding: 16px 20px">
         <div class="hrams-v2-card-toolbar">
-          <el-button type="primary" v-permission="'hrams:material:category:config'" @click="save">保存</el-button>
+          <el-button type="primary" v-permission="'hrams:category:config'" @click="save">保存</el-button>
         </div>
         <el-table :data="rows" size="small" v-loading="loading">
           <el-table-column prop="name" label="大类" min-width="280" />

@@ -61,5 +61,8 @@ export async function loginViaUi(page) {
     { timeout: 15_000 }
   );
 
-  await page.waitForURL(/workbench\/dashboard/, { timeout: 20_000 });
+  await page.waitForURL(
+    (url) => /^\/dashboard(\/|$)/.test(new URL(url).pathname),
+    { timeout: 20_000 }
+  );
 }

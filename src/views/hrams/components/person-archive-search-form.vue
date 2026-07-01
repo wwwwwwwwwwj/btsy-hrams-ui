@@ -1,5 +1,5 @@
 <template>
-  <el-form :inline="true" :model="model" class="ele-form-search">
+  <el-form :inline="true" :model="model" class="ele-form-search hrams-person-search-form">
     <el-form-item label="档案编号"><el-input v-model="model.archiveNo" clearable /></el-form-item>
     <el-form-item label="姓名"><el-input v-model="model.name" clearable /></el-form-item>
     <template v-if="!simple">
@@ -44,25 +44,53 @@
       <dict-data v-model="model.archiveStatus" code="hrams_archive_status" type="select" placeholder="全部" clearable style="width:120px" />
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="$emit('search')">查询</el-button>
+      <el-button type="primary" v-permission="searchPermission" @click="$emit('search')">查询</el-button>
       <el-button @click="$emit('reset')">重置</el-button>
+    </el-form-item>
+    <el-form-item v-if="slots.extra" class="hrams-search-extra-actions">
       <slot name="extra" />
     </el-form-item>
   </el-form>
 </template>
 
 <script setup>
+  import { useSlots } from 'vue';
   import DictData from '@/components/DictData/index.vue';
 
   defineOptions({ name: 'PersonArchiveSearchForm' });
+
+  const slots = useSlots();
 
   const model = defineModel('model', { type: Object, required: true });
 
   defineProps({
     simple: { type: Boolean, default: false },
     showIntegrity: { type: Boolean, default: false },
-    showArchiveStatus: { type: Boolean, default: false }
+    showArchiveStatus: { type: Boolean, default: false },
+    /** 列表查询按钮权限，不传则始终展示 */
+    searchPermission: { type: String, default: '' }
   });
 
   defineEmits(['search', 'reset']);
 </script>
+
+<style scoped>
+  .hrams-person-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 8px;
+    width: 100%;
+  }
+
+  .hrams-search-extra-actions {
+    margin-left: auto;
+  }
+
+  .hrams-search-extra-actions :deep(.el-form-item__content) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+</style>

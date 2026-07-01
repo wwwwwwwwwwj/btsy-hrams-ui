@@ -9,16 +9,16 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="reload(where, 1)">查询</el-button>
+            <el-button type="primary" v-permission="'hrams:batch:list'" @click="reload(where, 1)">查询</el-button>
             <el-button @click="resetWhere">重置</el-button>
-            <el-button @click="goMaintain">去材料维护上传</el-button>
+            <el-button v-permission="'hrams:archive:upload'" @click="goMaintain">去材料维护上传</el-button>
           </el-form-item>
         </el-form>
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
         <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
           <template #action="{ row }">
-            <el-button link type="primary" @click="showDetail(row)">明细</el-button>
+            <el-button link type="primary" v-permission="'hrams:batch:list'" @click="showDetail(row)">明细</el-button>
           </template>
         </ele-pro-table>
       </div>
@@ -48,6 +48,7 @@
   import { pagePerson } from '@/api/hrams/person';
   import { pageUploadBatch, listBatchMaterials } from '@/api/hrams/material-batch';
   import { listCategories } from '@/api/hrams/archive';
+  import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import { formatDateDay } from '@/utils/hrams-date';
   import '../../styles/v2.scss';
 
@@ -117,7 +118,7 @@
     detailVisible.value = true;
   };
 
-  const goMaintain = () => router.push('/archive-material/maintain');
+  const goMaintain = () => router.push(HRAMS_MATERIAL_MAINTAIN_PATH);
 
   onMounted(async () => {
     const data = await pagePerson({ pageNum: 1, pageSize: 500 });

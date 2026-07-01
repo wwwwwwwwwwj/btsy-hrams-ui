@@ -5,16 +5,15 @@
         <person-archive-search-form
           v-model:model="where"
           simple
+          search-permission="hrams:person:list"
           @search="reload(where, 1)"
           @reset="resetWhere"
         >
           <template #extra>
-            <span class="hrams-v2-filter-actions">
-              <el-button type="primary" v-permission="'hrams:person:add'" @click="() => handleEdit()">新增人员</el-button>
-              <el-button v-permission="'hrams:person:import'" @click="handleImport">批量导入</el-button>
-              <el-button v-permission="'hrams:person:export'" @click="handleExport">批量导出</el-button>
-              <el-button v-permission="'hrams:person:import'" @click="handleDownloadTemplate">下载导入模板</el-button>
-            </span>
+            <el-button type="primary" v-permission="'hrams:person:add'" @click="() => handleEdit()">新增人员</el-button>
+            <el-button v-permission="'hrams:person:import'" @click="handleImport">批量导入</el-button>
+            <el-button v-permission="'hrams:person:export'" @click="handleExport">批量导出</el-button>
+            <el-button v-permission="'hrams:person:import'" @click="handleDownloadTemplate">下载导入模板</el-button>
           </template>
         </person-archive-search-form>
       </div>
@@ -22,9 +21,8 @@
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
         <template #action="{ row }">
           <btn-items type="link" :divider="true" :items="[
-            // { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
+            { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
             { title: '查看档案', permission: 'hrams:archive:list', onClick: () => goArchive(row) },
-            { title: '管理材料', icon: false, permission: 'hrams:archive:upload', onClick: () => goMaterial(row) },
             { preset: 'edit', icon: false, permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
             { preset: 'del', icon: false, permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
           ]" />
@@ -50,7 +48,7 @@
   import { EleMessage, useModal } from 'ele-admin-plus';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pagePerson, removePerson, exportPerson, importPerson, downloadPersonImportTemplate } from '@/api/hrams/person';
-  import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
+  import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
   import '../styles/v2.scss';
   import { formatDateDay } from '@/utils/hrams-date';
 
@@ -105,16 +103,9 @@
     });
   };
 
-  const goMaterial = (row) => {
-    router.push({
-      path: HRAMS_MATERIAL_MAINTAIN_PATH,
-      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
-    });
-  };
-
   const goArchive = (row) => {
     router.push({
-      path: '/person-archive/archive',
+      path: HRAMS_ARCHIVE_LIST,
       query: { viewId: String(row.id) }
     });
   };

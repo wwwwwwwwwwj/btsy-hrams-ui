@@ -1,7 +1,7 @@
 <template>
   <div class="material-person-pick">
     <div class="hrams-v2-card hrams-v2-filter">
-      <el-form :inline="true" :model="pickWhere" class="ele-form-search">
+      <el-form :inline="true" :model="pickWhere" class="ele-form-search material-pick-search-form">
         <el-form-item label="档案编号"><el-input v-model="pickWhere.archiveNo" clearable /></el-form-item>
         <el-form-item label="姓名"><el-input v-model="pickWhere.name" clearable /></el-form-item>
         <el-form-item>
@@ -11,7 +11,12 @@
       </el-form>
     </div>
     <div class="hrams-v2-card hrams-v2-table-card">
-      <ele-pro-table ref="pickRef" row-key="id" :columns="pickColumns" :datasource="pickDatasource">
+      <ele-pro-table
+        ref="pickRef"
+        row-key="id"
+        :columns="pickColumns"
+        :datasource="pickDatasource"
+      >
         <template #action="{ row }">
           <el-button link type="primary" @click="$emit('select', row)">材料维护</el-button>
         </template>
@@ -42,3 +47,13 @@
     pickReload(pickWhere.value, 1);
   };
 </script>
+
+<style scoped>
+  .material-pick-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 8px;
+    width: 100%;
+  }
+</style>

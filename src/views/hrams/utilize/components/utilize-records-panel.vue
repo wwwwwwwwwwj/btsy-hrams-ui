@@ -15,7 +15,7 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="where.status" clearable>
+          <el-select v-model="where.status" clearable placeholder="全部" style="width: 140px">
             <el-option label="借阅中" value="borrowing" />
             <el-option label="逾期未还" value="overdue" />
             <el-option label="已归还" value="returned" />

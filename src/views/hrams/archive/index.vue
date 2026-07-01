@@ -6,26 +6,30 @@
           v-model:model="search"
           simple
           show-archive-status
+          search-permission="hrams:archive:list"
           @search="reload(search, 1)"
           @reset="resetSearch"
         >
           <template #extra>
-            <span class="hrams-v2-filter-actions">
-              <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
-              <el-button type="primary" v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
-            </span>
+            <el-button v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
+            <el-button v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
           </template>
         </person-archive-search-form>
       </div>
       <div class="hrams-v2-card hrams-v2-table-card">
-        <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource" v-model:selections="selections">
+        <ele-pro-table
+          ref="tableRef"
+          row-key="id"
+          :columns="columns"
+          :datasource="datasource"
+          v-model:selections="selections"
+        >
           <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
           <template #integrityStatus="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
           <template #action="{ row }">
             <btn-items type="link" :divider="true" :items="[
               { title: '查看档案', permission: 'hrams:archive:material', onClick: () => viewArchive(row) },
-              { title: '导出目录', permission: 'hrams:archive:catalog:export', onClick: () => handleExportCatalog(row) },
-              { title: '材料管理', permission: 'hrams:archive:material', onClick: () => goMaterial(row) }
+              { title: '导出目录', permission: 'hrams:catalog:export', onClick: () => handleExportCatalog(row) }
             ]" />
           </template>
         </ele-pro-table>
@@ -41,21 +45,21 @@
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
   import { pageArchivePersons, exportCatalog } from '@/api/hrams/archive';
-  import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
   import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import '../styles/v2.scss';
   import { formatDateDay } from '@/utils/hrams-date';
   import { dictLabel } from '@/utils/hrams-dict';
+  import { HRAMS_ARCHIVE_ATTACH } from '@/utils/hrams-routes';
 
   defineOptions({ name: 'HramsArchive' });
   const router = useRouter();
   const route = useRoute();
   const tableRef = ref(null);
   const search = ref({});
-  const selections = ref([]);
   const drawerVisible = ref(false);
   const currentPersonId = ref(null);
+  const selections = ref([]);
 
   const [,, archiveStatusDicts] = useDictData(['hrams_person_status', 'hrams_education', 'hrams_archive_status']);
 
@@ -63,7 +67,7 @@
   const integrityLabel = (s) => (s === 'complete' ? '完整' : s === 'missing' ? '缺项' : '—');
 
   const columns = ref([
-    { type: 'selection', width: 50 },
+    { type: 'selection', width: 50, fixed: 'left' },
     { prop: 'archiveNo', label: '档案编号', minWidth: 120, fixed: 'left' },
     { prop: 'name', label: '姓名', minWidth: 100, fixed: 'left' },
     { prop: 'gender', label: '性别', width: 70 },
@@ -89,24 +93,6 @@
   const datasource = ({ pages, where: w }) => pageArchivePersons({ ...search.value, ...w, ...pages });
   const reload = (w, page) => tableRef.value?.reload?.({ where: w, page });
   const resetSearch = () => { search.value = {}; reload(search.value, 1); };
-
-  const goAttach = (mode) => {
-    if (!selections.value.length) {
-      EleMessage.error({ message: '请先勾选需要挂接的档案人员', plain: true });
-      return;
-    }
-    router.push({
-      path: '/person-archive/archive/attach',
-      query: { mode, ids: selections.value.map((p) => p.id).join(',') }
-    });
-  };
-
-  const goMaterial = (row) => {
-    router.push({
-      path: HRAMS_MATERIAL_MAINTAIN_PATH,
-      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
-    });
-  };
 
   const viewArchive = (row) => {
     currentPersonId.value = row.id;
@@ -158,5 +144,16 @@
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     }
+  };
+
+  const goAttach = (mode) => {
+    if (!selections.value.length) {
+      EleMessage.error({ message: '请先勾选需要挂接的档案人员', plain: true });
+      return;
+    }
+    router.push({
+      path: HRAMS_ARCHIVE_ATTACH,
+      query: { mode, ids: selections.value.map((p) => p.id).join(',') }
+    });
   };
 </script>

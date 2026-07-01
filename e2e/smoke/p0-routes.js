@@ -1,15 +1,15 @@
 import { HRAMS_MENU_ROUTES } from './hrams-menu-routes.js';
 
 const P0_PATHS = {
-  'TC-DASH-001': '/workbench/dashboard',
-  'TC-PERSON-001': '/person-archive/person',
-  'TC-ARCH-001': '/person-archive/archive',
-  'TC-MAT-001': '/archive-material/maintain',
-  'TC-UTIL-001': '/archive-utilize/register',
-  'TC-QUERY-001': '/query-search/person-query',
-  'TC-BATCH-001': '/archive-material/batch',
-  'TC-FT-001': '/query-search/fulltext',
-  'TC-ATT-003': '/person-archive/archive/attach?mode=batch'
+  'TC-DASH-001': '/dashboard',
+  'TC-PERSON-001': '/person',
+  'TC-ARCH-001': '/archive',
+  'TC-MAT-001': '/archive-material',
+  'TC-UTIL-001': '/archive-utilize',
+  'TC-QUERY-001': '/person-query',
+  'TC-BATCH-001': '/archive-material-group/batch',
+  'TC-FT-001': '/query-search-group/fulltext',
+  'TC-ATT-003': '/archive/attach?mode=batch' // 挂接：ZIP 上传 + 异步 scan/upload 轮询
 };
 
 /** P0 冒烟与 docs/v2/HRAMS-V2-测试用例.csv 用例编号对应 */

@@ -7,8 +7,8 @@
         <el-tag :type="p.attachable && !p.cancelled ? 'success' : 'danger'" size="small">
           {{ p.cancelled ? '已取消挂接' : p.attachable ? '可挂接' : '校验不通过' }}
         </el-tag>
-        <el-button v-if="p.attachable && !p.cancelled" link type="warning" @click="$emit('cancel-person', p.personId)">取消挂接</el-button>
-        <el-button v-if="p.cancelled" link @click="$emit('restore-person', p.personId)">恢复</el-button>
+        <el-button v-if="p.attachable && !p.cancelled" link type="warning" v-permission="'hrams:archive:attach'" @click="$emit('cancel-person', p.personId)">取消挂接</el-button>
+        <el-button v-if="p.cancelled" link v-permission="'hrams:archive:attach'" @click="$emit('restore-person', p.personId)">恢复</el-button>
       </div>
     </div>
 
@@ -20,7 +20,7 @@
             文件 {{ fileCount }} 个 · 选中人员 {{ selectedPersonCount }} 人 · 可挂接 {{ confirmableCount }} 人
           </div>
         </div>
-        <el-button type="primary" :loading="confirmLoading" :disabled="!canConfirm" @click="$emit('confirm')">确认挂接</el-button>
+        <el-button type="primary" :loading="confirmLoading" :disabled="!canConfirm" v-permission="'hrams:archive:attach'" @click="$emit('confirm')">确认挂接</el-button>
       </div>
       <el-row :gutter="16">
         <el-col :span="8">
@@ -51,7 +51,7 @@
             <el-table-column prop="message" label="问题说明" min-width="160" show-overflow-tooltip />
             <el-table-column label="操作" width="90">
               <template #default="{ row }">
-                <el-button v-if="canDeleteRow(row)" link type="danger" @click="$emit('remove-row', row)">删除</el-button>
+                <el-button v-if="canDeleteRow(row)" link type="danger" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>

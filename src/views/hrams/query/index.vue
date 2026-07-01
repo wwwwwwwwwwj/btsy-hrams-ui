@@ -6,6 +6,7 @@
           v-model:model="where"
           show-integrity
           show-archive-status
+          search-permission="hrams:query:list"
           @search="reload(where, 1)"
           @reset="resetWhere"
         />
@@ -15,9 +16,9 @@
         <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
         <template #integrityStatus="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
         <template #action="{ row }">
-          <el-button link type="primary" @click="showDetail(row)">查看详情</el-button>
-          <el-button link type="primary" @click="goFulltext(row)">全文检索</el-button>
-          <el-button link type="primary" @click="goQa(row)">智能问答</el-button>
+          <el-button link type="primary" v-permission="'hrams:query:list'" @click="showDetail(row)">查看详情</el-button>
+          <el-button link type="primary" v-permission="'hrams:search:fulltext'" @click="goFulltext(row)">全文检索</el-button>
+          <el-button link type="primary" v-permission="'hrams:qa:chat'" @click="goQa(row)">智能问答</el-button>
         </template>
       </ele-pro-table>
       </div>
@@ -25,10 +26,10 @@
     <el-drawer v-model="drawer" title="档案详情" size="58%">
       <template v-if="detail.person">
         <div class="drawer-actions">
-          <el-button type="primary" @click="exportMaterials">导出档案材料</el-button>
-          <el-button @click="exportCatalog">导出档案目录</el-button>
-          <el-button @click="goFulltext(detail.person)">全文检索此人</el-button>
-          <el-button @click="goQa(detail.person)">智能问答</el-button>
+          <el-button type="primary" v-permission="'hrams:archive:download'" @click="exportMaterials">导出档案材料</el-button>
+          <el-button v-permission="'hrams:catalog:export'" @click="exportCatalog">导出档案目录</el-button>
+          <el-button v-permission="'hrams:search:fulltext'" @click="goFulltext(detail.person)">全文检索此人</el-button>
+          <el-button v-permission="'hrams:qa:chat'" @click="goQa(detail.person)">智能问答</el-button>
         </div>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
@@ -56,7 +57,7 @@
               <el-table-column prop="pageCount" label="页数" width="70" />
               <el-table-column label="操作" width="80">
                 <template #default="{ row }">
-                  <el-button v-if="row.fileStatus === 'uploaded'" link @click="previewMaterial(row.id)">预览</el-button>
+                  <el-button v-if="row.fileStatus === 'uploaded'" link v-permission="'hrams:archive:preview'" @click="previewMaterial(row.id)">预览</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -72,6 +73,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
+  import { HRAMS_QUERY_FULLTEXT, HRAMS_QUERY_QA } from '@/utils/hrams-routes';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pageQueryPerson, getQueryPersonDetail } from '@/api/hrams/query';
   import { previewMaterial, downloadMaterialsZip, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
@@ -119,14 +121,14 @@
 
   const goFulltext = (row) => {
     router.push({
-      path: '/query-search/fulltext',
+      path: HRAMS_QUERY_FULLTEXT,
       query: { keyword: row.name || row.archiveNo || '', personId: row.id }
     });
   };
 
   const goQa = (row) => {
     router.push({
-      path: '/query-search/qa',
+      path: HRAMS_QUERY_QA,
       query: { personId: row.id, name: row.name, archiveNo: row.archiveNo }
     });
   };
