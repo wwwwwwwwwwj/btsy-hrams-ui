@@ -1,34 +1,65 @@
 <template>
   <div>
-    <el-dialog v-model="uploadVisible" title="上传材料" width="520px">
+    <el-dialog v-model="uploadVisible" title="上传材料" width="880px">
       <el-form label-width="90px">
-        <el-form-item label="分类">
-          <el-select v-model="uploadForm.categoryCode" style="width:100%" @change="$emit('suggest-page-no')">
+        <el-form-item label="干部">
+          <el-select
+            v-model="uploadForm.personId"
+            clearable
+            filterable
+            placeholder="不选则由 OCR 和 AI 推荐归属"
+            style="width:100%"
+            @change="$emit('suggest-page-no')"
+          >
+            <el-option
+              v-for="p in uploadPersonOptions"
+              :key="p.id"
+              :label="`${p.archiveNo || ''} ${p.name || ''}`.trim()"
+              :value="p.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="目录">
+          <el-select
+            v-model="uploadForm.categoryCode"
+            clearable
+            filterable
+            placeholder="不选则由 OCR 和 AI 推荐目录"
+            style="width:100%"
+            @change="$emit('suggest-page-no')"
+          >
             <el-option v-for="c in flatCategories" :key="c.code" :label="c.name" :value="c.code" />
           </el-select>
         </el-form-item>
-        <el-form-item label="页号" required>
+        <el-form-item label="OCR">
+          <el-switch v-model="uploadForm.ocrFlag" :disabled="uploadNeedsIntake" />
+          <span class="field-hint inline-hint">
+            {{ uploadNeedsIntake ? '未完整选择归属时默认 OCR' : '关闭后仅上传归档文件' }}
+          </span>
+        </el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="页号" required>
           <el-input-number v-model="uploadForm.pageNo" :min="1" />
           <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该页号起依次占号</div>
         </el-form-item>
         <el-form-item label="名称" :required="nameRequired">
           <el-input
             v-model="uploadForm.materialName"
-            :placeholder="pendingUploadFiles.length > 1 ? '多份默认取各文件名；仅一份时可在此填写' : '卷内目录材料名称'"
+            :placeholder="uploadNeedsIntake ? '可不填，由 AI 推荐' : pendingUploadFiles.length > 1 ? '多份默认取各文件名；仅一份时可在此填写' : '卷内目录材料名称'"
           />
         </el-form-item>
-        <el-form-item label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-        <el-form-item label="页数" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="页数" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
         <el-form-item v-if="activeBatchNo" label="本轮批次"><span class="batch-inline">{{ activeBatchNo }}</span></el-form-item>
         <el-form-item label="文件" required>
           <div class="file-picker">
             <input type="file" accept=".jpg,.jpeg,.png,.bmp" multiple @change="(e) => $emit('upload-file', e)" />
-            <div class="field-hint">可多选，同一轮次共用一个批次号</div>
+            <div class="field-hint">图片会先进入旋转、裁剪处理；可多选，同一轮次共用一个批次号</div>
             <ul v-if="pendingUploadFiles.length" class="pending-list">
               <li v-for="(item, index) in pendingUploadFiles" :key="item.key" class="pending-item">
-                <span class="pending-page">页 {{ pageNoForIndex(index) }}</span>
+                <span class="pending-page">{{ uploadNeedsIntake ? `待识别 ${index + 1}` : `页 ${pageNoForIndex(index)}` }}</span>
                 <span class="pending-name">{{ item.file?.name }}</span>
                 <span class="pending-size">{{ formatFileSize(item.file?.size) }}</span>
+                <el-button link type="primary" @click="$emit('edit-pending', item.key)">处理</el-button>
                 <el-button link type="danger" @click="$emit('remove-pending', item.key)">移除</el-button>
               </li>
             </ul>
@@ -39,9 +70,59 @@
           <div v-if="intakePreview.matchedPersonName" class="intake-hint">匹配干部：{{ intakePreview.matchedArchiveNo }} {{ intakePreview.matchedPersonName }}</div>
         </el-form-item>
       </el-form>
+      <div v-if="intakeRows.length" class="intake-result">
+        <div class="intake-result-title">AI 推荐归属</div>
+        <el-table :data="intakeRows" border size="small">
+          <el-table-column prop="fileName" label="文件" min-width="150" show-overflow-tooltip />
+          <el-table-column label="推荐人员" min-width="170">
+            <template #default="{ row }">
+              <el-select v-model="row.personId" filterable clearable placeholder="选择人员" style="width:100%">
+                <el-option
+                  v-for="p in uploadPersonOptions"
+                  :key="p.id"
+                  :label="`${p.archiveNo || ''} ${p.name || ''}`.trim()"
+                  :value="p.id"
+                />
+              </el-select>
+              <div v-if="row.personName" class="field-hint">AI：{{ row.archiveNo }} {{ row.personName }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="推荐目录" min-width="180">
+            <template #default="{ row }">
+              <el-select v-model="row.categoryCode" filterable clearable placeholder="选择目录" style="width:100%">
+                <el-option v-for="c in flatCategories" :key="c.code" :label="c.name" :value="c.code" />
+              </el-select>
+              <div v-if="row.categoryName" class="field-hint">AI：{{ row.categoryName }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="材料名称" min-width="150">
+            <template #default="{ row }">
+              <el-input v-model="row.materialName" placeholder="材料名称" />
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'confirmed' ? 'success' : 'warning'">{{ row.statusText }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="90" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                link
+                type="primary"
+                :disabled="row.status === 'confirmed'"
+                :loading="confirmSubmitting"
+                @click="$emit('confirm-intake', row)"
+              >
+                确认
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
       <template #footer>
         <el-button @click="$emit('close-upload')">取消</el-button>
-        <el-button :loading="intakeLoading" :disabled="!pendingUploadFiles.length" @click="$emit('intake-preview')">识别正文</el-button>
+        <el-button :loading="intakeLoading" :disabled="!pendingUploadFiles.length" @click="$emit('intake-preview')">识别预览</el-button>
         <el-button type="primary" :loading="uploadSubmitting" :disabled="!pendingUploadFiles.length" @click="$emit('do-upload')">
           {{ uploadButtonLabel }}
         </el-button>
@@ -92,7 +173,7 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+  import { computed, watch } from 'vue';
 
   const props = defineProps({
     flatCategories: { type: Array, default: () => [] },
@@ -101,18 +182,25 @@
     pageNoForm: { type: Object, required: true },
     activeBatchNo: String,
     intakePreview: { type: Object, default: () => ({}) },
+    intakeRows: { type: Array, default: () => [] },
     intakeLoading: Boolean,
     uploadSubmitting: Boolean,
+    confirmSubmitting: Boolean,
+    uploadPersonOptions: { type: Array, default: () => [] },
+    uploadNeedsIntake: Boolean,
     pendingUploadFiles: { type: Array, default: () => [] },
     replaceForm: { type: Object, default: () => ({}) }
   });
 
   const nameRequired = computed(
-    () => !props.pendingUploadFiles.length || props.pendingUploadFiles.length === 1
+    () => !props.uploadNeedsIntake && (!props.pendingUploadFiles.length || props.pendingUploadFiles.length === 1)
   );
 
   const uploadButtonLabel = computed(() => {
     const n = props.pendingUploadFiles.length;
+    if (props.uploadNeedsIntake) {
+      return n > 1 ? `提交识别（${n} 份）` : '提交识别';
+    }
     if (n > 1) return `确认上传本批（${n} 份）`;
     if (n === 1) return '确认上传';
     return '确认上传';
@@ -134,8 +222,18 @@
   const pageNoVisible = defineModel('pageNoVisible', { type: Boolean, default: false });
   const replaceVisible = defineModel('replaceVisible', { type: Boolean, default: false });
 
+  watch(
+    () => props.uploadNeedsIntake,
+    (needsIntake) => {
+      if (needsIntake) {
+        props.uploadForm.ocrFlag = true;
+      }
+    },
+    { immediate: true }
+  );
+
   defineEmits([
-    'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'remove-pending',
+    'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'confirm-intake', 'remove-pending', 'edit-pending',
     'save-edit', 'save-page-no', 'replace-file', 'do-replace'
   ]);
 </script>
@@ -172,6 +270,21 @@
     font-size: 12px;
     color: #6c7e97;
     line-height: 1.4;
+  }
+  .inline-hint {
+    margin-top: 0;
+    margin-left: 10px;
+  }
+  .intake-result {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eef2f8;
+  }
+  .intake-result-title {
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2d3d;
   }
   .pending-list {
     margin: 0;

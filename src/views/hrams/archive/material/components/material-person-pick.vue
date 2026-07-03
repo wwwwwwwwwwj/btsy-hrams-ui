@@ -7,6 +7,13 @@
         <el-form-item>
           <el-button type="primary" @click="pickReload(pickWhere, 1)">查询</el-button>
           <el-button @click="resetPick">重置</el-button>
+          <el-button
+            type="primary"
+            v-permission="'hrams:archive:upload'"
+            @click="$emit('open-upload')"
+          >
+            上传材料
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -29,7 +36,7 @@
   import { ref } from 'vue';
   import { pagePerson } from '@/api/hrams/person';
 
-  defineEmits(['select']);
+  defineEmits(['select', 'open-upload']);
 
   const pickRef = ref(null);
   const pickWhere = ref({});

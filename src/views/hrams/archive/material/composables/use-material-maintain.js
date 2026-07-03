@@ -13,8 +13,12 @@ import {
   downloadMaterialsZip,
   replaceMaterial,
   updateMaterialPageNo,
-  previewMaterialIntake
+  previewMaterialIntake,
+  uploadMaterialIntake,
+  confirmMaterialIntake
 } from '@/api/hrams/archive';
+import { pagePerson } from '@/api/hrams/person';
+import { listCategoryConfig } from '@/api/hrams/material-category';
 import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
 import request from '@/utils/request';
 import { checkDownloadRes, download } from '@/utils/common';
@@ -66,15 +70,26 @@ export function useMaterialMaintain() {
   const editVisible = ref(false);
   const pageNoVisible = ref(false);
   const replaceVisible = ref(false);
-  const uploadForm = ref({ categoryCode: '1', pageNo: 1, materialName: '', pageCount: 1, formDate: '', file: null });
+  const createUploadForm = () => ({
+    personId: personId.value || '',
+    categoryCode: personId.value ? categoryCode.value : '',
+    pageNo: 1,
+    materialName: '',
+    pageCount: 1,
+    formDate: '',
+    ocrFlag: true,
+    file: null
+  });
+  const uploadForm = ref(createUploadForm());
   const editForm = ref({});
   const pageNoForm = ref({ id: null, pageNo: 1 });
   const replaceForm = ref({ id: null, file: null });
   const highlightMaterialId = ref(null);
+  const globalCategories = ref([]);
   const flatCategories = computed(() => {
     const list = [];
     const walk = (nodes) => (nodes || []).forEach((n) => { list.push(n); if (n.children?.length) walk(n.children); });
-    walk(panel.value.categories);
+    walk(panel.value.categories?.length ? panel.value.categories : globalCategories.value);
     return list;
   });
 
@@ -82,16 +97,103 @@ export function useMaterialMaintain() {
   const editorVisible = ref(false);
   const editorFile = ref(null);
   const editorTarget = ref('upload');
+  const editorPendingKey = ref('');
   const activeBatchId = ref(null);
   const activeBatchNo = ref('');
   const intakePreview = ref({});
+  const intakeRows = ref([]);
   const intakeLoading = ref(false);
   const pendingUploadFiles = ref([]);
   const uploadSubmitting = ref(false);
+  const confirmSubmitting = ref(false);
+  const uploadPersonOptions = ref([]);
 
   const fileNameStem = (name) => (name ? String(name).replace(/\.[^.]+$/, '') : '');
 
   const nextPendingKey = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const selectedUploadPerson = computed(() =>
+    uploadPersonOptions.value.find((p) => String(p.id) === String(uploadForm.value.personId))
+  );
+
+  const uploadNeedsIntake = computed(() =>
+    !uploadForm.value.personId || !uploadForm.value.categoryCode
+  );
+
+  const categoryName = (code) => {
+    if (code == null || code === '') return '';
+    return flatCategories.value.find((c) => String(c.code) === String(code))?.name || String(code);
+  };
+
+  const parseJsonMaybe = (value) => {
+    if (!value) return {};
+    if (typeof value === 'object') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return {};
+    }
+  };
+
+  const resolveAiPayload = (row = {}) =>
+    parseJsonMaybe(row.aiResult || row.aiJson || row.recommendJson || row.resultJson || row.recognitionResult);
+
+  const normalizeIntakeRows = (data, queue = []) => {
+    const source = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.rows)
+        ? data.rows
+        : Array.isArray(data?.records)
+          ? data.records
+          : data
+            ? [data]
+            : [];
+    return source.map((row, index) => {
+      const ai = resolveAiPayload(row);
+      const aiPerson = ai.person || ai.owner || {};
+      const aiCategory = ai.category || ai.directory || {};
+      const personIdValue = row.personId || row.recommendPersonId || row.matchedPersonId || ai.personId || aiPerson.id || '';
+      const categoryCodeValue = row.categoryCode || row.recommendCategoryCode || row.matchedCategoryCode || ai.categoryCode || aiCategory.code || '';
+      const personOption = uploadPersonOptions.value.find((p) => String(p.id) === String(personIdValue));
+      return {
+        id: row.id || row.intakeId || row.materialIntakeId || '',
+        fileName: row.fileName || queue[index]?.file?.name || ai.fileName || '',
+        status: row.status || 'pending',
+        statusText: row.statusText || row.message || '待审核',
+        personId: personOption?.id || personIdValue,
+        archiveNo: row.archiveNo || row.recommendArchiveNo || row.matchedArchiveNo || ai.archiveNo || aiPerson.archiveNo || '',
+        personName: row.personName || row.recommendPersonName || row.matchedPersonName || ai.personName || aiPerson.name || '',
+        categoryCode: categoryCodeValue,
+        categoryName: row.categoryName || row.recommendCategoryName || row.matchedCategoryName || ai.categoryName || aiCategory.name || categoryName(categoryCodeValue),
+        materialName: row.materialName || row.suggestMaterialName || ai.materialName || fileNameStem(queue[index]?.file?.name) || '',
+        formDate: row.formDate || ai.formDate || '',
+        pageNo: row.pageNo || ai.pageNo || 1,
+        pageCount: row.pageCount || ai.pageCount || 1,
+        confidence: row.confidence || ai.confidence || '',
+        rawJson: typeof row.aiResult === 'string'
+          ? row.aiResult
+          : typeof row.recommendJson === 'string'
+            ? row.recommendJson
+            : Object.keys(ai).length
+              ? JSON.stringify(ai)
+              : ''
+      };
+    });
+  };
+
+  const loadUploadOptions = async () => {
+    try {
+      const data = await pagePerson({ pageNum: 1, pageSize: 500 });
+      uploadPersonOptions.value = data.rows || [];
+    } catch {
+      uploadPersonOptions.value = [];
+    }
+    try {
+      globalCategories.value = await listCategoryConfig();
+    } catch {
+      globalCategories.value = [];
+    }
+  };
 
   const addToPending = (file, materialName) => {
     if (!file) return;
@@ -114,6 +216,8 @@ export function useMaterialMaintain() {
     uploadVisible.value = false;
     activeBatchId.value = null;
     activeBatchNo.value = '';
+    intakePreview.value = {};
+    intakeRows.value = [];
     clearPendingUpload();
   };
 
@@ -155,7 +259,13 @@ export function useMaterialMaintain() {
       personId.value = q.personId ? String(q.personId) : '';
       archiveNo.value = q.archiveNo || '';
       personName.value = q.name || '';
-      if (personId.value) load();
+      if (personId.value) {
+        load();
+      } else {
+        panel.value = { categories: [], totalFiles: 0, totalPages: 0 };
+        materials.value = [];
+        selections.value = [];
+      }
     }
   );
 
@@ -196,6 +306,10 @@ export function useMaterialMaintain() {
   const onSelectionChange = (rows) => { selections.value = rows; };
 
   const suggestPageNo = () => {
+    if (!personId.value || String(uploadForm.value.personId || '') !== String(personId.value)) {
+      uploadForm.value.pageNo = 1;
+      return;
+    }
     const inCat = materials.value.filter((m) => m.categoryCode === uploadForm.value.categoryCode);
     const max = inCat.reduce((m, r) => Math.max(m, r.pageNo || 0), 0);
     uploadForm.value.pageNo = max > 0 ? max + 1 : 1;
@@ -204,8 +318,9 @@ export function useMaterialMaintain() {
   const openUpload = () => {
     activeBatchId.value = null;
     activeBatchNo.value = '';
-    uploadForm.value = { categoryCode: categoryCode.value, pageNo: 1, materialName: '', pageCount: 1, formDate: '', file: null };
+    uploadForm.value = createUploadForm();
     intakePreview.value = {};
+    intakeRows.value = [];
     clearPendingUpload();
     suggestPageNo();
     uploadVisible.value = true;
@@ -235,12 +350,33 @@ export function useMaterialMaintain() {
       doReplace();
       return;
     }
+    if (editorTarget.value === 'pending') {
+      pendingUploadFiles.value = pendingUploadFiles.value.map((item) =>
+        item.key === editorPendingKey.value
+          ? { ...item, file, materialName: item.materialName || fileNameStem(file.name) || '' }
+          : item
+      );
+      editorPendingKey.value = '';
+      return;
+    }
     addToPending(file);
+  };
+
+  const isImageFile = (file) =>
+    file && (/^image\//i.test(file.type) || /\.(jpe?g|png|bmp)$/i.test(file.name || ''));
+
+  const editPendingUpload = (key) => {
+    const item = pendingUploadFiles.value.find((p) => p.key === key);
+    if (!item?.file || !isImageFile(item.file)) return;
+    editorPendingKey.value = key;
+    editorFile.value = item.file;
+    editorTarget.value = 'pending';
+    editorVisible.value = true;
   };
 
   const pickImageForEditor = (file, target) => {
     if (!file) return;
-    const isImg = /^image\//i.test(file.type) || /\.(jpe?g|png|bmp)$/i.test(file.name || '');
+    const isImg = isImageFile(file);
     if (target === 'replace') {
       replaceForm.value.file = file;
       if (isImg) {
@@ -284,26 +420,57 @@ export function useMaterialMaintain() {
     return fromItem || '';
   };
 
+  const doIntakeUpload = async (queue) => {
+    let successCount = 0;
+    const rows = [];
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      const fd = new FormData();
+      fd.append('file', item.file);
+      fd.append('ocrFlag', '1');
+      if (uploadForm.value.personId) fd.append('personId', uploadForm.value.personId);
+      if (uploadForm.value.categoryCode) fd.append('categoryCode', uploadForm.value.categoryCode);
+      if (uploadForm.value.materialName?.trim()) fd.append('materialName', uploadForm.value.materialName.trim());
+      if (uploadForm.value.formDate) fd.append('formDate', uploadForm.value.formDate);
+      if (uploadForm.value.pageCount) fd.append('pageCount', uploadForm.value.pageCount);
+      const saved = await uploadMaterialIntake(fd);
+      rows.push(...normalizeIntakeRows(saved, [item]));
+      successCount += 1;
+    }
+    intakeRows.value = rows;
+    clearPendingUpload();
+    intakePreview.value = {};
+    EleMessage.success({
+      message: successCount > 1 ? `已提交 ${successCount} 份材料，等待确认归属` : '已提交识别，等待确认归属',
+      plain: true
+    });
+  };
+
   const doUpload = async () => {
     const queue = [...pendingUploadFiles.value];
     if (!queue.length) {
       return EleMessage.error({ message: '请先选择文件', plain: true });
     }
-    if (!uploadForm.value.formDate) {
-      return EleMessage.error({ message: '请选择形成日期', plain: true });
-    }
-    if (!uploadForm.value.pageCount || uploadForm.value.pageCount < 1) {
-      return EleMessage.error({ message: '请填写页数', plain: true });
-    }
-    const singleInBatch = queue.length === 1;
-    if (singleInBatch && !resolveMaterialName(queue[0], true)) {
-      return EleMessage.error({ message: '请填写材料名称', plain: true });
-    }
 
     uploadSubmitting.value = true;
+    const intakeMode = uploadNeedsIntake.value;
     let pageNo = uploadForm.value.pageNo;
     let successCount = 0;
     try {
+      if (intakeMode) {
+        await doIntakeUpload(queue);
+        return;
+      }
+      if (!uploadForm.value.formDate) {
+        return EleMessage.error({ message: '请选择形成日期', plain: true });
+      }
+      if (!uploadForm.value.pageCount || uploadForm.value.pageCount < 1) {
+        return EleMessage.error({ message: '请填写页数', plain: true });
+      }
+      const singleInBatch = queue.length === 1;
+      if (singleInBatch && !resolveMaterialName(queue[0], true)) {
+        return EleMessage.error({ message: '请填写材料名称', plain: true });
+      }
       for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         const materialName = resolveMaterialName(item, singleInBatch);
@@ -316,9 +483,10 @@ export function useMaterialMaintain() {
         fd.append('materialName', materialName);
         fd.append('pageCount', uploadForm.value.pageCount);
         fd.append('formDate', uploadForm.value.formDate);
+        fd.append('ocrFlag', uploadForm.value.ocrFlag ? '1' : '0');
         if (activeBatchId.value) fd.append('batchId', activeBatchId.value);
         fd.append('file', item.file);
-        const saved = await uploadMaterial(personId.value, fd);
+        const saved = await uploadMaterial(uploadForm.value.personId, fd);
         if (saved?.batchId) {
           activeBatchId.value = saved.batchId;
           activeBatchNo.value = saved.batchNo || '';
@@ -330,16 +498,20 @@ export function useMaterialMaintain() {
       uploadForm.value.materialName = '';
       uploadForm.value.formDate = '';
       uploadForm.value.pageNo = pageNo;
-      await load();
+      if (String(uploadForm.value.personId) === String(personId.value)) {
+        await load();
+      }
       EleMessage.success({
         message: successCount > 1 ? `本批已上传 ${successCount} 份材料` : '上传成功，可继续选择文件',
         plain: true
       });
     } catch (e) {
-      if (successCount > 0) {
+      if (!intakeMode && successCount > 0) {
         pendingUploadFiles.value = queue.slice(successCount);
         uploadForm.value.pageNo = pageNo;
-        await load();
+        if (String(uploadForm.value.personId) === String(personId.value)) {
+          await load();
+        }
       }
       EleMessage.error({
         message: successCount > 0 ? `已上传 ${successCount} 份，后续失败：${e.message}` : e.message,
@@ -347,6 +519,36 @@ export function useMaterialMaintain() {
       });
     } finally {
       uploadSubmitting.value = false;
+    }
+  };
+
+  const confirmIntakeRow = async (row) => {
+    if (!row.id) {
+      return EleMessage.error({ message: '缺少待审核记录ID', plain: true });
+    }
+    if (!row.personId || !row.categoryCode) {
+      return EleMessage.error({ message: '请先确认人员和目录', plain: true });
+    }
+    confirmSubmitting.value = true;
+    try {
+      await confirmMaterialIntake(row.id, {
+        personId: row.personId,
+        categoryCode: row.categoryCode,
+        materialName: row.materialName,
+        formDate: row.formDate,
+        pageNo: row.pageNo,
+        pageCount: row.pageCount
+      });
+      row.status = 'confirmed';
+      row.statusText = '已确认';
+      EleMessage.success({ message: '已确认归属', plain: true });
+      if (String(row.personId) === String(personId.value)) {
+        await load();
+      }
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    } finally {
+      confirmSubmitting.value = false;
     }
   };
 
@@ -408,6 +610,7 @@ export function useMaterialMaintain() {
   };
 
   onMounted(async () => {
+    await loadUploadOptions();
     if (route.query.categoryCode) categoryCode.value = route.query.categoryCode;
     if (route.query.materialId) highlightMaterialId.value = Number(route.query.materialId);
     if (personId.value) {
@@ -443,9 +646,14 @@ export function useMaterialMaintain() {
     replaceForm,
     activeBatchNo,
     intakePreview,
+    intakeRows,
     intakeLoading,
     pendingUploadFiles,
     uploadSubmitting,
+    confirmSubmitting,
+    uploadPersonOptions,
+    selectedUploadPerson,
+    uploadNeedsIntake,
     editorVisible,
     editorFile,
     rowClass,
@@ -461,8 +669,10 @@ export function useMaterialMaintain() {
     suggestPageNo,
     onUploadFile,
     removePendingUpload,
+    editPendingUpload,
     runIntakePreview,
     doUpload,
+    confirmIntakeRow,
     saveEdit,
     savePageNo,
     onReplaceFile,

@@ -56,6 +56,24 @@ export async function previewMaterialIntake(file) {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function uploadMaterialIntake(formData) {
+  const res = await request.post('/hrams/material/intake/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function confirmMaterialIntake(intakeId, data) {
+  const res = await request.post(`/hrams/material/intake/${intakeId}/confirm`, data);
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function updateMaterial(materialId, data) {
   const res = await request.put(`/hrams/archive/materials/${materialId}`, data);
   if (res.data.code === 200) {

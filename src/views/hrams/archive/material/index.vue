@@ -1,7 +1,11 @@
 <template>
   <ele-page hide-footer :flex-table="personId ? void 0 : 'auto'">
     <div class="hrams-v2-page">
-      <material-person-pick v-if="!personId" @select="selectPerson" />
+      <material-person-pick
+        v-if="!personId"
+        @select="selectPerson"
+        @open-upload="openUpload"
+      />
 
       <material-maintain-panel
         v-else
@@ -58,15 +62,21 @@
       :replace-form="replaceForm"
       :active-batch-no="activeBatchNo"
       :intake-preview="intakePreview"
+      :intake-rows="intakeRows"
       :intake-loading="intakeLoading"
       :pending-upload-files="pendingUploadFiles"
       :upload-submitting="uploadSubmitting"
+      :confirm-submitting="confirmSubmitting"
+      :upload-person-options="uploadPersonOptions"
+      :upload-needs-intake="uploadNeedsIntake"
       @close-upload="closeUploadDialog"
       @suggest-page-no="suggestPageNo"
       @upload-file="onUploadFile"
       @remove-pending="removePendingUpload"
+      @edit-pending="editPendingUpload"
       @intake-preview="runIntakePreview"
       @do-upload="doUpload"
+      @confirm-intake="confirmIntakeRow"
       @save-edit="saveEdit"
       @save-page-no="savePageNo"
       @replace-file="onReplaceFile"
@@ -112,9 +122,13 @@
     replaceForm,
     activeBatchNo,
     intakePreview,
+    intakeRows,
     intakeLoading,
     pendingUploadFiles,
     uploadSubmitting,
+    confirmSubmitting,
+    uploadPersonOptions,
+    uploadNeedsIntake,
     editorVisible,
     editorFile,
     rowClass,
@@ -130,8 +144,10 @@
     suggestPageNo,
     onUploadFile,
     removePendingUpload,
+    editPendingUpload,
     runIntakePreview,
     doUpload,
+    confirmIntakeRow,
     saveEdit,
     savePageNo,
     onReplaceFile,
