@@ -153,7 +153,7 @@
     }
     router.push({
       path: HRAMS_ARCHIVE_ATTACH,
-      query: { mode, ids: selections.value.map((p) => p.id).join(',') }
+      query: { mode, ids: selections.value.map((p) => String(p.id)).join(',') }
     });
   };
 </script>

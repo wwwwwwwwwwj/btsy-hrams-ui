@@ -205,9 +205,18 @@ function adjustTopLevelMenus(list) {
     return list;
   }
   const hidden = new Set(HIDDEN_TOP_MENU_PATHS);
-  let menus = list.filter(
-    (item) => !(isTopMenu(item) && hidden.has(item.path))
-  );
+  let menus = list.filter((item) => {
+    if (!isTopMenu(item)) {
+      return true;
+    }
+    if (hidden.has(item.path)) {
+      return false;
+    }
+    if (item.path === 'archive-material-maintain') {
+      return false;
+    }
+    return true;
+  });
   const idx = menus.findIndex(
     (m) => isTopMenu(m) && m.path === LAST_TOP_MENU_PATH
   );

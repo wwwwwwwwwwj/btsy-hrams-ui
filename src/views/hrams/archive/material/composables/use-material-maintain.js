@@ -1,6 +1,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { EleMessage } from 'ele-admin-plus';
+import { createManualBatch } from '@/api/hrams/material-batch';
 import {
   getMaterialPanel,
   listMaterials,
@@ -15,11 +16,18 @@ import {
   updateMaterialPageNo,
   previewMaterialIntake,
   uploadMaterialIntake,
-  confirmMaterialIntake
+  getMaterialIntake,
+  confirmMaterialIntake,
+  rejectMaterialIntake
 } from '@/api/hrams/archive';
 import { pagePerson } from '@/api/hrams/person';
 import { listCategoryConfig } from '@/api/hrams/material-category';
-import { HRAMS_MATERIAL_MAINTAIN_PATH } from '@/utils/hrams-routes';
+import { HRAMS_MATERIAL_MAINTAIN_PATH, HRAMS_MATERIAL_MGMT_PATH } from '@/utils/hrams-routes';
+import {
+  INTAKE_TERMINAL_STATUSES,
+  intakeVoToRow,
+  pollMaterialIntake
+} from '@/utils/hrams-material-intake';
 import request from '@/utils/request';
 import { checkDownloadRes, download } from '@/utils/common';
 import { usePageTab } from '@/utils/use-page-tab';
@@ -46,13 +54,17 @@ export function useMaterialMaintain() {
     return who ? `当前干部 · ${who}` : '维护卷内目录与上传材料';
   });
 
-  const PAGE_TITLE = '材料维护';
+  const PAGE_TITLE = '卷内材料维护';
 
   const syncLayoutTitle = () => {
-    if (route.path !== HRAMS_MATERIAL_MAINTAIN_PATH) {
+    const onMaintain = route.path === HRAMS_MATERIAL_MAINTAIN_PATH;
+    const onMgmtUpload =
+      route.path === HRAMS_MATERIAL_MGMT_PATH && String(route.query.tab || '') === 'upload';
+    if (!onMaintain && !onMgmtUpload) {
       return;
     }
-    activeMenu(HRAMS_MATERIAL_MAINTAIN_PATH);
+    const menuPath = onMgmtUpload ? HRAMS_MATERIAL_MGMT_PATH : HRAMS_MATERIAL_MAINTAIN_PATH;
+    activeMenu(menuPath);
     setPageTabTitle(PAGE_TITLE);
     setPageTitle(PAGE_TITLE);
     const leaf = route.matched[route.matched.length - 1];
@@ -135,51 +147,12 @@ export function useMaterialMaintain() {
     }
   };
 
-  const resolveAiPayload = (row = {}) =>
-    parseJsonMaybe(row.aiResult || row.aiJson || row.recommendJson || row.resultJson || row.recognitionResult);
+  const intakeRowCtx = () => ({
+    uploadPersonOptions: uploadPersonOptions.value,
+    flatCategories: flatCategories.value
+  });
 
-  const normalizeIntakeRows = (data, queue = []) => {
-    const source = Array.isArray(data)
-      ? data
-      : Array.isArray(data?.rows)
-        ? data.rows
-        : Array.isArray(data?.records)
-          ? data.records
-          : data
-            ? [data]
-            : [];
-    return source.map((row, index) => {
-      const ai = resolveAiPayload(row);
-      const aiPerson = ai.person || ai.owner || {};
-      const aiCategory = ai.category || ai.directory || {};
-      const personIdValue = row.personId || row.recommendPersonId || row.matchedPersonId || ai.personId || aiPerson.id || '';
-      const categoryCodeValue = row.categoryCode || row.recommendCategoryCode || row.matchedCategoryCode || ai.categoryCode || aiCategory.code || '';
-      const personOption = uploadPersonOptions.value.find((p) => String(p.id) === String(personIdValue));
-      return {
-        id: row.id || row.intakeId || row.materialIntakeId || '',
-        fileName: row.fileName || queue[index]?.file?.name || ai.fileName || '',
-        status: row.status || 'pending',
-        statusText: row.statusText || row.message || '待审核',
-        personId: personOption?.id || personIdValue,
-        archiveNo: row.archiveNo || row.recommendArchiveNo || row.matchedArchiveNo || ai.archiveNo || aiPerson.archiveNo || '',
-        personName: row.personName || row.recommendPersonName || row.matchedPersonName || ai.personName || aiPerson.name || '',
-        categoryCode: categoryCodeValue,
-        categoryName: row.categoryName || row.recommendCategoryName || row.matchedCategoryName || ai.categoryName || aiCategory.name || categoryName(categoryCodeValue),
-        materialName: row.materialName || row.suggestMaterialName || ai.materialName || fileNameStem(queue[index]?.file?.name) || '',
-        formDate: row.formDate || ai.formDate || '',
-        pageNo: row.pageNo || ai.pageNo || 1,
-        pageCount: row.pageCount || ai.pageCount || 1,
-        confidence: row.confidence || ai.confidence || '',
-        rawJson: typeof row.aiResult === 'string'
-          ? row.aiResult
-          : typeof row.recommendJson === 'string'
-            ? row.recommendJson
-            : Object.keys(ai).length
-              ? JSON.stringify(ai)
-              : ''
-      };
-    });
-  };
+  const mapIntakeVo = (vo, queueItem) => intakeVoToRow(vo, queueItem, intakeRowCtx());
 
   const loadUploadOptions = async () => {
     try {
@@ -242,15 +215,31 @@ export function useMaterialMaintain() {
   };
   const rowSelectable = (row) => row.fileStatus === 'uploaded';
 
+  const materialBasePath = () =>
+    route.path === HRAMS_MATERIAL_MGMT_PATH ? HRAMS_MATERIAL_MGMT_PATH : HRAMS_MATERIAL_MAINTAIN_PATH;
+
+  const materialPersonQuery = (person) => {
+    const q = {
+      personId: String(person.id),
+      archiveNo: person.archiveNo,
+      name: person.name
+    };
+    if (route.path === HRAMS_MATERIAL_MGMT_PATH) {
+      q.tab = 'upload';
+    }
+    return q;
+  };
+
   const selectPerson = (row) => {
     router.replace({
-      path: HRAMS_MATERIAL_MAINTAIN_PATH,
-      query: { personId: row.id, archiveNo: row.archiveNo, name: row.name }
+      path: materialBasePath(),
+      query: materialPersonQuery(row)
     });
   };
 
   const clearPerson = () => {
-    router.replace({ path: HRAMS_MATERIAL_MAINTAIN_PATH });
+    const q = route.path === HRAMS_MATERIAL_MGMT_PATH ? { tab: 'upload' } : {};
+    router.replace({ path: materialBasePath(), query: q });
   };
 
   watch(
@@ -272,7 +261,10 @@ export function useMaterialMaintain() {
   watch(
     () => route.fullPath,
     () => {
-      if (route.path !== HRAMS_MATERIAL_MAINTAIN_PATH) {
+      const onMaintain = route.path === HRAMS_MATERIAL_MAINTAIN_PATH;
+      const onMgmtUpload =
+        route.path === HRAMS_MATERIAL_MGMT_PATH && String(route.query.tab || '') === 'upload';
+      if (!onMaintain && !onMgmtUpload) {
         return;
       }
       nextTick(syncLayoutTitle);
@@ -421,29 +413,48 @@ export function useMaterialMaintain() {
   };
 
   const doIntakeUpload = async (queue) => {
+    intakeLoading.value = true;
     let successCount = 0;
     const rows = [];
-    for (let i = 0; i < queue.length; i++) {
-      const item = queue[i];
-      const fd = new FormData();
-      fd.append('file', item.file);
-      fd.append('ocrFlag', '1');
-      if (uploadForm.value.personId) fd.append('personId', uploadForm.value.personId);
-      if (uploadForm.value.categoryCode) fd.append('categoryCode', uploadForm.value.categoryCode);
-      if (uploadForm.value.materialName?.trim()) fd.append('materialName', uploadForm.value.materialName.trim());
-      if (uploadForm.value.formDate) fd.append('formDate', uploadForm.value.formDate);
-      if (uploadForm.value.pageCount) fd.append('pageCount', uploadForm.value.pageCount);
-      const saved = await uploadMaterialIntake(fd);
-      rows.push(...normalizeIntakeRows(saved, [item]));
-      successCount += 1;
+    try {
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        const fd = new FormData();
+        fd.append('file', item.file);
+        fd.append('ocr', 'true');
+        if (uploadForm.value.personId) fd.append('personId', uploadForm.value.personId);
+        if (uploadForm.value.categoryCode) fd.append('categoryCode', uploadForm.value.categoryCode);
+        if (uploadForm.value.materialName?.trim()) fd.append('materialName', uploadForm.value.materialName.trim());
+        if (uploadForm.value.formDate) fd.append('formDate', uploadForm.value.formDate);
+        if (uploadForm.value.pageCount) fd.append('pageCount', uploadForm.value.pageCount);
+        const saved = await uploadMaterialIntake(fd);
+        let vo = saved;
+        if (saved?.id && !INTAKE_TERMINAL_STATUSES.has(saved.status)) {
+          vo = await pollMaterialIntake(saved.id, getMaterialIntake);
+        }
+        rows.push(mapIntakeVo(vo, item));
+        successCount += 1;
+      }
+      intakeRows.value = rows;
+      clearPendingUpload();
+      intakePreview.value = {};
+      const failed = rows.filter((r) => r.status === 'recognize_failed');
+      if (failed.length) {
+        EleMessage.warning({
+          message: failed.length === rows.length ? '识别失败，请核对文件或稍后重试' : `部分识别失败（${failed.length} 份）`,
+          plain: true
+        });
+      } else {
+        EleMessage.success({
+          message: successCount > 1 ? `已完成 ${successCount} 份识别，请确认归属` : '识别完成，请确认归属',
+          plain: true
+        });
+      }
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    } finally {
+      intakeLoading.value = false;
     }
-    intakeRows.value = rows;
-    clearPendingUpload();
-    intakePreview.value = {};
-    EleMessage.success({
-      message: successCount > 1 ? `已提交 ${successCount} 份材料，等待确认归属` : '已提交识别，等待确认归属',
-      plain: true
-    });
   };
 
   const doUpload = async () => {
@@ -471,6 +482,15 @@ export function useMaterialMaintain() {
       if (singleInBatch && !resolveMaterialName(queue[0], true)) {
         return EleMessage.error({ message: '请填写材料名称', plain: true });
       }
+      if (!activeBatchId.value) {
+        const pid = uploadForm.value.personId;
+        if (!pid) {
+          return EleMessage.error({ message: '请先选择人员', plain: true });
+        }
+        const batch = await createManualBatch(pid);
+        activeBatchId.value = batch.id;
+        activeBatchNo.value = batch.batchNo || '';
+      }
       for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         const materialName = resolveMaterialName(item, singleInBatch);
@@ -484,12 +504,11 @@ export function useMaterialMaintain() {
         fd.append('pageCount', uploadForm.value.pageCount);
         fd.append('formDate', uploadForm.value.formDate);
         fd.append('ocrFlag', uploadForm.value.ocrFlag ? '1' : '0');
-        if (activeBatchId.value) fd.append('batchId', activeBatchId.value);
         fd.append('file', item.file);
-        const saved = await uploadMaterial(uploadForm.value.personId, fd);
+        const saved = await uploadMaterial(uploadForm.value.personId, fd, activeBatchId.value);
         if (saved?.batchId) {
           activeBatchId.value = saved.batchId;
-          activeBatchNo.value = saved.batchNo || '';
+          activeBatchNo.value = saved.batchNo || activeBatchNo.value;
         }
         pageNo += 1;
         successCount += 1;
@@ -539,12 +558,29 @@ export function useMaterialMaintain() {
         pageNo: row.pageNo,
         pageCount: row.pageCount
       });
-      row.status = 'confirmed';
-      row.statusText = '已确认';
+      row.status = 'archived';
+      row.statusText = '已归档';
       EleMessage.success({ message: '已确认归属', plain: true });
       if (String(row.personId) === String(personId.value)) {
         await load();
       }
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    } finally {
+      confirmSubmitting.value = false;
+    }
+  };
+
+  const rejectIntakeRow = async (row) => {
+    if (!row?.id) {
+      return EleMessage.error({ message: '缺少待审核记录ID', plain: true });
+    }
+    confirmSubmitting.value = true;
+    try {
+      await rejectMaterialIntake(row.id, '管理员驳回');
+      row.status = 'rejected';
+      row.statusText = '已驳回';
+      EleMessage.success({ message: '已驳回', plain: true });
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     } finally {
@@ -673,6 +709,7 @@ export function useMaterialMaintain() {
     runIntakePreview,
     doUpload,
     confirmIntakeRow,
+    rejectIntakeRow,
     saveEdit,
     savePageNo,
     onReplaceFile,

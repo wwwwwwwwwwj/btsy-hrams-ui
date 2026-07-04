@@ -42,6 +42,7 @@
         :file-count="fileCount"
         :selected-person-count="selectedIds.length"
         :confirmable-count="confirmedPersonIds.length"
+        :attachable-file-count="attachableFileCount"
         :can-confirm="canConfirm"
         :confirm-loading="confirmLoading"
         :can-delete-row="canDeleteRow"
@@ -101,27 +102,43 @@
     const map = new Map();
     previewRows.value.forEach((r) => {
       if (!r.personId) return;
-      if (!map.has(r.personId)) {
-        map.set(r.personId, {
+      const key = String(r.personId);
+      if (!map.has(key)) {
+        map.set(key, {
           personId: r.personId,
           label: `${r.archiveNo || ''}${r.personName || ''}`,
-          attachable: Boolean(r.personAttachable)
+          hasPass: false
         });
+      }
+      if (r.status === 'pass') {
+        map.get(key).hasPass = true;
       }
     });
     return [...map.values()].map((p) => ({
-      ...p,
+      personId: p.personId,
+      label: p.label,
+      attachable: p.hasPass,
       cancelled: cancelledPersonIds.value.has(String(p.personId))
     }));
   });
 
+  const attachableFileCount = computed(
+    () => previewRows.value.filter((r) => r.status === 'pass').length
+  );
+
   const confirmedPersonIds = computed(() =>
     personSummaries.value
       .filter((p) => p.attachable && !p.cancelled)
-      .map((p) => p.personId)
+      .map((p) => String(p.personId))
   );
 
-  const canConfirm = computed(() => Boolean(batchId.value) && confirmedPersonIds.value.length > 0 && !scanLoading.value);
+  const canConfirm = computed(
+    () =>
+      Boolean(batchId.value) &&
+      attachableFileCount.value > 0 &&
+      confirmedPersonIds.value.length > 0 &&
+      !scanLoading.value
+  );
 
   const visiblePreviewRows = computed(() =>
     previewRows.value.filter((r) => !r.personId || !cancelledPersonIds.value.has(String(r.personId)))
@@ -266,7 +283,7 @@
             return;
           }
           scanPhaseText.value =
-            st.scanStatus === 'processing' ? '服务端正在解压并校验，请稍候…' : '等待扫描…';
+            st.scanStatus === 'scanning' ? '服务端正在解压并校验，请稍候…' : '等待扫描…';
         } catch (e) {
           if (pollTimer) {
             clearInterval(pollTimer);
@@ -285,6 +302,14 @@
 
   const loadPreview = async (id) => {
     previewRows.value = await getAttachScanPreview(id);
+    const attachableCount = previewRows.value.filter((r) => r.status === 'pass').length;
+    if (attachableCount === 0) {
+      EleMessage.warning({
+        message: '未发现可挂接材料，请确认 ZIP 中包含材料文件',
+        plain: true,
+        duration: 6000
+      });
+    }
     const dupMsg = previewRows.value.find(
       (r) => r.message && r.message.includes('同一人员存在多个文件夹')
     );
@@ -314,7 +339,7 @@
     try {
       const { batchId: id } = await uploadAttachZip({
         mode: modeAtStart,
-        personIds: selectedIds.value,
+        personIds: selectedIds.value.map(String),
         zip
       });
       if (session !== uploadSession || modeAtStart !== mode.value) {
@@ -400,6 +425,13 @@
 
   const doConfirmAttach = async () => {
     if (!batchId.value) {
+      return;
+    }
+    if (attachableFileCount.value === 0 || confirmedPersonIds.value.length === 0) {
+      EleMessage.warning({
+        message: '未发现可挂接材料，请确认 ZIP 中包含材料文件',
+        plain: true
+      });
       return;
     }
     confirmLoading.value = true;

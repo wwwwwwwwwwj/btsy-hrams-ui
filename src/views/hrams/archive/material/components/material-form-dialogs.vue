@@ -85,6 +85,7 @@
                 />
               </el-select>
               <div v-if="row.personName" class="field-hint">AI：{{ row.archiveNo }} {{ row.personName }}</div>
+              <div v-if="row.personCandidateHint" class="field-hint">候选：{{ row.personCandidateHint }}</div>
             </template>
           </el-table-column>
           <el-table-column label="推荐目录" min-width="180">
@@ -100,21 +101,33 @@
               <el-input v-model="row.materialName" placeholder="材料名称" />
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="100">
+          <el-table-column label="状态" width="108">
             <template #default="{ row }">
-              <el-tag :type="row.status === 'confirmed' ? 'success' : 'warning'">{{ row.statusText }}</el-tag>
+              <el-tag :type="row.status === 'archived' ? 'success' : row.status === 'recognize_failed' || row.status === 'rejected' ? 'danger' : 'warning'">
+                {{ row.statusText }}
+              </el-tag>
+              <div v-if="row.recognizeMessage" class="field-hint">{{ row.recognizeMessage }}</div>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="90" fixed="right">
+          <el-table-column label="操作" width="140" fixed="right">
             <template #default="{ row }">
               <el-button
                 link
                 type="primary"
-                :disabled="row.status === 'confirmed'"
+                :disabled="row.status !== 'pending_confirm'"
                 :loading="confirmSubmitting"
                 @click="$emit('confirm-intake', row)"
               >
                 确认
+              </el-button>
+              <el-button
+                link
+                type="danger"
+                :disabled="row.status !== 'pending_confirm' && row.status !== 'recognize_failed'"
+                :loading="confirmSubmitting"
+                @click="$emit('reject-intake', row)"
+              >
+                驳回
               </el-button>
             </template>
           </el-table-column>
@@ -233,7 +246,7 @@
   );
 
   defineEmits([
-    'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'confirm-intake', 'remove-pending', 'edit-pending',
+    'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'confirm-intake', 'reject-intake', 'remove-pending', 'edit-pending',
     'save-edit', 'save-page-no', 'replace-file', 'do-replace'
   ]);
 </script>

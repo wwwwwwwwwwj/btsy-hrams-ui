@@ -77,6 +77,7 @@
       @intake-preview="runIntakePreview"
       @do-upload="doUpload"
       @confirm-intake="confirmIntakeRow"
+      @reject-intake="rejectIntakeRow"
       @save-edit="saveEdit"
       @save-page-no="savePageNo"
       @replace-file="onReplaceFile"
@@ -148,6 +149,7 @@
     runIntakePreview,
     doUpload,
     confirmIntakeRow,
+    rejectIntakeRow,
     saveEdit,
     savePageNo,
     onReplaceFile,

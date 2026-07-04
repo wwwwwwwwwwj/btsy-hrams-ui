@@ -3,13 +3,17 @@ export const HRAMS_WORKBENCH_DASHBOARD = '/dashboard';
 export const HRAMS_PERSON_LIST = '/person';
 export const HRAMS_ARCHIVE_LIST = '/archive';
 export const HRAMS_ARCHIVE_ATTACH = '/archive/attach';
-export const HRAMS_MATERIAL_MAINTAIN_PATH = '/archive-material';
+/** 材料管理：统一材料批次（手工 / 挂接） */
+export const HRAMS_MATERIAL_MGMT_PATH = '/archive-material';
+/** 卷内目录与单份材料维护 */
+export const HRAMS_MATERIAL_MAINTAIN_PATH = '/archive-material-maintain';
 export const HRAMS_UTILIZE_REGISTER = '/archive-utilize';
 export const HRAMS_QUERY_PERSON = '/person-query';
 
 /** 侧栏隐藏入口（挂在 *-group 目录下） */
 export const HRAMS_FIELD_CONFIG = '/person-archive-group/field-config';
-export const HRAMS_MATERIAL_BATCH = '/archive-material-group/batch';
+/** @deprecated 已合并到材料管理 */
+export const HRAMS_MATERIAL_BATCH = HRAMS_MATERIAL_MGMT_PATH;
 export const HRAMS_QUERY_FULLTEXT = '/query-search-group/fulltext';
 export const HRAMS_QUERY_QA = '/query-search-group/qa';
 export const HRAMS_QUERY_REINDEX = '/query-search-group/reindex';
@@ -31,7 +35,8 @@ export const HRAMS_LEGACY_REDIRECTS = {
   '/person-archive/archive/attach': HRAMS_ARCHIVE_ATTACH,
   '/person-archive/field-config': HRAMS_FIELD_CONFIG,
   '/archive-material/maintain': HRAMS_MATERIAL_MAINTAIN_PATH,
-  '/archive-material/batch': HRAMS_MATERIAL_BATCH,
+  '/archive-material/batch': HRAMS_MATERIAL_MGMT_PATH,
+  '/archive-material-group/batch': HRAMS_MATERIAL_MGMT_PATH,
   '/archive-utilize/register': HRAMS_UTILIZE_REGISTER,
   '/archive-utilize/records': HRAMS_UTILIZE_REGISTER,
   '/archive-utilize/stats': HRAMS_WORKBENCH_DASHBOARD,

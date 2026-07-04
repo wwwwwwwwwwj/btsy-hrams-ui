@@ -34,8 +34,9 @@ export async function listMaterials(personId, params) {
   return Promise.reject(new Error(res.data.msg));
 }
 
-export async function uploadMaterial(personId, formData) {
+export async function uploadMaterial(personId, formData, batchId) {
   const res = await request.post(`/hrams/archive/${personId}/materials`, formData, {
+    params: batchId != null && batchId !== '' ? { batchId } : undefined,
     headers: { 'Content-Type': 'multipart/form-data' }
   });
   if (res.data.code === 200) {
@@ -58,7 +59,8 @@ export async function previewMaterialIntake(file) {
 
 export async function uploadMaterialIntake(formData) {
   const res = await request.post('/hrams/material/intake/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 600000
   });
   if (res.data.code === 200) {
     return res.data.data;
@@ -66,8 +68,32 @@ export async function uploadMaterialIntake(formData) {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function getMaterialIntake(intakeId) {
+  const res = await request.get(`/hrams/material/intake/${intakeId}`);
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function pageMaterialIntake(params) {
+  const res = await request.get('/hrams/material/intake/list', { params });
+  if (res.data.code === 200) {
+    return res.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function confirmMaterialIntake(intakeId, data) {
   const res = await request.post(`/hrams/material/intake/${intakeId}/confirm`, data);
+  if (res.data.code === 200) {
+    return res.data.data;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function rejectMaterialIntake(intakeId, reason) {
+  const res = await request.post(`/hrams/material/intake/${intakeId}/reject`, { reason });
   if (res.data.code === 200) {
     return res.data.data;
   }

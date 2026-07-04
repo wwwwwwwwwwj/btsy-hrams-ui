@@ -17,7 +17,7 @@
         <div>
           <div class="upload-title">待挂接文件清单</div>
           <div class="upload-desc">
-            文件 {{ fileCount }} 个 · 选中人员 {{ selectedPersonCount }} 人 · 可挂接 {{ confirmableCount }} 人
+            文件 {{ fileCount }} 个 · 选中人员 {{ selectedPersonCount }} 人 · 可挂接材料 {{ attachableFileCount }} 份 · 可确认 {{ confirmableCount }} 人
           </div>
         </div>
         <el-button type="primary" :loading="confirmLoading" :disabled="!canConfirm" v-permission="'hrams:archive:attach'" @click="$emit('confirm')">确认挂接</el-button>
@@ -69,6 +69,7 @@
     fileCount: { type: Number, default: 0 },
     selectedPersonCount: { type: Number, default: 0 },
     confirmableCount: { type: Number, default: 0 },
+    attachableFileCount: { type: Number, default: 0 },
     canConfirm: Boolean,
     confirmLoading: Boolean,
     canDeleteRow: { type: Function, required: true }
