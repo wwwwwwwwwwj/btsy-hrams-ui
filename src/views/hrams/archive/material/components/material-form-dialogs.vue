@@ -49,11 +49,11 @@
         </el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="页数" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
-        <el-form-item v-if="activeBatchNo" label="本轮批次"><span class="batch-inline">{{ activeBatchNo }}</span></el-form-item>
+        <el-form-item v-if="activeBatchNo && !hideBatchHint" label="本轮批次"><span class="batch-inline">{{ activeBatchNo }}</span></el-form-item>
         <el-form-item label="文件" required>
           <div class="file-picker">
-            <input type="file" accept=".jpg,.jpeg,.png,.bmp" multiple @change="(e) => $emit('upload-file', e)" />
-            <div class="field-hint">图片会先进入旋转、裁剪处理；可多选，同一轮次共用一个批次号</div>
+            <input type="file" accept=".jpg,.jpeg,.png,.bmp,.pdf,image/*,application/pdf" multiple @change="(e) => $emit('upload-file', e)" />
+            <div class="field-hint">图片可先旋转、裁剪；PDF 直接加入待传列表</div>
             <ul v-if="pendingUploadFiles.length" class="pending-list">
               <li v-for="(item, index) in pendingUploadFiles" :key="item.key" class="pending-item">
                 <span class="pending-page">{{ uploadNeedsIntake ? `待识别 ${index + 1}` : `页 ${pageNoForIndex(index)}` }}</span>
@@ -139,7 +139,7 @@
         <el-button type="primary" :loading="uploadSubmitting" :disabled="!pendingUploadFiles.length" @click="$emit('do-upload')">
           {{ uploadButtonLabel }}
         </el-button>
-        <el-button @click="$emit('close-upload')">完成本轮</el-button>
+        <el-button v-if="!hideBatchHint" @click="$emit('close-upload')">完成本轮</el-button>
       </template>
     </el-dialog>
 
@@ -170,7 +170,7 @@
       <el-form label-width="90px">
         <el-form-item label="新文件" required>
           <div class="file-picker">
-            <input type="file" accept=".jpg,.jpeg,.png,.bmp" @change="(e) => $emit('replace-file', e)" />
+            <input type="file" accept=".jpg,.jpeg,.png,.bmp,.pdf,image/*,application/pdf" @change="(e) => $emit('replace-file', e)" />
             <div v-if="replaceFile" class="file-selected">
               <span class="file-selected-name">{{ replaceFile.name }}</span>
             </div>
@@ -194,6 +194,7 @@
     editForm: { type: Object, required: true },
     pageNoForm: { type: Object, required: true },
     activeBatchNo: String,
+    hideBatchHint: Boolean,
     intakePreview: { type: Object, default: () => ({}) },
     intakeRows: { type: Array, default: () => [] },
     intakeLoading: Boolean,

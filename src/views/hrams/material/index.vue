@@ -1,15 +1,16 @@
 <template>
   <div class="hrams-material-mgmt">
-    <div class="hrams-v2-card material-mgmt-tabs">
-      <el-radio-group v-model="activeTab" size="default">
-        <el-radio-button value="batch">批次记录</el-radio-button>
-        <el-radio-button value="upload">上传材料</el-radio-button>
-        <el-radio-button value="intake">待归属审核</el-radio-button>
-      </el-radio-group>
-    </div>
-    <material-batch-mgmt v-if="activeTab === 'batch'" />
-    <material-intake-pending v-else-if="activeTab === 'intake'" />
-    <archive-material-maintain v-else />
+    <el-tabs v-model="activeTab" class="material-mgmt-tabs" @tab-change="onTabChange">
+      <el-tab-pane label="批次记录" name="batch" lazy>
+        <material-batch-mgmt />
+      </el-tab-pane>
+      <el-tab-pane label="上传材料" name="upload" lazy>
+        <material-upload-entry />
+      </el-tab-pane>
+      <el-tab-pane label="待归属审核" name="intake" lazy>
+        <material-intake-pending />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -18,7 +19,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import MaterialBatchMgmt from './batch/index.vue';
   import MaterialIntakePending from './intake-pending/index.vue';
-  import ArchiveMaterialMaintain from '../archive/material/index.vue';
+  import MaterialUploadEntry from './upload/index.vue';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsMaterialMgmt' });
@@ -28,9 +29,9 @@
 
   const tabFromQuery = () => {
     const t = route.query.tab;
-    if (t === 'upload') return 'upload';
+    if (t === 'batch') return 'batch';
     if (t === 'intake') return 'intake';
-    return 'batch';
+    return 'upload';
   };
 
   const activeTab = ref(tabFromQuery());
@@ -38,39 +39,78 @@
   watch(
     () => route.query.tab,
     () => {
-      activeTab.value = tabFromQuery();
+      const next = tabFromQuery();
+      if (activeTab.value !== next) {
+        activeTab.value = next;
+      }
     }
   );
 
-  watch(activeTab, (tab) => {
-    if (tab === tabFromQuery()) {
-      return;
-    }
+  const onTabChange = (name) => {
     const q = { ...route.query };
-    if (tab === 'upload') {
-      q.tab = 'upload';
-    } else if (tab === 'intake') {
-      q.tab = 'intake';
+    if (name === 'upload' || name === 'intake') {
+      q.tab = name;
     } else {
       delete q.tab;
     }
+    delete q.openUpload;
     router.replace({ path: route.path, query: q });
-  });
+  };
 </script>
 
 <style scoped>
   .hrams-material-mgmt {
     display: flex;
     flex-direction: column;
-    gap: 0;
     min-height: 0;
     flex: 1;
+    padding: 0 2px;
   }
+
   .material-mgmt-tabs {
-    margin-bottom: 12px;
-    padding: 12px 16px 0;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
+
+  .material-mgmt-tabs :deep(.el-tabs__header) {
+    margin: 0 0 16px;
+    padding: 10px 16px 0;
+    background: #fff;
+    border: 1px solid #eef2f8;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 2%);
+  }
+
+  .material-mgmt-tabs :deep(.el-tabs__nav-wrap::after) {
+    height: 1px;
+    background-color: #eef2f8;
+  }
+
+  .material-mgmt-tabs :deep(.el-tabs__item) {
+    height: 40px;
+    line-height: 40px;
+    font-size: 14px;
+    padding: 0 20px;
+  }
+
+  .material-mgmt-tabs :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .material-mgmt-tabs :deep(.el-tab-pane) {
+    min-height: 0;
+  }
+
   .hrams-material-mgmt :deep(.ele-page) {
-    padding-top: 0;
+    padding: 0;
+    min-height: 0;
+  }
+
+  .hrams-material-mgmt :deep(.ele-page-body) {
+    padding: 0;
   }
 </style>
