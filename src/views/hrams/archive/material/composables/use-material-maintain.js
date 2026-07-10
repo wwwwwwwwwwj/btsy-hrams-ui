@@ -28,6 +28,7 @@ import {
   intakeVoToRow,
   pollMaterialIntake
 } from '@/utils/hrams-material-intake';
+import { uploadOssFile, ocrOssFile, analyzeOcrTextStream } from '@/api/hrams/checking';
 import request from '@/utils/request';
 import { checkDownloadRes, download } from '@/utils/common';
 import { usePageTab } from '@/utils/use-page-tab';
@@ -482,6 +483,166 @@ export function useMaterialMaintain() {
     }
   };
 
+  /**
+   * Checking Agent 流式录入：文件 → MinIO → OCR → Dify → SSE 实时返回。
+   * 并行上传到 MinIO，每个文件独立 SSE 分析，结果实时更新 intakeRows。
+   */
+  /**
+   * 三步并行录入：上传→OCR→Dify，每一步操作独立并行。
+   */
+  const doCheckingUpload = async (queue) => {
+    intakeLoading.value = true;
+    const rowsMap = {};
+    const streamControllers = [];
+
+    const setRow = (i, patch) => {
+      rowsMap[i] = { ...rowsMap[i], ...patch };
+      intakeRows.value = Object.values(rowsMap);
+    };
+
+    try {
+      // 初始化行
+      queue.forEach((item, i) => {
+        rowsMap[i] = {
+          id: null, fileName: item.file?.name || '',
+          status: 'uploading', statusText: '上传至 MinIO…',
+          recognizeMessage: '', personId: '', archiveNo: '', personName: '',
+          categoryCode: '', categoryName: '', materialName: '',
+          formDate: '', pageNo: 1, pageCount: 1, confidence: '', rawJson: ''
+        };
+      });
+      intakeRows.value = Object.values(rowsMap);
+      clearPendingUpload();
+      intakePreview.value = {};
+
+      // ═══ Phase 1: 并行上传到 MinIO ═══
+      const uploadResults = await Promise.allSettled(
+        queue.map(async (item, i) => {
+          setRow(i, { statusText: '上传中…' });
+          const res = await uploadOssFile(item.file);
+          if (!res?.data?.success) throw new Error(res?.data?.error || '上传失败');
+          return { index: i, key: res.data.key };
+        })
+      );
+
+      const okUploads = [];
+      uploadResults.forEach((r, fallbackIdx) => {
+        if (r.status === 'rejected') {
+          setRow(fallbackIdx, { status: 'recognize_failed', statusText: '上传失败', recognizeMessage: r.reason?.message || '上传失败' });
+        } else {
+          okUploads.push(r.value);
+          setRow(r.value.index, { status: 'ocr_processing', statusText: 'OCR 识别中…' });
+        }
+      });
+
+      if (!okUploads.length) {
+        EleMessage.error({ message: '所有文件上传失败', plain: true });
+        return;
+      }
+
+      // ═══ Phase 2: 并行 OCR ═══
+      const ocrResults = await Promise.allSettled(
+        okUploads.map(async ({ index, key }) => {
+          setRow(index, { statusText: 'OCR 识别中…' });
+          const res = await ocrOssFile(key);
+          if (!res?.data?.success || !res?.data?.ocrText) throw new Error(res?.data?.error || 'OCR 结果为空');
+          return { index, ossKey: key, ocrText: res.data.ocrText, fileName: res.data.fileName };
+        })
+      );
+
+      const okOcr = [];
+      ocrResults.forEach((r, fallbackIdx) => {
+        if (r.status === 'rejected') {
+          const idx = okUploads[fallbackIdx]?.index ?? fallbackIdx;
+          setRow(idx, { status: 'recognize_failed', statusText: 'OCR 失败', recognizeMessage: r.reason?.message || 'OCR 失败' });
+        } else {
+          okOcr.push(r.value);
+          setRow(r.value.index, { status: 'ai_processing', statusText: 'AI 分析中…' });
+        }
+      });
+
+      if (!okOcr.length) {
+        EleMessage.error({ message: '所有文件 OCR 失败', plain: true });
+        return;
+      }
+
+      // ═══ Phase 3: 并行 Dify SSE 流式 ═══
+      const streamPromises = okOcr.map(({ index, key, ocrText }) => {
+        const abortCtrl = new AbortController();
+        streamControllers.push(abortCtrl);
+
+        return (async () => {
+          let streamingText = '';
+          try {
+            const resp = await analyzeOcrTextStream(ocrText, { signal: abortCtrl.signal });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const parts = buffer.split('\n\n');
+              buffer = parts.pop() || '';
+              for (const part of parts) {
+                if (!part.trim()) continue;
+                const lines = part.split('\n');
+                let eventName = '', eventData = '';
+                for (const line of lines) {
+                  if (line.startsWith('event:')) eventName = line.substring(6).trim();
+                  else if (line.startsWith('data:')) eventData = line.substring(5).trim();
+                }
+                if (!eventName || !eventData) continue;
+                let data;
+                try { data = JSON.parse(eventData); } catch { data = eventData; }
+                if (eventName === 'token') {
+                  streamingText += (data.t || '');
+                } else if (eventName === 'done') {
+                  streamingText = data.answer || streamingText;
+                  setRow(index, { status: 'pending_confirm', statusText: '待确认', rawJson: streamingText, recognizeMessage: streamingText });
+                  return;
+                } else if (eventName === 'error') {
+                  setRow(index, { status: 'recognize_failed', statusText: '识别失败', recognizeMessage: data.message || '分析失败' });
+                  return;
+                }
+              }
+            }
+            if (streamingText) {
+              setRow(index, { status: 'pending_confirm', statusText: '待确认', rawJson: streamingText, recognizeMessage: streamingText });
+            } else {
+              setRow(index, { status: 'recognize_failed', statusText: '识别失败' });
+            }
+          } catch (err) {
+            if (err.name === 'AbortError') return;
+            setRow(index, { status: 'recognize_failed', statusText: '识别失败', recognizeMessage: err.message || '分析失败' });
+          }
+        })();
+      });
+
+      await Promise.allSettled(streamPromises);
+
+      // 汇总
+      const allRows = Object.values(rowsMap);
+      const failed = allRows.filter((r) => r.status === 'recognize_failed');
+      const ok = allRows.filter((r) => r.status === 'pending_confirm');
+      if (failed.length === allRows.length) {
+        EleMessage.error({ message: '全部识别失败，请核对文件', plain: true });
+      } else if (failed.length) {
+        EleMessage.warning({ message: `${ok.length} 份待确认，${failed.length} 份识别失败`, plain: true });
+      } else {
+        EleMessage.success({ message: allRows.length > 1 ? `已完成 ${allRows.length} 份识别，请确认归属` : '识别完成，请确认归属', plain: true });
+      }
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    } finally {
+      intakeLoading.value = false;
+      streamControllers.forEach((c) => { try { c.abort(); } catch {} });
+    }
+  };
+
   const doUpload = async () => {
     const queue = [...pendingUploadFiles.value];
     if (!queue.length) {
@@ -494,7 +655,7 @@ export function useMaterialMaintain() {
     let successCount = 0;
     try {
       if (intakeMode) {
-        await doIntakeUpload(queue);
+        await doCheckingUpload(queue);
         return;
       }
       if (!uploadForm.value.formDate) {
