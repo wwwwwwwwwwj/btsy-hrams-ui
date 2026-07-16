@@ -63,7 +63,8 @@
           <template v-else>
             <!-- 始终渲染 img/iframe 让它开始加载，用 v-show 控制可见性 -->
             <img
-              v-show="!previewLoading && !previewError && previewType === 'image'"
+              v-if="!previewLoading && !previewError && previewType === 'image'"
+              :key="'img-' + previewSrc"
               :src="previewSrc"
               :style="{ transform: `rotate(${rotation || 0}deg)` }"
               class="prev-image"
@@ -71,7 +72,7 @@
               @error="onPreviewError"
             />
             <iframe
-              v-show="!previewLoading && !previewError && previewType === 'pdf'"
+              v-if="!previewLoading && !previewError && previewType === 'pdf'"
               :key="'pdf-' + previewSrc"
               :src="previewSrc"
               class="prev-pdf"
@@ -612,6 +613,14 @@ async function loadCategories() {
 }
 
 onMounted(() => { loadCategories(); });
+
+// 自动选中第一个可预览文件
+watch(items, (list) => {
+  if (list.length) {
+    const firstValid = list.findIndex(item => item.ossKey && item.status !== 'upload_failed');
+    selectItem(firstValid >= 0 ? firstValid : 0);
+  }
+}, { immediate: true });
 
 // ── 工具 ──
 function isPdf(name) { return name?.toLowerCase().endsWith('.pdf'); }
