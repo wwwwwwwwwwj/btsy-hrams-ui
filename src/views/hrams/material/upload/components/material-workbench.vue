@@ -37,7 +37,7 @@
             <span class="qicon">{{ isPdf(item.fileName) ? '📕' : '🖼️' }}</span>
             <div class="qbody">
               <div class="qname">{{ item.fileName }}</div>
-              <div v-if="item.status === 'ocr_failed'" class="qerr">⚠ {{ item.remark || 'OCR识别失败，请人工归类' }}</div>
+              <div v-if="item.status === 'ocr_failed'" class="qerr">⚠ OCR识别失败</div>
               <div v-else class="qcat">{{ getCategoryDisplay(item) }}</div>
               <span v-if="item.status === 'returned'" class="badge badge-returned">↩ 已退回</span>
             </div>
@@ -408,7 +408,7 @@ watch(selected, (item) => {
   form.pageNo = item.pageNo || '';
   form.formDate = item.formDate || parsed.materialTime || '';
   form.pageCount = item.pageCount || '1';
-  form.remark = item.remark || '';
+  form.remark = (item.status === 'ocr_failed') ? '' : (item.remark || '');
   formErrors.materialName = false;
   formErrors.categoryCode = false;
   formErrors.pageNo = false;
