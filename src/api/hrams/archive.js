@@ -229,3 +229,10 @@ export async function exportCatalog(personId) {
   const name = parseFilenameFromDisposition(res.headers['content-disposition']) || `catalog_${personId}.xlsx`;
   download(res.data, name);
 }
+
+export async function exportBatchCatalog(personIds) {
+  const res = await request.post('/hrams/archive/batch-catalog-export', personIds, { responseType: 'blob' });
+  await checkDownloadRes(res);
+  const name = parseFilenameFromDisposition(res.headers['content-disposition']) || '档案目录批量导出.zip';
+  download(res.data, name);
+}
