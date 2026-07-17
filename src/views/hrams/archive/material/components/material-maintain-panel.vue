@@ -29,6 +29,7 @@
           <el-button type="danger" v-permission="'hrams:archive:remove'" :disabled="!hasSelection" @click="$emit('batch-delete')">
             批量删除
           </el-button>
+          <el-button type="primary" @click="$emit('go-back')">返回</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -117,7 +118,8 @@
     'open-edit',
     'open-page-no',
     'remove-file',
-    'remove-row'
+    'remove-row',
+    'go-back'
   ]);
 
   const treeProps = { label: 'name', children: 'children' };

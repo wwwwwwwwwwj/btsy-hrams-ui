@@ -32,6 +32,7 @@
         @open-page-no="openPageNo"
         @remove-file="removeFile"
         @remove-row="removeRow"
+        @go-back="goBack"
       >
         <template #search-extra>
           <span class="hrams-v2-filter-actions">
@@ -97,7 +98,9 @@
   import MaterialPersonPick from './components/material-person-pick.vue';
   import MaterialFormDialogs from './components/material-form-dialogs.vue';
   import MaterialMaintainPanel from './components/material-maintain-panel.vue';
+  import { useRouter } from 'vue-router';
   import { useMaterialMaintain } from './composables/use-material-maintain';
+  import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
   import '../../styles/v2.scss';
 
   defineOptions({ name: 'HramsArchiveMaterial' });
@@ -164,6 +167,9 @@
     doBatchDelete,
     doDownload
   } = useMaterialMaintain();
+
+  const router = useRouter();
+  const goBack = () => router.push(HRAMS_ARCHIVE_LIST);
 </script>
 
 <style scoped>
