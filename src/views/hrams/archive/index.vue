@@ -13,6 +13,7 @@
           <template #extra>
             <el-button v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
             <el-button v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
+            <el-button v-permission="'hrams:archive:download'" type="primary" @click="handleBatchExport">批量导出</el-button>
           </template>
         </person-archive-search-form>
       </div>
@@ -44,7 +45,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
-  import { pageArchivePersons, exportCatalog } from '@/api/hrams/archive';
+  import { pageArchivePersons, exportCatalog, exportBatchArchivePackage } from '@/api/hrams/archive';
   import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import '../styles/v2.scss';
@@ -141,6 +142,18 @@
   const handleExportCatalog = async (row) => {
     try {
       await exportCatalog(row.id);
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
+  };
+
+  const handleBatchExport = async () => {
+    if (!selections.value.length) {
+      EleMessage.error({ message: '请先勾选人员', plain: true });
+      return;
+    }
+    try {
+      await exportBatchArchivePackage(selections.value.map((p) => p.id));
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     }

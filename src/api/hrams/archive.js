@@ -204,6 +204,13 @@ export async function exportArchivePackage(personId) {
   download(res.data, name);
 }
 
+export async function exportBatchArchivePackage(personIds) {
+  const res = await request.post('/hrams/archive/batch-export', personIds, { responseType: 'blob' });
+  await checkDownloadRes(res);
+  const name = parseFilenameFromDisposition(res.headers['content-disposition']) || '档案材料批量导出.zip';
+  download(res.data, name);
+}
+
 function parseFilenameFromDisposition(disposition) {
   if (!disposition) return '';
   const m = /filename\*=utf-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
