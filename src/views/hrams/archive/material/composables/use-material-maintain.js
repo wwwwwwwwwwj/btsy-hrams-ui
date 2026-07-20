@@ -1,6 +1,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { EleMessage } from 'ele-admin-plus';
+import { ElMessageBox } from 'element-plus';
 import { createManualBatch } from '@/api/hrams/material-batch';
 import {
   getMaterialPanel,
@@ -816,10 +817,24 @@ export function useMaterialMaintain() {
     download(res.data, row.fileName || `material_${row.id}`);
   };
 
-  const removeFile = async (row) => { await deleteMaterialFile(row.id); load(); };
+  const removeFile = async (row) => {
+    try {
+      await ElMessageBox.confirm('是否删除该目录及材料文件', '提示', { type: 'warning' });
+    } catch {
+      return;
+    }
+    await deleteMaterialFile(row.id);
+    EleMessage.success({ message: '删除成功', plain: true });
+    load();
+  };
   const removeRow = async (row) => { await deleteMaterial(row.id); load(); };
 
   const doBatchDelete = async () => {
+    try {
+      await ElMessageBox.confirm('是否删除选中目录及材料文件', '提示', { type: 'warning' });
+    } catch {
+      return;
+    }
     const ids = selections.value.map((r) => r.id);
     await batchDeleteMaterials(personId.value, ids);
     EleMessage.success({ message: '删除成功', plain: true });
