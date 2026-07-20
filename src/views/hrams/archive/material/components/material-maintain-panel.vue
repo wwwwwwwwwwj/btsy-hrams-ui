@@ -62,7 +62,9 @@
           >
             <el-table-column v-if="!readOnly" type="selection" width="48" :selectable="rowSelectable" />
             <el-table-column prop="pageNo" label="页号" width="70" />
-            <el-table-column prop="displayNo" label="显示序号" width="90" />
+            <el-table-column label="显示序号" width="90">
+              <template #default="{ row }">{{ (row.displayNo || '').split('-').pop() }}</template>
+            </el-table-column>
             <el-table-column prop="materialName" label="材料名称" min-width="160" show-overflow-tooltip />
             <el-table-column prop="fileName" label="文件名" min-width="120" show-overflow-tooltip />
             <el-table-column label="形成日期" width="110">
@@ -151,9 +153,7 @@
     }
     items.push(
       { title: '修改', permission: 'hrams:archive:upload', onClick: () => emit('open-edit', row) },
-      { title: '改序号', permission: 'hrams:archive:upload', onClick: () => emit('open-page-no', row) },
-      { title: '删文件', permission: 'hrams:archive:remove', onClick: () => emit('remove-file', row) },
-      { preset: 'del', title: '删记录', permission: 'hrams:archive:remove', onClick: () => emit('remove-row', row) }
+      { title: '删文件', permission: 'hrams:archive:remove', onClick: () => emit('remove-file', row) }
     );
     return items;
   };
