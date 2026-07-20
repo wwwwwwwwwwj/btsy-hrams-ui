@@ -16,7 +16,7 @@
         <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
         <template #integrityStatus="{ row }">{{ integrityLabel(row.integrityStatus) }}</template>
         <template #action="{ row }">
-          <el-button link type="primary" v-permission="'hrams:query:list'" @click="showDetail(row)">查看详情</el-button>
+          <el-button link type="primary" v-permission="'hrams:query:list'" @click="showDetail(row)">查看档案</el-button>
           <el-button link type="primary" v-permission="'hrams:search:fulltext'" @click="goFulltext(row)">全文检索</el-button>
           <el-button link type="primary" v-permission="'hrams:qa:chat'" @click="goQa(row)">智能问答</el-button>
         </template>
