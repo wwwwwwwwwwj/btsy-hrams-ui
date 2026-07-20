@@ -50,8 +50,11 @@
             </el-menu>
           </el-col>
           <el-col :span="16">
-            <el-table :data="detailMaterials" size="small">
-              <el-table-column prop="displayNo" label="序号" width="90" />
+             <el-table :data="detailMaterials" size="small">
+              <!-- <el-table-column prop="displayNo" label="序号" width="90" /> -->
+                <el-table-column label="显示序号" width="90">
+                  <template #default="{ row }">{{ (row.displayNo || '').split('-').pop() }}</template>
+              </el-table-column>
               <el-table-column prop="materialName" label="材料名称" />
               <el-table-column prop="formDate" label="形成时间" width="110" />
               <el-table-column prop="pageCount" label="页数" width="70" />
