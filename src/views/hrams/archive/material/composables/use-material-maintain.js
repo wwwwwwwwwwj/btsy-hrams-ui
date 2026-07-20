@@ -92,6 +92,7 @@ export function useMaterialMaintain() {
     materialName: '',
     pageCount: 1,
     formDate: '',
+    remark: '',
     ocrFlag: true,
     file: null
   });
@@ -690,6 +691,7 @@ export function useMaterialMaintain() {
         fd.append('materialName', materialName);
         fd.append('pageCount', uploadForm.value.pageCount);
         fd.append('formDate', uploadForm.value.formDate);
+        if (uploadForm.value.remark) fd.append('remark', uploadForm.value.remark);
         fd.append('ocrFlag', uploadForm.value.ocrFlag ? '1' : '0');
         fd.append('file', item.file);
         const saved = await uploadMaterial(uploadForm.value.personId, fd, activeBatchId.value);

@@ -37,7 +37,7 @@
             {{ uploadNeedsIntake ? '未完整选择归属时默认 OCR' : '关闭后仅上传归档文件' }}
           </span>
         </el-form-item>
-        <el-form-item v-if="!uploadNeedsIntake" label="页号" required>
+        <el-form-item v-if="!uploadNeedsIntake" label="序号" required>
           <el-input-number v-model="uploadForm.pageNo" :min="1" />
           <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该页号起依次占号</div>
         </el-form-item>
@@ -49,6 +49,7 @@
         </el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="页数" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="备注"><el-input v-model="uploadForm.remark" type="textarea" /></el-form-item>
         <el-form-item v-if="activeBatchNo && !hideBatchHint" label="本轮批次"><span class="batch-inline">{{ activeBatchNo }}</span></el-form-item>
         <el-form-item label="文件" required>
           <div class="file-picker">
@@ -147,6 +148,7 @@
       <el-form label-width="90px">
         <el-form-item label="名称"><el-input v-model="editForm.materialName" /></el-form-item>
         <el-form-item label="形成日期"><el-date-picker v-model="editForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+        <el-form-item label="序号"><el-input-number v-model="editForm.pageNo" :min="1" /></el-form-item>
         <el-form-item label="页数"><el-input-number v-model="editForm.pageCount" :min="0" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="editForm.remark" type="textarea" /></el-form-item>
       </el-form>
