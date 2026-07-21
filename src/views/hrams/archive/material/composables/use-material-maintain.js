@@ -825,7 +825,7 @@ export function useMaterialMaintain() {
     } catch {
       return;
     }
-    await deleteMaterialFile(row.id);
+    await deleteMaterial(row.id);
     EleMessage.success({ message: '删除成功', plain: true });
     load();
   };
