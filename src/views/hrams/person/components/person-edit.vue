@@ -50,7 +50,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="出生日期">
-                    <el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" />
+                    <el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" readonly/>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
