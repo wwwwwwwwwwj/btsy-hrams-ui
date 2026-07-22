@@ -72,13 +72,23 @@ export async function rescanMaterialBatch(batchId) {
   return unwrap(res);
 }
 
-export async function confirmMaterialBatch(batchId, confirmedPersonIds) {
+export async function confirmMaterialBatch(batchId, confirmedPersonIds, files, relativePaths) {
   const params = new URLSearchParams();
   (confirmedPersonIds || []).forEach((id) => params.append('confirmedPersonIds', String(id)));
+  const hasFiles = Array.isArray(files) && files.length > 0;
+  let body = null;
+  const headers = {};
+  if (hasFiles) {
+    const fd = new FormData();
+    files.forEach((f) => fd.append('files', f));
+    (relativePaths || []).forEach((p) => fd.append('relativePaths', p));
+    body = fd;
+    headers['Content-Type'] = 'multipart/form-data';
+  }
   const res = await request.post(
     `/hrams/material-batches/${batchId}/confirm?${params.toString()}`,
-    null,
-    { timeout: 600000 }
+    body,
+    { headers, timeout: 600000 }
   );
   if (res.data.code === 200) {
     return res.data.msg;

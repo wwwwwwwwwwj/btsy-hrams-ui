@@ -34,7 +34,7 @@
           />
         </el-col>
         <el-col :span="16">
-          <el-table :data="visiblePreviewRows" border max-height="480">
+          <el-table :data="visiblePreviewRows" border>
             <el-table-column type="index" label="序号" width="70" />
             <el-table-column prop="personName" label="人员" width="120" show-overflow-tooltip />
             <el-table-column prop="personKey" label="人员目录" min-width="130" show-overflow-tooltip />
@@ -49,11 +49,6 @@
               </template>
             </el-table-column>
             <el-table-column prop="message" label="问题说明" min-width="160" show-overflow-tooltip />
-            <el-table-column label="操作" width="90">
-              <template #default="{ row }">
-                <el-button v-if="canDeleteRow(row)" link type="danger" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
-              </template>
-            </el-table-column>
           </el-table>
         </el-col>
       </el-row>
@@ -71,11 +66,10 @@
     confirmableCount: { type: Number, default: 0 },
     attachableFileCount: { type: Number, default: 0 },
     canConfirm: Boolean,
-    confirmLoading: Boolean,
-    canDeleteRow: { type: Function, required: true }
+    confirmLoading: Boolean
   });
 
-  defineEmits(['confirm', 'cancel-person', 'restore-person', 'remove-row']);
+  defineEmits(['confirm', 'cancel-person', 'restore-person']);
 </script>
 
 <style scoped>

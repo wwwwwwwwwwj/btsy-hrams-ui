@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     :model-value="modelValue"
-    title="档案详情"
+    title="查看档案"
     size="72%"
     append-to-body
     class="archive-detail-drawer"
@@ -13,11 +13,22 @@
         <el-button v-permission="'hrams:archive:download'" type="primary" @click="exportMaterials">导出档案材料</el-button>
         <el-button v-permission="'hrams:catalog:export'" @click="exportCatalogFile">导出档案目录</el-button>
       </div>
-      <el-descriptions :column="3" border size="small" class="drawer-summary">
+      <el-descriptions v-if="fullPersonInfo" :column="2" border size="small" class="drawer-summary">
+        <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
+        <el-descriptions-item label="姓名">{{ detail.person.name }}</el-descriptions-item>
+        <el-descriptions-item label="身份证号">{{ detail.person.idCard }}</el-descriptions-item>
+        <el-descriptions-item label="性别">{{ detail.person.gender }}</el-descriptions-item>
+        <el-descriptions-item label="出生日期">{{ detail.person.birthDate }}</el-descriptions-item>
+        <el-descriptions-item label="年龄">{{ detail.person.age }}</el-descriptions-item>
+        <el-descriptions-item label="民族">{{ detail.person.nation }}</el-descriptions-item>
+        <el-descriptions-item label="政治面貌">{{ detail.person.politicalStatus }}</el-descriptions-item>
+        <el-descriptions-item label="学历">{{ detail.person.education }}</el-descriptions-item>
+        <el-descriptions-item label="当前状态">{{ detail.person.personStatus }}</el-descriptions-item>
+      </el-descriptions>
+      <el-descriptions v-else :column="3" border size="small" class="drawer-summary">
         <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
         <el-descriptions-item label="姓名">{{ detail.person.name }}</el-descriptions-item>
         <el-descriptions-item label="当前状态">{{ detail.person.personStatus || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="档案状态">{{ archiveStatusLabel(detail.person.archiveStatus) }}</el-descriptions-item>
         <el-descriptions-item label="材料数量">{{ detail.person.materialCount ?? 0 }}</el-descriptions-item>
         <el-descriptions-item label="完整性">{{ integrityLabel(detail.person.integrityStatus) }}</el-descriptions-item>
       </el-descriptions>
@@ -39,12 +50,12 @@
             </template>
           </el-tree>
           <div class="summary">
-            总份数 {{ detail.panel?.totalFiles ?? 0 }}，总页数 {{ detail.panel?.totalPages ?? 0 }}
+            总份数 {{ detailStats.totalFiles }}，总页数 {{ detailStats.totalPages }}
           </div>
         </div>
         <div class="drawer-table-col">
           <el-table :data="detailMaterials" size="small" border height="100%">
-            <el-table-column prop="displayNo" label="序号" width="90" />
+            <el-table-column prop="pageNo" label="序号" width="90" />
             <el-table-column prop="materialName" label="材料名称" min-width="140" show-overflow-tooltip />
             <el-table-column label="形成时间" width="110">
               <template #default="{ row }">{{ formatDateDay(row.formDate) }}</template>
@@ -73,8 +84,6 @@
 <script setup>
   import { computed, ref, watch } from 'vue';
   import { EleMessage } from 'ele-admin-plus';
-  import { useDictData } from '@/utils/use-dict-data';
-  import { dictLabel } from '@/utils/hrams-dict';
   import { formatDateDay } from '@/utils/hrams-date';
   import { getPerson } from '@/api/hrams/person';
   import {
@@ -87,7 +96,10 @@
 
   const props = defineProps({
     modelValue: Boolean,
-    personId: [Number, String]
+    personId: [Number, String],
+    detailLoader: { type: Function, default: null },
+    exportMaterialsHandler: { type: Function, default: null },
+    fullPersonInfo: { type: Boolean, default: false }
   });
   const emit = defineEmits(['update:modelValue']);
 
@@ -95,12 +107,18 @@
   const detail = ref({});
   const detailCat = ref('');
   const detailMaterials = ref([]);
-  const [, , archiveStatusDicts] = useDictData(['hrams_person_status', 'hrams_education', 'hrams_archive_status']);
 
   const treeProps = { label: 'name', children: 'children' };
   const categoryTree = computed(() => detail.value.categories || []);
+  const detailStats = computed(() => ({
+    totalFiles: detail.value.panel?.totalFiles
+      ?? detail.value.materials?.length
+      ?? 0,
+    totalPages: detail.value.panel?.totalPages
+      ?? detail.value.materials?.reduce((sum, item) => sum + (Number(item.pageCount) || 0), 0)
+      ?? 0
+  }));
 
-  const archiveStatusLabel = (code) => dictLabel(archiveStatusDicts.value, code);
   const integrityLabel = (s) => (s === 'complete' ? '完整' : s === 'missing' ? '缺项' : '—');
 
   const firstSelectableCode = (nodes) => {
@@ -164,19 +182,23 @@
     if (!props.personId) return;
     loading.value = true;
     try {
-      const [person, panel, materials] = await Promise.all([
-        getPerson(props.personId),
-        getMaterialPanel(props.personId),
-        listMaterials(props.personId, {})
-      ]);
-      detail.value = {
-        person,
-        panel,
-        categories: panel?.categories || [],
-        materials
-      };
-      detailCat.value = firstSelectableCode(panel?.categories);
-      const firstNode = findTreeNode(panel?.categories, detailCat.value);
+      if (props.detailLoader) {
+        detail.value = await props.detailLoader(props.personId);
+      } else {
+        const [person, panel, materials] = await Promise.all([
+          getPerson(props.personId),
+          getMaterialPanel(props.personId),
+          listMaterials(props.personId, {})
+        ]);
+        detail.value = {
+          person,
+          panel,
+          categories: panel?.categories || [],
+          materials
+        };
+      }
+      detailCat.value = firstSelectableCode(detail.value.categories);
+      const firstNode = findTreeNode(detail.value.categories, detailCat.value);
       filterMaterials(firstNode);
     } catch (e) {
       detail.value = {};
@@ -209,12 +231,19 @@
     if (!p?.id) {
       return;
     }
-    exportArchivePackage(p.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
+    const task = props.exportMaterialsHandler
+      ? props.exportMaterialsHandler(detail.value)
+      : exportArchivePackage(p.id);
+    Promise.resolve(task).catch((e) => EleMessage.error({ message: e.message, plain: true }));
   };
 
   const exportCatalogFile = () => {
     const p = detail.value.person;
-    if (p?.id) exportCatalog(p.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
+    if (!p?.id) {
+      EleMessage.error({ message: '人员信息缺失，无法导出目录', plain: true });
+      return;
+    }
+    exportCatalog(p.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
   };
 </script>
 

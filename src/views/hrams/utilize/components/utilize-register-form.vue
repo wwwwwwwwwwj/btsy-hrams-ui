@@ -1,9 +1,49 @@
 <template>
   <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" style="max-width:720px">
     <el-form-item label="档案编号" prop="archiveNo">
-      <el-input v-model="form.archiveNo" placeholder="输入后自动带出被查阅人" @blur="lookupPerson" />
+      <el-select
+        v-model="form.archiveNo"
+        filterable
+        remote
+        clearable
+        allow-create
+        default-first-option
+        placeholder="输入档案编号模糊检索"
+        :remote-method="searchByArchiveNo"
+        :loading="lookupLoading"
+        style="width:100%"
+        @change="onArchiveNoChange"
+      >
+        <el-option
+          v-for="p in archiveOptions"
+          :key="p.id"
+          :label="`${p.archiveNo} ${p.name || ''}`"
+          :value="p.archiveNo"
+        />
+      </el-select>
     </el-form-item>
-    <el-form-item label="被查阅人"><el-input :model-value="lookup.name" disabled /></el-form-item>
+    <el-form-item label="被查阅人" required>
+      <el-select
+        v-model="form.personName"
+        filterable
+        remote
+        clearable
+        allow-create
+        default-first-option
+        placeholder="输入姓名模糊检索"
+        :remote-method="searchByName"
+        :loading="lookupLoading"
+        style="width:100%"
+        @change="onPersonNameChange"
+      >
+        <el-option
+          v-for="p in nameOptions"
+          :key="p.id"
+          :label="`${p.name}（${p.archiveNo || ''}）`"
+          :value="p.name"
+        />
+      </el-select>
+    </el-form-item>
     <el-form-item label="借阅时间" prop="borrowTime">
       <el-date-picker v-model="form.borrowTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" />
     </el-form-item>
@@ -41,7 +81,7 @@
   import { EleMessage } from 'ele-admin-plus';
   import { toFormData } from '@/utils/common';
   import { useUserStore } from '@/store/modules/user';
-  import { registerBorrowForm, lookupBorrowPerson } from '@/api/hrams/borrow';
+  import { registerBorrowForm, searchBorrowPersons } from '@/api/hrams/borrow';
   import { listCategories } from '@/api/hrams/archive';
 
   defineProps({
@@ -52,9 +92,12 @@
   const userStore = useUserStore();
   const formRef = ref(null);
   const form = ref({});
-  const lookup = ref({});
   const attachFile = ref(null);
   const scopeCategories = ref([]);
+  const archiveOptions = ref([]);
+  const nameOptions = ref([]);
+  const lookupLoading = ref(false);
+  let selectedPerson = null;
 
   const rules = {
     archiveNo: [{ required: true, message: '请输入档案编号', trigger: ['blur', 'change'] }],
@@ -68,28 +111,94 @@
   const resetForm = () => {
     const nick = userStore.info?.nickName || userStore.info?.userName || '';
     form.value = {
+      personId: null,
+      personName: '',
+      archiveNo: '',
       borrowTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
       borrower: nick,
       borrowScope: 'full',
       scopeCategoryCodes: []
     };
-    lookup.value = {};
+    selectedPerson = null;
     scopeCategories.value = [];
+    archiveOptions.value = [];
+    nameOptions.value = [];
     attachFile.value = null;
     formRef.value?.clearValidate();
   };
 
-  const lookupPerson = async () => {
-    if (!form.value.archiveNo) return;
+  const applyPerson = async (person) => {
+    selectedPerson = person || null;
+    form.value.personId = person?.id || null;
+    form.value.archiveNo = person?.archiveNo || form.value.archiveNo || '';
+    form.value.personName = person?.name || form.value.personName || '';
+    scopeCategories.value = [];
+    if (!person?.id) return;
     try {
-      lookup.value = await lookupBorrowPerson(form.value.archiveNo);
-      if (lookup.value?.id) {
-        const tree = await listCategories(lookup.value.id);
-        scopeCategories.value = (tree || []).filter((c) => !c.parentCode || c.parentCode === '0');
-      }
+      const tree = await listCategories(person.id);
+      scopeCategories.value = (tree || []).filter((c) => !c.parentCode || c.parentCode === '0');
     } catch {
-      lookup.value = {};
       scopeCategories.value = [];
+    }
+  };
+
+  const searchByArchiveNo = async (keyword) => {
+    if (!keyword?.trim()) {
+      archiveOptions.value = [];
+      return;
+    }
+    lookupLoading.value = true;
+    try {
+      archiveOptions.value = await searchBorrowPersons({ archiveNo: keyword.trim() });
+    } catch {
+      archiveOptions.value = [];
+    } finally {
+      lookupLoading.value = false;
+    }
+  };
+
+  const searchByName = async (keyword) => {
+    if (!keyword?.trim()) {
+      nameOptions.value = [];
+      return;
+    }
+    lookupLoading.value = true;
+    try {
+      nameOptions.value = await searchBorrowPersons({ name: keyword.trim() });
+    } catch {
+      nameOptions.value = [];
+    } finally {
+      lookupLoading.value = false;
+    }
+  };
+
+  const onArchiveNoChange = async (archiveNo) => {
+    const hit = archiveOptions.value.find((p) => p.archiveNo === archiveNo);
+    if (hit) {
+      await applyPerson(hit);
+      return;
+    }
+    form.value.personId = null;
+    selectedPerson = null;
+    if (archiveNo) {
+      await searchByArchiveNo(archiveNo);
+      const exact = archiveOptions.value.find((p) => p.archiveNo === archiveNo);
+      if (exact) await applyPerson(exact);
+    }
+  };
+
+  const onPersonNameChange = async (name) => {
+    const hit = nameOptions.value.find((p) => p.name === name);
+    if (hit) {
+      await applyPerson(hit);
+      return;
+    }
+    form.value.personId = null;
+    selectedPerson = null;
+    if (name) {
+      await searchByName(name);
+      const exact = nameOptions.value.find((p) => p.name === name);
+      if (exact) await applyPerson(exact);
     }
   };
 
@@ -115,9 +224,31 @@
     if (f.borrowScope === 'partial' && (!f.scopeCategoryCodes || f.scopeCategoryCodes.length === 0)) {
       return EleMessage.warning({ message: '指定大类调阅须选择至少一个大类', plain: true });
     }
-
-    const { scopeCategoryCodes, ...borrowFields } = f;
-    const fd = toFormData({ ...borrowFields, file: attachFile.value });
+    let personId = form.value.personId || selectedPerson?.id || null;
+    if (!personId) {
+      try {
+        const list = await searchBorrowPersons({
+          archiveNo: form.value.archiveNo,
+          name: form.value.personName || undefined
+        });
+        if (list.length === 1) {
+          await applyPerson(list[0]);
+          personId = list[0].id;
+        } else if (list.length > 1) {
+          return EleMessage.error({ message: '匹配到多人，请从下拉中选择具体人员', plain: true });
+        } else {
+          return EleMessage.error({ message: '未找到匹配人员，请检查档案编号或姓名', plain: true });
+        }
+      } catch (e) {
+        return EleMessage.error({ message: e.message || '人员检索失败', plain: true });
+      }
+    }
+    const { scopeCategoryCodes, personName, ...borrowFields } = form.value;
+    const fd = toFormData({
+      ...borrowFields,
+      personId,
+      file: attachFile.value
+    });
     (scopeCategoryCodes || []).forEach((c) => fd.append('scopeCategoryCodes', c));
     await registerBorrowForm(fd);
     EleMessage.success({ message: '登记成功', plain: true });

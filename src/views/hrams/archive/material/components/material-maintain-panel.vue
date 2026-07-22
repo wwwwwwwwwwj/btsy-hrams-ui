@@ -1,7 +1,11 @@
 <template>
   <div class="material-maintain">
     <div class="hrams-v2-card hrams-v2-filter">
-      <el-form :inline="true" class="ele-form-search material-search-form" @submit.prevent="">
+      <el-form
+        :inline="true"
+        class="ele-form-search material-search-form"
+        @submit.prevent=""
+      >
         <el-form-item label="材料名称">
           <el-input
             :model-value="keyword"
@@ -16,20 +20,22 @@
           <el-button @click="$emit('reset-search')">重置</el-button>
           <slot name="search-extra" />
         </el-form-item>
-        <el-form-item label="排序">
-          <el-radio-group :model-value="sortMode" size="small" @update:model-value="$emit('update:sortMode', $event)">
-            <el-radio-button value="pageNo">按页号</el-radio-button>
-            <el-radio-button value="createTime">按上传时间</el-radio-button>
-          </el-radio-group>
-        </el-form-item>
         <el-form-item v-if="!readOnly" class="material-batch-actions">
-          <el-button v-permission="'hrams:archive:download'" :disabled="!hasSelectedUploaded" @click="$emit('batch-download')">
+          <el-button
+            v-permission="'hrams:archive:download'"
+            :disabled="!hasSelectedUploaded"
+            @click="$emit('batch-download')"
+          >
             批量下载
           </el-button>
-          <el-button type="danger" v-permission="'hrams:archive:remove'" :disabled="!hasSelection" @click="$emit('batch-delete')">
+          <el-button
+            type="danger"
+            v-permission="'hrams:archive:remove'"
+            :disabled="!hasSelection"
+            @click="$emit('batch-delete')"
+          >
             批量删除
           </el-button>
-          <el-button type="primary" @click="$emit('go-back')">返回</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -49,10 +55,15 @@
             @node-click="onTreeClick"
           >
             <template #default="{ data }">
-              <span class="tree-node" :title="data.name">{{ data.name }} ({{ data.fileCount || 0 }})</span>
+              <span class="tree-node" :title="data.name"
+                >{{ data.name }} ({{ data.fileCount || 0 }})</span
+              >
             </template>
           </el-tree>
-          <div class="summary">总份数 {{ panel.totalFiles || 0 }}，总页数 {{ panel.totalPages || 0 }}</div>
+          <div class="summary"
+            >总份数 {{ panel.totalFiles || 0 }}，总页数
+            {{ panel.totalPages || 0 }}</div
+          >
         </el-col>
         <el-col :md="17" :sm="24">
           <el-table
@@ -60,20 +71,37 @@
             :row-class-name="rowClass"
             @selection-change="(rows) => $emit('selection-change', rows)"
           >
-            <el-table-column v-if="!readOnly" type="selection" width="48" :selectable="rowSelectable" />
-            <el-table-column prop="pageNo" label="页号" width="70" />
-            <el-table-column label="显示序号" width="90">
-              <template #default="{ row }">{{ (row.displayNo || '').split('-').pop() }}</template>
-            </el-table-column>
-            <el-table-column prop="materialName" label="材料名称" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="fileName" label="文件名" min-width="120" show-overflow-tooltip />
+            <el-table-column
+              v-if="!readOnly"
+              type="selection"
+              width="48"
+              :selectable="rowSelectable"
+            />
+            <el-table-column prop="pageNo" label="序号" width="90" />
+            <el-table-column
+              prop="materialName"
+              label="材料名称"
+              min-width="160"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="fileName"
+              label="文件名"
+              min-width="120"
+              show-overflow-tooltip
+            />
             <el-table-column label="形成日期" width="110">
-              <template #default="{ row }">{{ formatDateDay(row.formDate) }}</template>
+              <template #default="{ row }">{{
+                formatDateDay(row.formDate)
+              }}</template>
             </el-table-column>
             <el-table-column prop="pageCount" label="页数" width="70" />
-            <el-table-column prop="batchNo" label="上传批次" min-width="130" show-overflow-tooltip />
             <el-table-column prop="createTime" label="上传时间" width="165" />
-            <el-table-column label="操作" :width="readOnly ? 140 : 200" fixed="right">
+            <el-table-column
+              label="操作"
+              :width="readOnly ? 140 : 200"
+              fixed="right"
+            >
               <template #default="{ row }">
                 <btn-items
                   type="link"
@@ -118,10 +146,7 @@
     'preview',
     'download-one',
     'open-edit',
-    'open-page-no',
-    'remove-file',
-    'remove-row',
-    'go-back'
+    'remove-row'
   ]);
 
   const treeProps = { label: 'name', children: 'children' };
@@ -152,8 +177,17 @@
       return items;
     }
     items.push(
-      { title: '修改', permission: 'hrams:archive:upload', onClick: () => emit('open-edit', row) },
-      { title: '删文件', permission: 'hrams:archive:remove', onClick: () => emit('remove-file', row) }
+      {
+        title: '修改',
+        permission: 'hrams:archive:upload',
+        onClick: () => emit('open-edit', row)
+      },
+      {
+        preset: 'del',
+        title: '删除',
+        permission: 'hrams:archive:remove',
+        onClick: () => emit('remove-row', row)
+      }
     );
     return items;
   };

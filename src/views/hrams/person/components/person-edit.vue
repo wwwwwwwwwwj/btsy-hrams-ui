@@ -49,8 +49,14 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="出生日期">
-                    <el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width:100%" readonly/>
+                  <el-form-item label="出生日期" prop="birthDate">
+                    <el-date-picker
+                      v-model="form.birthDate"
+                      type="date"
+                      value-format="YYYY-MM-DD"
+                      style="width:100%"
+                      readonly
+                    />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
@@ -394,7 +400,25 @@
 
   const idCardRule = (_r, v, cb) => {
     if (!v) return cb();
-    if (!/^\d{17}[\dXx]$/.test(v)) return cb(new Error('身份证号格式不正确'));
+    if (!parseIdCardInfo(v)) return cb(new Error('请输入合法的18位身份证号'));
+    cb();
+  };
+
+  const birthDateRule = (_r, v, cb) => {
+    if (!v) return cb();
+    const today = new Date();
+    const todayText = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0')
+    ].join('-');
+    if (v > todayText) {
+      return cb(new Error('出生日期不能晚于当前日期'));
+    }
+    const parsed = parseIdCardInfo(form.value.idCard);
+    if (parsed && parsed.birthDate !== v) {
+      return cb(new Error('出生日期与身份证号中的出生日期不一致'));
+    }
     cb();
   };
 
@@ -404,6 +428,10 @@
     idCard: [
       { required: true, message: '请输入身份证号', trigger: 'blur' },
       { validator: idCardRule, trigger: 'blur' }
+    ],
+    birthDate: [
+      { required: true, message: '请选择出生日期', trigger: 'change' },
+      { validator: birthDateRule, trigger: 'change' }
     ]
   });
 
@@ -450,7 +478,9 @@
     const parsed = parseIdCardInfo(form.value.idCard);
     if (!parsed) return;
     form.value.birthDate = parsed.birthDate;
-    form.value.gender = parsed.gender;
+    if (!form.value.gender) {
+      form.value.gender = parsed.gender;
+    }
   };
 
   const uploadPhoto = async ({ file }) => {
@@ -477,6 +507,12 @@
     formRef.value?.validate?.(async (valid) => {
       if (!valid) {
         EleMessage.warning({ message: '请完善必填项（基本信息页）', plain: true });
+        activeTab.value = 'basic';
+        return;
+      }
+      const parsedIdCard = parseIdCardInfo(form.value.idCard);
+      if (!parsedIdCard || parsedIdCard.birthDate !== form.value.birthDate) {
+        EleMessage.warning({ message: '出生日期与身份证号中的出生日期不一致', plain: true });
         activeTab.value = 'basic';
         return;
       }

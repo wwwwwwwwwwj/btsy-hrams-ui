@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- <el-button v-permission="'hrams:borrow:export'" class="export-btn" @click="exportStats">导出统计 Excel</el-button> -->
     <el-row :gutter="16">
       <el-col :span="12">
         <div class="stats-card">
@@ -29,15 +28,13 @@
 <script setup>
   import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
   import * as echarts from 'echarts';
-  import { borrowStatistics, exportBorrowStatistics } from '@/api/hrams/borrow';
+  import { borrowStatistics } from '@/api/hrams/borrow';
 
   const chartTimeRef = ref(null);
   const chartPersonRef = ref(null);
   const chartStatusRef = ref(null);
   const charts = [];
   let renderGeneration = 0;
-
-  const exportStats = () => exportBorrowStatistics('month');
 
   const resizeCharts = () => charts.forEach((c) => c?.resize());
 
@@ -118,7 +115,6 @@
 </script>
 
 <style scoped>
-  .export-btn { margin-bottom: 12px; }
   .chart-box { height: 300px; width: 100%; }
   .stats-card {
     border: 1px solid #eef2f8;

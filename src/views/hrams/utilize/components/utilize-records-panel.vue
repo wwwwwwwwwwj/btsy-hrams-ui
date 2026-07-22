@@ -37,10 +37,27 @@
         <span v-else>-</span>
       </template>
       <template #action="{ row }">
-        <el-button v-if="row.status !== 'returned'" link type="primary" v-permission="'hrams:borrow:return'" @click="doReturn(row)">归还</el-button>
+        <el-button v-if="row.status !== 'returned'" link type="primary" v-permission="'hrams:borrow:return'" @click="openReturn(row)">归还</el-button>
       </template>
       </ele-pro-table>
     </div>
+    <el-dialog v-model="returnVisible" title="确认归还" width="420px" destroy-on-close>
+      <el-form label-width="90px">
+        <el-form-item label="归还日期" required>
+          <el-date-picker
+            v-model="returnTime"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择归还日期"
+            style="width:100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="returnVisible = false">取消</el-button>
+        <el-button type="primary" :loading="returnSubmitting" @click="confirmReturn">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -52,6 +69,10 @@
   const tableRef = ref(null);
   const where = ref({});
   const borrowDateRange = ref(null);
+  const returnVisible = ref(false);
+  const returnSubmitting = ref(false);
+  const returnTime = ref('');
+  const returningRow = ref(null);
 
   const columns = ref([
     { prop: 'archiveNo', label: '档案编号', minWidth: 120 },
@@ -95,10 +116,29 @@
     reloadRecords();
   };
 
-  const doReturn = async (row) => {
-    await returnBorrow(row.id);
-    EleMessage.success({ message: '已归还', plain: true });
-    reloadRecords();
+  const openReturn = (row) => {
+    returningRow.value = row;
+    returnTime.value = new Date().toISOString().slice(0, 10);
+    returnVisible.value = true;
+  };
+
+  const confirmReturn = async () => {
+    if (!returningRow.value?.id) return;
+    if (!returnTime.value) {
+      EleMessage.error({ message: '请选择归还日期', plain: true });
+      return;
+    }
+    returnSubmitting.value = true;
+    try {
+      await returnBorrow(returningRow.value.id, returnTime.value);
+      EleMessage.success({ message: '已归还', plain: true });
+      returnVisible.value = false;
+      reloadRecords();
+    } catch (e) {
+      EleMessage.error({ message: e.message || '归还失败', plain: true });
+    } finally {
+      returnSubmitting.value = false;
+    }
   };
 
   const previewAttach = (row) => {
