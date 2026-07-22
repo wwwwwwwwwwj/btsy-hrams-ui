@@ -14,8 +14,8 @@
     />
     <div v-if="sourceLabel" class="upload-zip-name">已选择：{{ sourceLabel }}</div>
     <div class="hrams-v2-actions">
-      <el-button type="primary" :disabled="packing" @click="chooseZip">选择 ZIP</el-button>
-      <el-button :loading="packing" :disabled="attachBusy" @click="chooseFolder">选择文件夹</el-button>
+      <el-button type="primary" :disabled="attachBusy || packing" @click="chooseZip">选择 ZIP</el-button>
+      <el-button :loading="packing" :disabled="attachBusy || packing" @click="chooseFolder">选择文件夹</el-button>
       <el-button
         :loading="scanLoading || packing"
         :disabled="attachBusy || packing || !zipFile"
