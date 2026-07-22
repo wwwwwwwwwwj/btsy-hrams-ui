@@ -134,7 +134,12 @@
     const { scopeCategoryCodes, ...borrowFields } = f;
     const fd = toFormData({ ...borrowFields, file: attachFile.value });
     (scopeCategoryCodes || []).forEach((c) => fd.append('scopeCategoryCodes', c));
-    await registerBorrowForm(fd);
+    try {
+      await registerBorrowForm(fd);
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+      return;
+    }
     EleMessage.success({ message: '登记成功', plain: true });
     resetForm();
     emit('submitted');
