@@ -6,9 +6,11 @@
         @select="selectPerson"
         @open-upload="openUpload"
       />
-
+      
       <material-maintain-panel
         v-else
+        :archive-no="archiveNo"
+        :person-name="personName"
         :read-only="readOnly"
         :panel="panel"
         :category-code="categoryCode"
@@ -107,6 +109,8 @@
 
   const {
     personId,
+    archiveNo,
+    personName,
     readOnly,
     panel,
     categoryCode,
