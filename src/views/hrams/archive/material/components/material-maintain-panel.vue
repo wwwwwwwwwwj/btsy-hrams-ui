@@ -1,6 +1,9 @@
 <template>
   <div class="material-maintain">
     <div class="hrams-v2-card hrams-v2-filter">
+      <div class="person-info-bar" v-if="archiveNo">
+        档案编号：{{ archiveNo }}{{ personName ? '-' + personName : '' }}
+      </div>
       <el-form
         :inline="true"
         class="ele-form-search material-search-form"
@@ -121,6 +124,8 @@
   import { formatDateDay } from '@/utils/hrams-date';
 
   const props = defineProps({
+    archiveNo: String,
+    personName: String,
     readOnly: Boolean,
     panel: { type: Object, default: () => ({}) },
     categoryCode: String,
@@ -194,6 +199,14 @@
 </script>
 
 <style scoped>
+  .person-info-bar {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2d3d;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eef2f8;
+  }
   .material-search-form {
     display: flex;
     flex-wrap: wrap;

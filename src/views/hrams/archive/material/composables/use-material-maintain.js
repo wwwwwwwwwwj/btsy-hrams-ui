@@ -866,6 +866,8 @@ export function useMaterialMaintain() {
 
   return {
     personId,
+    archiveNo,
+    personName,
     readOnly,
     pageDesc,
     panel,

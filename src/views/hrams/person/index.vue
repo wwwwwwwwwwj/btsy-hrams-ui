@@ -113,6 +113,10 @@
   };
 
   const handleExport = () => {
+    if (selections.value.length) {
+      exportPerson({ ids: selections.value.map((p) => p.id).join(',') });
+      return;
+    }
     tableRef.value?.fetch?.(({ where: w, pages }) => exportPerson({ ...w, ...pages }));
   };
 

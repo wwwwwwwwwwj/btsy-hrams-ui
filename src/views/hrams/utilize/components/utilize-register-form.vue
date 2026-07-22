@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-  import { onMounted, ref } from 'vue';
+  import { onMounted, ref, watch } from 'vue';
   import { EleMessage } from 'ele-admin-plus';
   import { toFormData } from '@/utils/common';
   import { useUserStore } from '@/store/modules/user';
@@ -101,7 +101,22 @@
 
   const rules = {
     archiveNo: [{ required: true, message: '请输入档案编号', trigger: ['blur', 'change'] }],
-    expectedReturn: [{ required: true, message: '请选择预计归还时间', trigger: ['blur', 'change'] }],
+    expectedReturn: [
+      { required: true, message: '请选择预计归还时间', trigger: ['blur', 'change'] },
+      { validator: (_rule, value, callback) => {
+          if (value && form.value.borrowTime) {
+            const returnDay = new Date(value).toISOString().slice(0, 10);
+            const borrowDay = new Date(form.value.borrowTime).toISOString().slice(0, 10);
+            if (returnDay < borrowDay) {
+              callback(new Error('预计归还时间必须大于借阅时间'));
+            } else {
+              callback();
+            }
+          } else {
+            callback();
+          }
+        }, trigger: ['blur', 'change'] }
+    ],
     borrower: [{ required: true, message: '请填写借阅人', trigger: ['blur', 'change'] }],
     reason: [{ required: true, message: '请填写借阅事由', trigger: ['blur', 'change'] }],
     borrowScope: [{ required: true, message: '请选择调阅范围', trigger: ['blur', 'change'] }],
@@ -250,11 +265,22 @@
       file: attachFile.value
     });
     (scopeCategoryCodes || []).forEach((c) => fd.append('scopeCategoryCodes', c));
-    await registerBorrowForm(fd);
+    try {
+      await registerBorrowForm(fd);
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+      return;
+    }
     EleMessage.success({ message: '登记成功', plain: true });
     resetForm();
     emit('submitted');
   };
+
+  watch(() => form.value.borrowTime, () => {
+    if (form.value.expectedReturn) {
+      formRef.value?.validateField('expectedReturn');
+    }
+  });
 
   onMounted(resetForm);
 
