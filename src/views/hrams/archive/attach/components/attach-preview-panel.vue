@@ -26,25 +26,26 @@
         <el-col :span="8">
           <div class="tree-title">目录树预览</div>
           <el-tree
-            :data="previewTree"
+            :data="sortedPreviewTree"
             node-key="id"
             default-expand-all
             highlight-current
             :props="{ label: 'label', children: 'children' }"
+            @node-click="onTreeNodeClick"
           />
         </el-col>
         <el-col :span="16">
-          <el-table :data="visiblePreviewRows" border max-height="480">
+          <el-table ref="tableRef" :data="visiblePreviewRows" border max-height="480" :row-class-name="tableRowClass">
             <el-table-column type="index" label="序号" width="70" />
             <el-table-column prop="personName" label="人员" width="120" show-overflow-tooltip />
             <el-table-column prop="personKey" label="人员目录" min-width="130" show-overflow-tooltip />
             <el-table-column prop="fileName" label="文件名称" min-width="200" show-overflow-tooltip />
             <el-table-column prop="categoryCode" label="分类" width="80" />
             <el-table-column prop="itemNo" label="页号" width="80" />
-            <el-table-column prop="statusText" label="校验状态" width="110">
+            <el-table-column label="校验状态" width="110">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'fail' || row.status === 'exists' ? 'danger' : row.status === 'catalog' ? 'info' : 'success'">
-                  {{ row.statusText }}
+                <el-tag :type="statusTagType(row)">
+                  {{ row.status === 'pass' ? '通过' : row.statusText || '—' }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -62,7 +63,9 @@
 </template>
 
 <script setup>
-  defineProps({
+  import { computed, ref, nextTick } from 'vue';
+
+  const props = defineProps({
     personSummaries: { type: Array, default: () => [] },
     previewTree: { type: Array, default: () => [] },
     visiblePreviewRows: { type: Array, default: () => [] },
@@ -76,6 +79,49 @@
   });
 
   defineEmits(['confirm', 'cancel-person', 'restore-person', 'remove-row']);
+
+  const tableRef = ref(null);
+
+  const sortCategoryChildren = (nodes) => {
+    if (!nodes || !nodes.length) return nodes;
+    return [...nodes].sort((a, b) => {
+      const aNum = parseFloat(a.id?.replace(/^c-\d+-/, '') || '');
+      const bNum = parseFloat(b.id?.replace(/^c-\d+-/, '') || '');
+      return aNum - bNum;
+    }).map(n => n.children?.length ? { ...n, children: sortCategoryChildren(n.children) } : n);
+  };
+
+  const sortedPreviewTree = computed(() => {
+    return props.previewTree.map(person => ({
+      ...person,
+      children: sortCategoryChildren(person.children)
+    }));
+  });
+
+  const tableRowClass = ({ row }) => {
+    return highlightRowIndex.value === row.index ? 'attach-highlight-row' : '';
+  };
+
+  const highlightRowIndex = ref(null);
+
+  const onTreeNodeClick = (node) => {
+    if (node.rowIndex == null || node.rowIndex < 0) return;
+    highlightRowIndex.value = node.rowIndex;
+    nextTick(() => {
+      const tableBody = tableRef.value?.$el?.querySelector?.('.el-table__body-wrapper');
+      if (!tableBody) return;
+      const row = tableBody.querySelector('.attach-highlight-row');
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  };
+
+  const statusTagType = (row) => {
+    if (row.status === 'fail' || row.status === 'exists') return 'danger';
+    if (row.status === 'catalog') return 'info';
+    return 'success';
+  };
 </script>
 
 <style scoped>
@@ -97,4 +143,5 @@
     margin-bottom: 18px;
   }
   .tree-title { margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+  :deep(.attach-highlight-row) { background: #fdf6ec !important; }
 </style>
