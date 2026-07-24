@@ -52,7 +52,7 @@
             <el-table-column prop="message" label="问题说明" min-width="160" show-overflow-tooltip />
             <el-table-column label="操作" width="90">
               <template #default="{ row }">
-                <el-button v-if="canDeleteRow(row)" link type="danger" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
+                <el-button v-if="canDeleteRow(row)" link type="danger" :disabled="scanLoading" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -75,6 +75,7 @@
     attachableFileCount: { type: Number, default: 0 },
     canConfirm: Boolean,
     confirmLoading: Boolean,
+    scanLoading: Boolean,
     canDeleteRow: { type: Function, required: true }
   });
 

@@ -45,6 +45,7 @@
         :attachable-file-count="attachableFileCount"
         :can-confirm="canConfirm"
         :confirm-loading="confirmLoading"
+        :scan-loading="scanLoading"
         :can-delete-row="canDeleteRow"
         @confirm="doConfirmAttach"
         @cancel-person="cancelPerson"
@@ -388,10 +389,13 @@
     if (row.index == null || row.index < 0) return false;
     if (row.status === 'pass' || row.status === 'catalog') return false;
     if (row.message && row.message.includes('文件命名不规范')) return false;
+    const isUnmatched = row.message && row.message.includes('目录表未匹配到该文件');
+    const isDuplicate = row.message && row.message.includes('不同分类下出现相同文件');
+    const isNoCheck = row.message && row.message.includes('未参与校验');
     if (mode.value === 'incremental') {
-      return row.status === 'exists' || (row.message && row.message.includes('目录表未匹配到该文件'));
+      return row.status === 'exists' || isUnmatched || isDuplicate || isNoCheck;
     }
-    return row.message && row.message.includes('目录表未匹配到该文件');
+    return isUnmatched || isDuplicate || isNoCheck;
   };
 
   const removePreviewRow = async (row) => {
