@@ -666,10 +666,10 @@ export function useMaterialMaintain() {
       if (!uploadForm.value.pageCount || uploadForm.value.pageCount < 1) {
         return EleMessage.error({ message: '请填写页数', plain: true });
       }
-      const singleInBatch = queue.length === 1;
-      if (singleInBatch && !resolveMaterialName(queue[0], true)) {
+      if (!uploadForm.value.materialName?.trim()) {
         return EleMessage.error({ message: '请填写材料名称', plain: true });
       }
+      const singleInBatch = queue.length === 1;
       if (!activeBatchId.value) {
         const pid = uploadForm.value.personId;
         if (!pid) {

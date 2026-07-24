@@ -41,10 +41,10 @@
           <el-input-number v-model="uploadForm.pageNo" :min="1" />
           <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该页号起依次占号</div>
         </el-form-item>
-        <el-form-item label="名称" :required="nameRequired">
+        <el-form-item label="名称" :required="!uploadNeedsIntake">
           <el-input
             v-model="uploadForm.materialName"
-            :placeholder="uploadNeedsIntake ? '可不填，由 AI 推荐' : pendingUploadFiles.length > 1 ? '多份默认取各文件名；仅一份时可在此填写' : '卷内目录材料名称'"
+            :placeholder="uploadNeedsIntake ? '可不填，由 AI 推荐' : '卷内目录材料名称'"
           />
         </el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
