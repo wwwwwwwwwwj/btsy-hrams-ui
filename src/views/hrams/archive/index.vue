@@ -11,6 +11,7 @@
           @reset="resetSearch"
         >
           <template #extra>
+            <el-button v-permission="'hrams:archive:attach'" @click="handleDownloadTemplate">下载挂接模板</el-button>
             <el-button v-permission="'hrams:archive:attach'" @click="goAttach('batch')">批量挂接</el-button>
             <el-button v-permission="'hrams:archive:attach'" @click="goAttach('incremental')">增补挂接</el-button>
             <el-button v-permission="'hrams:archive:download'" @click="handleBatchExport">导出档案材料</el-button>
@@ -46,7 +47,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { useDictData } from '@/utils/use-dict-data';
-  import { pageArchivePersons, exportCatalog, exportBatchArchivePackage, exportBatchCatalog } from '@/api/hrams/archive';
+  import { pageArchivePersons, exportCatalog, exportBatchArchivePackage, exportBatchCatalog, downloadAttachTemplate } from '@/api/hrams/archive';
   import ArchiveDetailDrawer from './components/archive-detail-drawer.vue';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import '../styles/v2.scss';
@@ -143,6 +144,14 @@
   const handleExportCatalog = async (row) => {
     try {
       await exportCatalog(row.id);
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadAttachTemplate();
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     }

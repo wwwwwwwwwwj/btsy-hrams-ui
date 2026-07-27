@@ -211,6 +211,13 @@ export async function exportBatchArchivePackage(personIds) {
   download(res.data, name);
 }
 
+export async function downloadAttachTemplate() {
+  const res = await request.get('/hrams/archive/attach-template', { responseType: 'blob' });
+  await checkDownloadRes(res);
+  const name = parseFilenameFromDisposition(res.headers['content-disposition']) || '干部人事档案挂接模板.zip';
+  download(res.data, name);
+}
+
 function parseFilenameFromDisposition(disposition) {
   if (!disposition) return '';
   const m = /filename\*=utf-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
