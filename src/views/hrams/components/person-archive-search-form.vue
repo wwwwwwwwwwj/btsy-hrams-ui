@@ -8,7 +8,7 @@
       <dict-data v-model="model.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
     </el-form-item>
     <el-form-item label="出生日期">
-      <el-date-picker v-model="model.birthDate" type="date" value-format="YYYY-MM-DD" />
+      <el-date-picker v-model="model.birthDate" type="date" value-format="YYYY-MM-DD" :disabled-date="disabledBirthDate" />
     </el-form-item>
     <el-form-item label="年龄">
       <el-input-number v-model="model.age" :min="0" :max="120" controls-position="right" />
@@ -72,6 +72,11 @@
   });
 
   defineEmits(['search', 'reset']);
+
+  /** 出生日期不能晚于当前日期 */
+  const disabledBirthDate = (time) => {
+    return time.getTime() > Date.now();
+  };
 </script>
 
 <style scoped>
