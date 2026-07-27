@@ -108,17 +108,24 @@
         map.set(key, {
           personId: r.personId,
           label: `${r.archiveNo || ''}${r.personName || ''}`,
-          hasPass: false
+          hasPass: false,
+          hasFail: false
         });
       }
+      const entry = map.get(key);
       if (r.status === 'pass') {
-        map.get(key).hasPass = true;
+        entry.hasPass = true;
+      }
+      // 与后端 OK_STATUS = {"pass", "catalog"} 保持一致，
+      // 只要有一条非 pass 且非 catalog 就是不通过
+      if (r.status !== 'pass' && r.status !== 'catalog') {
+        entry.hasFail = true;
       }
     });
     return [...map.values()].map((p) => ({
       personId: p.personId,
       label: p.label,
-      attachable: p.hasPass,
+      attachable: p.hasPass && !p.hasFail,
       cancelled: cancelledPersonIds.value.has(String(p.personId))
     }));
   });
