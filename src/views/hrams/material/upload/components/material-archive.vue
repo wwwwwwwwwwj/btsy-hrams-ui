@@ -67,7 +67,7 @@
           <tbody>
             <tr v-for="m in selectedMaterials" :key="m.id">
               <td class="order-col">{{ m.pageNo || '-' }}</td>
-              <td>{{ m.materialName || m.fileName }}</td>
+              <td>{{ m.materialName || (m.originalFileName || m.fileName) }}</td>
               <td>{{ formatDate(m.formDate) }}</td>
               <td>{{ m.pageCount || '-' }} 页</td>
               <td class="batch-col">{{ m.batchNo }}</td>
@@ -271,14 +271,14 @@ const modalTitle = computed(() => {
 async function openModal(m, preview) {
   isPreview.value = preview;
   reclassifyItem.value = m;
-  reclassifyForm.materialName = m.materialName || m.fileName?.replace(/\.[^.]+$/, '') || '';
+  reclassifyForm.materialName = m.materialName || (m.originalFileName || m.fileName)?.replace(/\.[^.]+$/, '') || '';
   reclassifyForm.categoryCode = m.categoryCode || '';
   reclassifyForm.pageNo = m.pageNo || '';
   reclassifyForm.formDate = formatDate(m.formDate);
   reclassifyForm.pageCount = m.pageCount || '';
   reclassifyForm.remark = m.remark || '';
   reclassifyPreviewSrc.value = '';
-  const name = (m.fileName || '').toLowerCase();
+  const name = ((m.originalFileName || m.fileName) || '').toLowerCase();
   if (/\.(jpg|jpeg|png|bmp|gif|webp)$/.test(name)) reclassifyPreviewType.value = 'image';
   else if (name.endsWith('.pdf')) reclassifyPreviewType.value = 'pdf';
   else reclassifyPreviewType.value = 'other';
@@ -287,6 +287,8 @@ async function openModal(m, preview) {
       const res = await getPresignedUrl(m.ossKey);
       if (res.data?.success) reclassifyPreviewSrc.value = res.data.url;
     } catch (e) { /* ignore */ }
+  } else if (m.id) {
+    reclassifyPreviewSrc.value = `/prod-api/hrams/archive/materials/${m.id}/preview`;
   }
   reclassifyVisible.value = true;
 }

@@ -51,12 +51,12 @@
             <span v-if="b.idCard" class="idcard-text">🪪 {{ b.idCard }}</span>
           </div>
           <div class="card-meta">
-            上传人：{{ b.uploader }} · {{ b.createTime }} · 共 {{ b.totalFiles }} 份
+            上传人：{{ b.uploader }} · {{ b.createTime }} · 共 {{ b.fileCount ?? 0 }} 份
             <span v-if="b.note" class="note"> · {{ b.note }}</span>
           </div>
         </div>
         <div class="progress-col">
-          <div class="progress-label"><span>人工确认</span><span>{{ b.confirmedCount }}/{{ b.totalFiles }}</span></div>
+          <div class="progress-label"><span>人工确认</span><span>{{ b.successCount ?? 0 }}/{{ b.fileCount ?? 0 }}</span></div>
           <div class="progress-bar"><div class="progress-fill" :style="{ width: pct(b) + '%' }" /></div>
         </div>
         <span class="status-pill" :class="statusClass(b)">{{ statusText(b) }}</span>
@@ -101,7 +101,7 @@ function resetSearch() {
   search.status = '';
 }
 
-function pct(b) { return Math.round((b.confirmedCount || 0) / (b.totalFiles || 1) * 100); }
+function pct(b) { return Math.round((b.successCount || 0) / (b.fileCount || 1) * 100); }
 function statusClass(b) {
   return { pending: 's-pending', processing: 's-processing', done: 's-done', error: 's-error' }[b.status] || 's-pending';
 }

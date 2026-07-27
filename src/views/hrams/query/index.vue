@@ -79,7 +79,7 @@
   import { HRAMS_QUERY_FULLTEXT, HRAMS_QUERY_QA } from '@/utils/hrams-routes';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pageQueryPerson, getQueryPersonDetail } from '@/api/hrams/query';
-  import { previewMaterial, downloadMaterialsZip, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
+  import { previewMaterial, exportArchivePackage, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsQuery' });
@@ -157,10 +157,8 @@
 
   const exportMaterials = () => {
     const p = detail.value.person;
-    const ids = (detail.value.materials || []).filter((m) => m.fileStatus === 'uploaded').map((m) => m.id);
-    if (p?.id && ids.length) {
-      downloadMaterialsZip(p.id, ids);
-    }
+    if (!p?.id) return;
+    exportArchivePackage(p.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
   };
 
   const exportCatalog = () => {

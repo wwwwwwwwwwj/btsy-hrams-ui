@@ -34,9 +34,9 @@
             @click="selectItem(i)"
           >
             <span :class="['dot', statusDot(item)]" />
-            <span class="qicon">{{ isPdf(item.fileName) ? '📕' : '🖼️' }}</span>
+            <span class="qicon">{{ isPdf((item.originalFileName || item.fileName)) ? '📕' : '🖼️' }}</span>
             <div class="qbody">
-              <div class="qname">{{ item.fileName }}</div>
+              <div class="qname">{{ (item.originalFileName || item.fileName) }}</div>
               <div v-if="item.status === 'ocr_failed'" class="qerr">⚠ OCR识别失败</div>
               <div v-else class="qcat">{{ getCategoryDisplay(item) }}</div>
               <span v-if="item.status === 'returned'" class="badge badge-returned">↩ 已退回</span>
@@ -49,7 +49,7 @@
       <!-- ====== 中栏：文件预览 ====== -->
       <div class="col col-preview">
         <div class="prev-toolbar">
-          <span class="prev-fname">{{ selected?.fileName || '无材料' }}</span>
+          <span class="prev-fname">{{ (selected?.originalFileName || selected?.fileName) || '无材料' }}</span>
           <template v-if="previewType === 'image'">
             <el-button size="small" round @click="rotation = (rotation || 0) - 90">⟲</el-button>
             <el-button size="small" round @click="rotation = (rotation || 0) + 90">⟳</el-button>
@@ -82,7 +82,7 @@
             <div v-if="previewType === 'other'" class="prev-unsupported">
               <span style="font-size:48px;margin-bottom:12px">📄</span>
               <span>无法预览此文件类型</span>
-              <span style="font-size:11px;color:#909399;margin-top:4px">{{ selected?.fileName }}</span>
+              <span style="font-size:11px;color:#909399;margin-top:4px">{{ (selected?.originalFileName || selected?.fileName) }}</span>
             </div>
 
             <!-- 加载/错误叠加层 -->
@@ -259,7 +259,7 @@ const previewCache = new Map();
 const PREVIEW_TIMEOUT = 120000; // 120 秒超时
 
 const previewType = computed(() => {
-  const name = (selected.value?.fileName || '').toLowerCase();
+  const name = (selected.value?.originalFileName || selected.value?.fileName || '').toLowerCase();
   if (/\.(jpg|jpeg|png|bmp|gif|webp)$/.test(name)) return 'image';
   if (name.endsWith('.pdf')) return 'pdf';
   return 'other';
@@ -403,7 +403,7 @@ watch(selected, (item) => {
   if (!item) return;
   const df = item.difyResult || '';
   const parsed = parseFieldsFromResult(df);
-  form.materialName = item.materialName || item.fileName?.replace(/\.[^.]+$/, '') || '';
+  form.materialName = item.materialName || (item.originalFileName || item.fileName)?.replace(/\.[^.]+$/, '') || '';
   // 优先使用后端匹配的分类编码，其次用 materialType 文本
   form.categoryCode = item.categoryCode || item.materialType || parsed.materialType || '';
   form.pageNo = item.pageNo || '';
