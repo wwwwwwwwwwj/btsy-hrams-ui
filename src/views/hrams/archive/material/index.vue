@@ -36,7 +36,6 @@
         <template #search-extra>
           <span class="hrams-v2-filter-actions">
             <el-tag v-if="readOnly" type="info" size="small">只读查阅</el-tag>
-            <el-button @click="goBack">返回</el-button>
             <el-button
               v-if="!readOnly"
               type="primary"
@@ -102,13 +101,6 @@
   defineOptions({ name: 'HramsArchiveMaterial' });
 
   const router = useRouter();
-  const goBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.push({ path: HRAMS_ARCHIVE_LIST });
-  };
 
   const {
     personId,

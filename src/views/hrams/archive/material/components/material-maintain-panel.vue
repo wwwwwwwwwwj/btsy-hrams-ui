@@ -39,7 +39,13 @@
           >
             批量删除
           </el-button>
+          <el-button
+            @click="goBack"
+          >
+            返回
+          </el-button>
         </el-form-item>
+        
       </el-form>
     </div>
 
@@ -124,6 +130,7 @@
 
 <script setup>
   import { formatDateDay } from '@/utils/hrams-date';
+  import { useRouter } from 'vue-router';
 
   const props = defineProps({
     archiveNo: String,
@@ -197,6 +204,15 @@
       }
     );
     return items;
+  };
+  
+  const router = useRouter();
+  const goBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push({ path: HRAMS_ARCHIVE_LIST });
   };
 </script>
 
