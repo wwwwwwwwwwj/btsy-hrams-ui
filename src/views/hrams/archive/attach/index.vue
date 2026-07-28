@@ -28,7 +28,7 @@
         :scan-loading="scanLoading"
         :attach-busy="attachBusy"
         :batch-id="batchId"
-        @zip-changed="onZipChanged"
+        @source-changed="onSourceChanged"
         @scan="startScan"
         @rescan="rescanBatch"
       />
@@ -50,7 +50,6 @@
         @confirm="doConfirmAttach"
         @cancel-person="cancelPerson"
         @restore-person="restorePerson"
-        @remove-row="removePreviewRow"
       />
     </div>
   </ele-page>
@@ -64,7 +63,6 @@
     uploadAttachZip,
     getAttachScanStatus,
     getAttachScanPreview,
-    excludeAttachPaths,
     rescanAttachBatch,
     confirmAttachBatch
   } from '@/api/hrams/attach';
@@ -152,6 +150,23 @@
     previewRows.value.filter((r) => !r.personId || !cancelledPersonIds.value.has(String(r.personId)))
   );
 
+  /** 人员根目录下的文件夹段（不含文件名）；目录表行返回空 */
+  const folderSegmentsOf = (relativePath) => {
+    if (!relativePath) return [];
+    const parts = String(relativePath).split(/[/\\]/).filter(Boolean);
+    if (parts.length <= 2) return [];
+    return parts.slice(1, -1);
+  };
+
+  const ensureChild = (parent, id, label) => {
+    let node = parent.children.find((c) => c.id === id);
+    if (!node) {
+      node = { id, label, children: [] };
+      parent.children.push(node);
+    }
+    return node;
+  };
+
   const previewTree = computed(() => {
     const roots = [];
     const personMap = new Map();
@@ -167,17 +182,29 @@
         roots.push(node);
       }
       const personNode = personMap.get(pid);
-      const cat = r.categoryCode || '—';
-      let catNode = personNode.children.find((c) => c.id === `c-${pid}-${cat}`);
-      if (!catNode) {
-        catNode = { id: `c-${pid}-${cat}`, label: `类 ${cat}`, children: [] };
-        personNode.children.push(catNode);
-      }
-      catNode.children.push({
+      const fileNode = {
         id: `f-${r.index}-${r.relativePath || r.fileName}`,
         label: `${r.fileName || '—'} [${r.statusText || r.status}]`,
         rowIndex: r.index
+      };
+
+      if (r.status === 'catalog') {
+        ensureChild(personNode, `c-${pid}-catalog`, '目录表').children.push(fileNode);
+        return;
+      }
+
+      const segments = folderSegmentsOf(r.relativePath);
+      if (!segments.length) {
+        ensureChild(personNode, `c-${pid}-other`, '未归类').children.push(fileNode);
+        return;
+      }
+      let parent = personNode;
+      let pathKey = '';
+      segments.forEach((seg) => {
+        pathKey = pathKey ? `${pathKey}/${seg}` : seg;
+        parent = ensureChild(parent, `c-${pid}-${pathKey}`, seg);
       });
+      parent.children.push(fileNode);
     });
     return roots;
   });
@@ -198,13 +225,14 @@
     fileCount.value = 0;
     scanPhaseText.value = '';
     cancelledPersonIds.value = new Set();
-    uploadPanelRef.value?.clearZip?.();
+    uploadPanelRef.value?.clearSource?.() || uploadPanelRef.value?.clearZip?.();
+    zipFile.value = null;
     router.replace({ path: route.path, query: { ...route.query, mode: nextMode } });
   };
 
-  const onZipChanged = (file) => {
+  const onSourceChanged = (source) => {
     uploadSession += 1;
-    zipFile.value = file;
+    zipFile.value = source?.zip || null;
     batchId.value = null;
     previewRows.value = [];
     fileCount.value = 0;
@@ -313,7 +341,7 @@
     const attachableCount = previewRows.value.filter((r) => r.status === 'pass').length;
     if (attachableCount === 0) {
       EleMessage.warning({
-        message: '未发现可挂接材料，请确认 ZIP 中包含材料文件',
+        message: '未发现可挂接材料，请确认上传包中包含材料文件',
         plain: true,
         duration: 6000
       });
@@ -333,7 +361,7 @@
     }
     const zip = uploadPanelRef.value?.getZipFile?.() || zipFile.value;
     if (!zip) {
-      EleMessage.error({ message: '请先选择 ZIP 文件', plain: true });
+      EleMessage.error({ message: '请先选择 ZIP 或文件夹', plain: true });
       return;
     }
     if (!selectedIds.value.length) {
@@ -440,7 +468,7 @@
     }
     if (attachableFileCount.value === 0 || confirmedPersonIds.value.length === 0) {
       EleMessage.warning({
-        message: '未发现可挂接材料，请确认 ZIP 中包含材料文件',
+        message: '未发现可挂接材料，请确认上传包中包含材料文件',
         plain: true
       });
       return;

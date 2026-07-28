@@ -39,7 +39,7 @@
         </el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="序号" prop="pageNo" required>
           <el-input-number v-model="uploadForm.pageNo" :min="1" />
-          <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该页号起依次占号</div>
+          <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该序号起依次占号</div>
         </el-form-item>
         <el-form-item label="名称" prop="materialName" :required="!uploadNeedsIntake">
           <el-input
@@ -57,7 +57,7 @@
             <div class="field-hint">图片可先旋转、裁剪；PDF 直接加入待传列表</div>
             <ul v-if="pendingUploadFiles.length" class="pending-list">
               <li v-for="(item, index) in pendingUploadFiles" :key="item.key" class="pending-item">
-                <span class="pending-page">{{ uploadNeedsIntake ? `待识别 ${index + 1}` : `页 ${pageNoForIndex(index)}` }}</span>
+                <span class="pending-page">{{ uploadNeedsIntake ? `待识别 ${index + 1}` : `序号 ${pageNoForIndex(index)}` }}</span>
                 <span class="pending-name">{{ item.file?.name }}</span>
                 <span class="pending-size">{{ formatFileSize(item.file?.size) }}</span>
                 <el-button link type="primary" @click="$emit('edit-pending', item.key)">处理</el-button>
@@ -69,6 +69,7 @@
         <el-form-item v-if="intakePreview.materialType" label="智能识别">
           <div class="intake-hint">类型：{{ intakePreview.materialType }}</div>
           <div v-if="intakePreview.matchedPersonName" class="intake-hint">匹配干部：{{ intakePreview.matchedArchiveNo }} {{ intakePreview.matchedPersonName }}</div>
+          <div v-if="intakePreview.message" class="intake-hint">{{ intakePreview.message }}</div>
         </el-form-item>
       </el-form>
       <div v-if="intakeRows.length" class="intake-result">
@@ -140,31 +141,20 @@
         <el-button type="primary" :loading="uploadSubmitting" :disabled="!pendingUploadFiles.length" @click="handleDoUpload">
           {{ uploadButtonLabel }}
         </el-button>
-        <el-button v-if="!hideBatchHint" @click="$emit('close-upload')">完成本轮</el-button>
       </template>
     </el-dialog>
 
     <el-dialog v-model="editVisible" title="修改材料信息" width="480px">
       <el-form label-width="90px">
+        <el-form-item label="序号"><el-input-number v-model="editForm.pageNo" :min="1" /></el-form-item>
         <el-form-item label="名称"><el-input v-model="editForm.materialName" /></el-form-item>
         <el-form-item label="形成日期"><el-date-picker v-model="editForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-        <el-form-item label="序号"><el-input-number v-model="editForm.pageNo" :min="1" /></el-form-item>
         <el-form-item label="页数"><el-input-number v-model="editForm.pageCount" :min="0" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="editForm.remark" type="textarea" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
         <el-button type="primary" @click="$emit('save-edit')">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="pageNoVisible" title="调整页号" width="360px">
-      <el-form label-width="80px">
-        <el-form-item label="新页号"><el-input-number v-model="pageNoForm.pageNo" :min="1" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="pageNoVisible = false">取消</el-button>
-        <el-button type="primary" @click="$emit('save-page-no')">保存</el-button>
       </template>
     </el-dialog>
 
@@ -194,7 +184,6 @@
     flatCategories: { type: Array, default: () => [] },
     uploadForm: { type: Object, required: true },
     editForm: { type: Object, required: true },
-    pageNoForm: { type: Object, required: true },
     activeBatchNo: String,
     hideBatchHint: Boolean,
     intakePreview: { type: Object, default: () => ({}) },
@@ -235,7 +224,6 @@
 
   const uploadVisible = defineModel('uploadVisible', { type: Boolean, default: false });
   const editVisible = defineModel('editVisible', { type: Boolean, default: false });
-  const pageNoVisible = defineModel('pageNoVisible', { type: Boolean, default: false });
   const replaceVisible = defineModel('replaceVisible', { type: Boolean, default: false });
 
   watch(
@@ -250,7 +238,7 @@
 
   const emit = defineEmits([
     'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'confirm-intake', 'reject-intake', 'remove-pending', 'edit-pending',
-    'save-edit', 'save-page-no', 'replace-file', 'do-replace'
+    'save-edit', 'replace-file', 'do-replace'
   ]);
 
   const uploadFormRef = ref(null);

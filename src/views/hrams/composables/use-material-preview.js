@@ -14,6 +14,23 @@ const state = reactive({
 
 let objectUrl = null;
 
+function resolvePreviewType(res) {
+  const headerType = res.headers?.['content-type'];
+  if (headerType && headerType !== 'application/octet-stream') {
+    return headerType;
+  }
+  if (res.data?.type && res.data.type !== 'application/octet-stream') {
+    return res.data.type;
+  }
+  const disposition = res.headers?.['content-disposition'] || '';
+  const lower = disposition.toLowerCase();
+  if (/\.pdf(?:\"|;|$)/.test(lower)) return 'application/pdf';
+  if (/\.png(?:\"|;|$)/.test(lower)) return 'image/png';
+  if (/\.jpe?g(?:\"|;|$)/.test(lower)) return 'image/jpeg';
+  if (/\.bmp(?:\"|;|$)/.test(lower)) return 'image/bmp';
+  return 'application/octet-stream';
+}
+
 function revokeObjectUrl() {
   if (objectUrl) {
     URL.revokeObjectURL(objectUrl);
@@ -40,7 +57,7 @@ export async function openMaterialPreview(materialId) {
       responseType: 'blob'
     });
     await checkDownloadRes(res);
-    const type = res.headers['content-type'] || 'application/octet-stream';
+    const type = resolvePreviewType(res);
     objectUrl = URL.createObjectURL(new Blob([res.data], { type }));
     if (/^image\//i.test(type)) {
       state.imageUrls = [objectUrl];

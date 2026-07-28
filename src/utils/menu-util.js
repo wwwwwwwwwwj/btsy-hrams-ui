@@ -242,12 +242,13 @@ export function formatUserMenu(userMenu) {
     return temp;
     })
   );
-  // 一级菜单去掉父级
+  // 一级菜单去掉父级（继承父级 hidden，否则「显示状态=隐藏」会丢）
   data.forEach((item, i) => {
     if (item.path === '/' && item.children && item.children.length) {
       const child = item.children[0];
       data[i] = {
         ...child,
+        hidden: !!(item.hidden || child.hidden),
         path:
           child.path?.startsWith?.('/') || isExternalLink(child.path)
             ? child.path

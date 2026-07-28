@@ -22,7 +22,6 @@
         <template #action="{ row }">
           <btn-items type="link" :divider="true" :items="[
             { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
-            { title: '查看档案', permission: 'hrams:archive:list', onClick: () => goArchive(row) },
             { preset: 'edit', icon: false, permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
             { preset: 'del', icon: false, permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
           ]" />
@@ -43,17 +42,14 @@
 
 <script setup>
   import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
   import { ElMessageBox } from 'element-plus';
   import { EleMessage, useModal } from 'ele-admin-plus';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pagePerson, removePerson, exportPerson, importPerson, downloadPersonImportTemplate } from '@/api/hrams/person';
-  import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
   import '../styles/v2.scss';
   import { formatDateDay } from '@/utils/hrams-date';
 
   defineOptions({ name: 'HramsPerson' });
-  const router = useRouter();
   const { openModal } = useModal();
   const tableRef = ref(null);
   const selections = ref([]);
@@ -80,7 +76,7 @@
     { prop: 'nativePlace', label: '籍贯', minWidth: 100 },
     { prop: 'major', label: '专业', minWidth: 100 },
     { prop: 'personStatus', label: '当前状态', width: 90 },
-    { columnKey: 'action', label: '操作', width: 280, slot: 'action', align: 'center' }
+    { columnKey: 'action', label: '操作', width: 200, slot: 'action', align: 'center' }
   ]);
 
   const datasource = ({ pages, where: w }) => pagePerson({ ...w, ...pages });
@@ -103,13 +99,6 @@
     });
   };
 
-  const goArchive = (row) => {
-    router.push({
-      path: HRAMS_ARCHIVE_LIST,
-      query: { viewId: String(row.id) }
-    });
-  };
-
   const handleRemove = (row) => {
     const rows = row ? [row] : selections.value;
     if (!rows.length) return EleMessage.error({ message: '请选择数据', plain: true });
@@ -117,6 +106,8 @@
       removePerson(rows.map((d) => d.id)).then(() => {
         EleMessage.success({ message: '已注销', plain: true });
         reload(where.value, 1);
+      }).catch((e) => {
+        EleMessage.error({ message: e.message || '注销失败', plain: true });
       });
     }).catch(() => {});
   };

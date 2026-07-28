@@ -10,9 +10,15 @@ export async function pageBorrow(params) {
 }
 
 export async function lookupBorrowPerson(archiveNo) {
-  const res = await request.get('/hrams/borrow/lookup', { params: { archiveNo } });
+  const list = await searchBorrowPersons({ archiveNo });
+  return list?.[0] || null;
+}
+
+export async function searchBorrowPersons(params = {}) {
+  const res = await request.get('/hrams/borrow/lookup', { params });
   if (res.data.code === 200) {
-    return res.data.data;
+    const data = res.data.data;
+    return Array.isArray(data) ? data : (data ? [data] : []);
   }
   return Promise.reject(new Error(res.data.msg));
 }

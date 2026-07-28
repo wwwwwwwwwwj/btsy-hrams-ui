@@ -9,12 +9,10 @@ import {
   uploadMaterial,
   updateMaterial,
   deleteMaterial,
-  deleteMaterialFile,
   previewMaterial,
   batchDeleteMaterials,
   downloadMaterialsZip,
   replaceMaterial,
-  updateMaterialPageNo,
   previewMaterialIntake,
   uploadMaterialIntake,
   getMaterialIntake,
@@ -83,7 +81,6 @@ export function useMaterialMaintain() {
   const selections = ref([]);
   const uploadVisible = ref(false);
   const editVisible = ref(false);
-  const pageNoVisible = ref(false);
   const replaceVisible = ref(false);
   const createUploadForm = () => ({
     personId: personId.value || '',
@@ -98,7 +95,6 @@ export function useMaterialMaintain() {
   });
   const uploadForm = ref(createUploadForm());
   const editForm = ref({});
-  const pageNoForm = ref({ id: null, pageNo: 1 });
   const replaceForm = ref({ id: null, file: null });
   const highlightMaterialId = ref(null);
   const globalCategories = ref([]);
@@ -311,7 +307,7 @@ export function useMaterialMaintain() {
   const loadMaterials = async () => {
     if (!personId.value) return;
     materials.value = await listMaterials(personId.value, {
-      categoryCode: categoryCode.value,
+      categoryCode: keyword.value ? undefined : categoryCode.value,
       keyword: keyword.value || undefined
     });
   };
@@ -325,14 +321,21 @@ export function useMaterialMaintain() {
   const resetSearch = () => { keyword.value = ''; loadMaterials(); };
   const onSelectionChange = (rows) => { selections.value = rows; };
 
-  const suggestPageNo = () => {
+  const suggestPageNo = async () => {
     if (!personId.value || String(uploadForm.value.personId || '') !== String(personId.value)) {
       uploadForm.value.pageNo = 1;
       return;
     }
-    const inCat = materials.value.filter((m) => m.categoryCode === uploadForm.value.categoryCode);
-    const max = inCat.reduce((m, r) => Math.max(m, r.pageNo || 0), 0);
-    uploadForm.value.pageNo = max > 0 ? max + 1 : 1;
+    try {
+      const inCat = await listMaterials(personId.value, {
+        categoryCode: uploadForm.value.categoryCode
+      });
+      const max = inCat.reduce((m, r) => Math.max(m, r.pageNo || 0), 0);
+      uploadForm.value.pageNo = max > 0 ? max + 1 : 1;
+    } catch (e) {
+      uploadForm.value.pageNo = 1;
+      EleMessage.error({ message: e.message || '获取建议序号失败', plain: true });
+    }
   };
 
   const openUpload = () => {
@@ -694,7 +697,9 @@ export function useMaterialMaintain() {
         fd.append('materialName', materialName);
         fd.append('pageCount', uploadForm.value.pageCount);
         fd.append('formDate', uploadForm.value.formDate);
-        if (uploadForm.value.remark) fd.append('remark', uploadForm.value.remark);
+        if (uploadForm.value.remark?.trim()) {
+          fd.append('remark', uploadForm.value.remark.trim());
+        }
         fd.append('ocrFlag', uploadForm.value.ocrFlag ? '1' : '0');
         fd.append('file', item.file);
         const saved = await uploadMaterial(uploadForm.value.personId, fd, activeBatchId.value);
@@ -788,17 +793,6 @@ export function useMaterialMaintain() {
     loadMaterials();
   };
 
-  const openPageNo = (row) => {
-    pageNoForm.value = { id: row.id, pageNo: row.pageNo || 1 };
-    pageNoVisible.value = true;
-  };
-  const savePageNo = async () => {
-    await updateMaterialPageNo(pageNoForm.value.id, pageNoForm.value.pageNo);
-    pageNoVisible.value = false;
-    EleMessage.success({ message: '页号已更新', plain: true });
-    loadMaterials();
-  };
-
   const onReplaceFile = (e) => {
     const f = e.target.files?.[0];
     e.target.value = '';
@@ -822,25 +816,32 @@ export function useMaterialMaintain() {
     download(res.data, row.fileName || `material_${row.id}`);
   };
 
-  const removeFile = async (row) => {
+  const removeRow = async (row) => {
     try {
-      await ElMessageBox.confirm('是否删除该目录及材料文件', '提示', { type: 'warning' });
+      await ElMessageBox.confirm(
+        '是否删除该目录及材料文件？',
+        '删除确认',
+        { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+      );
     } catch {
       return;
     }
     await deleteMaterial(row.id);
     EleMessage.success({ message: '删除成功', plain: true });
-    load();
+    await load();
   };
-  const removeRow = async (row) => { await deleteMaterial(row.id); load(); };
 
   const doBatchDelete = async () => {
+    const ids = selections.value.map((r) => r.id);
     try {
-      await ElMessageBox.confirm('是否删除选中目录及材料文件', '提示', { type: 'warning' });
+      await ElMessageBox.confirm(
+        '是否删除选中目录及材料文件？',
+        '批量删除确认',
+        { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+      );
     } catch {
       return;
     }
-    const ids = selections.value.map((r) => r.id);
     await batchDeleteMaterials(personId.value, ids);
     EleMessage.success({ message: '删除成功', plain: true });
     load();
@@ -882,11 +883,9 @@ export function useMaterialMaintain() {
     hasSelection,
     uploadVisible,
     editVisible,
-    pageNoVisible,
     replaceVisible,
     uploadForm,
     editForm,
-    pageNoForm,
     replaceForm,
     activeBatchNo,
     intakePreview,
@@ -919,15 +918,12 @@ export function useMaterialMaintain() {
     confirmIntakeRow,
     rejectIntakeRow,
     saveEdit,
-    savePageNo,
     onReplaceFile,
     doReplace,
     onImageEdited,
     preview,
     downloadOne,
     openEdit,
-    openPageNo,
-    removeFile,
     removeRow,
     doBatchDelete,
     doDownload

@@ -209,11 +209,31 @@ export function isValidComponentName(name) {
  */
 export async function checkDownloadRes(res) {
   const contentType = res.headers['content-type'];
-  if (contentType && String(contentType).startsWith('application/json')) {
-    const json = await res.data.text();
-    return Promise.reject(
-      new Error(JSON.parse(json).msg || '系统未知错误，请反馈给管理员')
-    );
+  const data = res.data;
+  const looksJson =
+    (contentType && String(contentType).includes('application/json')) ||
+    (typeof Blob !== 'undefined' && data instanceof Blob && data.type && data.type.includes('application/json'));
+  if (looksJson) {
+    const json = typeof data.text === 'function' ? await data.text() : String(data);
+    let msg = '系统未知错误，请反馈给管理员';
+    try {
+      msg = JSON.parse(json).msg || msg;
+    } catch {
+      /* ignore parse error */
+    }
+    return Promise.reject(new Error(msg));
+  }
+  if (typeof Blob !== 'undefined' && data instanceof Blob && data.size < 2048) {
+    const text = await data.slice(0, 2048).text();
+    if (text.trim().startsWith('{') && text.includes('"code"')) {
+      let msg = '下载失败';
+      try {
+        msg = JSON.parse(text).msg || msg;
+      } catch {
+        /* ignore */
+      }
+      return Promise.reject(new Error(msg));
+    }
   }
   return true;
 }

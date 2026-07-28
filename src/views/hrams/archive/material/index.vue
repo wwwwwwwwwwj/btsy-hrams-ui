@@ -31,15 +31,12 @@
         @preview="preview"
         @download-one="downloadOne"
         @open-edit="openEdit"
-        @open-page-no="openPageNo"
-        @remove-file="removeFile"
         @remove-row="removeRow"
-        @go-back="goBack"
       >
         <template #search-extra>
           <span class="hrams-v2-filter-actions">
             <el-tag v-if="readOnly" type="info" size="small">只读查阅</el-tag>
-            <el-button @click="clearPerson">更换干部</el-button>
+            <el-button @click="goBack">返回</el-button>
             <el-button
               v-if="!readOnly"
               type="primary"
@@ -56,12 +53,10 @@
     <material-form-dialogs
       v-model:upload-visible="uploadVisible"
       v-model:edit-visible="editVisible"
-      v-model:page-no-visible="pageNoVisible"
       v-model:replace-visible="replaceVisible"
       :flat-categories="flatCategories"
       :upload-form="uploadForm"
       :edit-form="editForm"
-      :page-no-form="pageNoForm"
       :replace-form="replaceForm"
       :active-batch-no="activeBatchNo"
       :intake-preview="intakePreview"
@@ -82,7 +77,6 @@
       @confirm-intake="confirmIntakeRow"
       @reject-intake="rejectIntakeRow"
       @save-edit="saveEdit"
-      @save-page-no="savePageNo"
       @replace-file="onReplaceFile"
       @do-replace="doReplace"
     />
@@ -96,16 +90,25 @@
 </template>
 
 <script setup>
+  import { useRouter } from 'vue-router';
   import MaterialImageEditor from './components/material-image-editor.vue';
   import MaterialPersonPick from './components/material-person-pick.vue';
   import MaterialFormDialogs from './components/material-form-dialogs.vue';
   import MaterialMaintainPanel from './components/material-maintain-panel.vue';
-  import { useRouter } from 'vue-router';
   import { useMaterialMaintain } from './composables/use-material-maintain';
   import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
   import '../../styles/v2.scss';
 
   defineOptions({ name: 'HramsArchiveMaterial' });
+
+  const router = useRouter();
+  const goBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push({ path: HRAMS_ARCHIVE_LIST });
+  };
 
   const {
     personId,
@@ -122,11 +125,9 @@
     hasSelection,
     uploadVisible,
     editVisible,
-    pageNoVisible,
     replaceVisible,
     uploadForm,
     editForm,
-    pageNoForm,
     replaceForm,
     activeBatchNo,
     intakePreview,
@@ -142,7 +143,6 @@
     rowClass,
     rowSelectable,
     selectPerson,
-    clearPerson,
     onSelectCat,
     loadMaterials,
     resetSearch,
@@ -158,22 +158,16 @@
     confirmIntakeRow,
     rejectIntakeRow,
     saveEdit,
-    savePageNo,
     onReplaceFile,
     doReplace,
     onImageEdited,
     preview,
     downloadOne,
     openEdit,
-    openPageNo,
-    removeFile,
     removeRow,
     doBatchDelete,
     doDownload
   } = useMaterialMaintain();
-
-  const router = useRouter();
-  const goBack = () => router.push(HRAMS_ARCHIVE_LIST);
 </script>
 
 <style scoped>

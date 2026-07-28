@@ -2,8 +2,8 @@
   <el-form :inline="true" :model="model" class="ele-form-search hrams-person-search-form">
     <el-form-item label="档案编号"><el-input v-model="model.archiveNo" clearable /></el-form-item>
     <el-form-item label="姓名"><el-input v-model="model.name" clearable /></el-form-item>
+    <el-form-item v-if="showIdCard || !simple" label="身份证号"><el-input v-model="model.idCard" clearable /></el-form-item>
     <template v-if="!simple">
-    <el-form-item label="身份证号"><el-input v-model="model.idCard" clearable /></el-form-item>
     <el-form-item label="性别">
       <dict-data v-model="model.gender" code="hrams_gender" type="select" placeholder="全部" style="width:100px" />
     </el-form-item>
@@ -40,9 +40,6 @@
         <el-option label="缺项" value="missing" />
       </el-select>
     </el-form-item>
-    <el-form-item v-if="showArchiveStatus" label="档案状态">
-      <dict-data v-model="model.archiveStatus" code="hrams_archive_status" type="select" placeholder="全部" clearable style="width:120px" />
-    </el-form-item>
     <el-form-item>
       <el-button type="primary" v-permission="searchPermission" @click="$emit('search')">查询</el-button>
       <el-button @click="$emit('reset')">重置</el-button>
@@ -66,7 +63,7 @@
   defineProps({
     simple: { type: Boolean, default: false },
     showIntegrity: { type: Boolean, default: false },
-    showArchiveStatus: { type: Boolean, default: false },
+    showIdCard: { type: Boolean, default: false },
     /** 列表查询按钮权限，不传则始终展示 */
     searchPermission: { type: String, default: '' }
   });

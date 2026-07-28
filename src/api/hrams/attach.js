@@ -1,6 +1,7 @@
 import {
   attachModeToBatchType,
   scanZipMaterialBatch,
+  scanFolderMaterialBatch,
   getMaterialBatch,
   listMaterialBatchItems,
   excludeMaterialBatchPaths,
@@ -43,6 +44,13 @@ export async function uploadAttachZip({ mode, personIds, zip }) {
   return { batchId: data.id, ...data, scanStatus: data.status };
 }
 
+export async function uploadAttachFolder({ mode, personIds, files, relativePaths }) {
+  const batchType = attachModeToBatchType(mode);
+  const ids = (personIds || []).map((id) => String(id));
+  const data = await scanFolderMaterialBatch(batchType, ids, files, relativePaths);
+  return { batchId: data.id, ...data, scanStatus: data.status };
+}
+
 export async function getAttachScanStatus(batchId) {
   const data = await getMaterialBatch(batchId);
   return {
@@ -65,6 +73,6 @@ export async function rescanAttachBatch(batchId) {
   return rescanMaterialBatch(batchId);
 }
 
-export async function confirmAttachBatch({ batchId, confirmedPersonIds }) {
-  return confirmMaterialBatch(batchId, confirmedPersonIds);
+export async function confirmAttachBatch({ batchId, confirmedPersonIds, files, relativePaths }) {
+  return confirmMaterialBatch(batchId, confirmedPersonIds, files, relativePaths);
 }
