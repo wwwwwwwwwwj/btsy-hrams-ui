@@ -50,6 +50,7 @@
         @confirm="doConfirmAttach"
         @cancel-person="cancelPerson"
         @restore-person="restorePerson"
+        @remove-row="removePreviewRow"
       />
     </div>
   </ele-page>
