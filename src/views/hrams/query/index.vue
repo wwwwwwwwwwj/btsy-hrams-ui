@@ -61,11 +61,6 @@
   const reload = (w, page) => tableRef.value?.reload?.({ where: w, page });
   const resetWhere = () => { where.value = {}; reload(where.value, 1); };
 
-  const showDetail = (row) => {
-    currentPersonId.value = row.id;
-    drawer.value = true;
-  };
-
   const showDetail = async (row) => {
     try {
       detail.value = await getQueryPersonDetail(row.id);
