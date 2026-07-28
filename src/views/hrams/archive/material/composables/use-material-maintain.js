@@ -660,6 +660,9 @@ export function useMaterialMaintain() {
         await doCheckingUpload(queue);
         return;
       }
+      if (!uploadForm.value.pageNo || uploadForm.value.pageNo < 1) {
+        return EleMessage.error({ message: '请输入序号', plain: true });
+      }
       if (!uploadForm.value.formDate) {
         return EleMessage.error({ message: '请选择形成日期', plain: true });
       }

@@ -73,6 +73,7 @@
             </el-table-column>
             <el-table-column prop="pageCount" label="页数" width="70" />
             <el-table-column prop="batchNo" label="上传批次" min-width="130" show-overflow-tooltip />
+            <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
             <el-table-column prop="createTime" label="上传时间" width="165" />
             <el-table-column label="操作" :width="readOnly ? 140 : 200" fixed="right">
               <template #default="{ row }">

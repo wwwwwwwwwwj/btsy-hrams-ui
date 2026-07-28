@@ -1,8 +1,8 @@
 <template>
   <div>
-    <el-dialog v-model="uploadVisible" title="上传材料" width="880px">
-      <el-form label-width="90px">
-        <el-form-item label="干部">
+    <el-dialog v-model="uploadVisible" title="上传材料" width="880px" @close="handleUploadDialogClose">
+      <el-form ref="uploadFormRef" :model="uploadForm" :rules="uploadRules" label-width="90px">
+        <el-form-item label="干部" prop="personId">
           <el-select
             v-model="uploadForm.personId"
             clearable
@@ -19,7 +19,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="目录">
+        <el-form-item label="目录" prop="categoryCode">
           <el-select
             v-model="uploadForm.categoryCode"
             clearable
@@ -37,18 +37,18 @@
             {{ uploadNeedsIntake ? '未完整选择归属时默认 OCR' : '关闭后仅上传归档文件' }}
           </span>
         </el-form-item>
-        <el-form-item v-if="!uploadNeedsIntake" label="序号" required>
+        <el-form-item v-if="!uploadNeedsIntake" label="序号" prop="pageNo" required>
           <el-input-number v-model="uploadForm.pageNo" :min="1" />
           <div v-if="pendingUploadFiles.length > 1" class="field-hint">多份时从该页号起依次占号</div>
         </el-form-item>
-        <el-form-item label="名称" :required="!uploadNeedsIntake">
+        <el-form-item label="名称" prop="materialName" :required="!uploadNeedsIntake">
           <el-input
             v-model="uploadForm.materialName"
             :placeholder="uploadNeedsIntake ? '可不填，由 AI 推荐' : '卷内目录材料名称'"
           />
         </el-form-item>
-        <el-form-item v-if="!uploadNeedsIntake" label="形成日期" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-        <el-form-item v-if="!uploadNeedsIntake" label="页数" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="形成日期" prop="formDate" required><el-date-picker v-model="uploadForm.formDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
+        <el-form-item v-if="!uploadNeedsIntake" label="页数" prop="pageCount" required><el-input-number v-model="uploadForm.pageCount" :min="1" /></el-form-item>
         <el-form-item v-if="!uploadNeedsIntake" label="备注"><el-input v-model="uploadForm.remark" type="textarea" /></el-form-item>
         <el-form-item v-if="activeBatchNo && !hideBatchHint" label="本轮批次"><span class="batch-inline">{{ activeBatchNo }}</span></el-form-item>
         <el-form-item label="文件" required>
@@ -137,7 +137,7 @@
       <template #footer>
         <el-button @click="$emit('close-upload')">取消</el-button>
         <el-button :loading="intakeLoading" :disabled="!pendingUploadFiles.length" @click="$emit('intake-preview')">识别预览</el-button>
-        <el-button type="primary" :loading="uploadSubmitting" :disabled="!pendingUploadFiles.length" @click="$emit('do-upload')">
+        <el-button type="primary" :loading="uploadSubmitting" :disabled="!pendingUploadFiles.length" @click="handleDoUpload">
           {{ uploadButtonLabel }}
         </el-button>
         <el-button v-if="!hideBatchHint" @click="$emit('close-upload')">完成本轮</el-button>
@@ -188,7 +188,7 @@
 </template>
 
 <script setup>
-  import { computed, watch } from 'vue';
+  import { computed, ref, watch } from 'vue';
 
   const props = defineProps({
     flatCategories: { type: Array, default: () => [] },
@@ -248,10 +248,41 @@
     { immediate: true }
   );
 
-  defineEmits([
+  const emit = defineEmits([
     'close-upload', 'suggest-page-no', 'upload-file', 'intake-preview', 'do-upload', 'confirm-intake', 'reject-intake', 'remove-pending', 'edit-pending',
     'save-edit', 'save-page-no', 'replace-file', 'do-replace'
   ]);
+
+  const uploadFormRef = ref(null);
+
+  const uploadRules = computed(() => {
+    if (props.uploadNeedsIntake) {
+      return {};
+    }
+    return {
+      pageNo: [{ required: true, message: '请输入序号', trigger: 'blur' }],
+      materialName: [{ required: true, message: '请填写材料名称', trigger: 'blur' }],
+      formDate: [{ required: true, message: '请选择形成日期', trigger: 'change' }],
+      pageCount: [{ required: true, message: '请填写页数', trigger: 'blur' }]
+    };
+  });
+
+  const handleDoUpload = async () => {
+    if (!uploadFormRef.value) {
+      emit('do-upload');
+      return;
+    }
+    try {
+      await uploadFormRef.value.validate();
+      emit('do-upload');
+    } catch {
+      // 校验失败，el-form 会显示错误提示
+    }
+  };
+
+  const handleUploadDialogClose = () => {
+    uploadFormRef.value?.clearValidate();
+  };
 </script>
 
 <style scoped>
