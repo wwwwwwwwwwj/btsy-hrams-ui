@@ -30,6 +30,7 @@ function mapPreviewItem(item) {
     fileName: item.originalFileName || item.normalizedFileName,
     originalFileName: item.originalFileName,
     categoryCode: item.categoryCode,
+    itemNo: item.itemNo,
     status: item.status,
     statusText: item.statusText,
     message: item.message,

@@ -64,6 +64,7 @@
     uploadAttachZip,
     getAttachScanStatus,
     getAttachScanPreview,
+    excludeAttachPaths,
     rescanAttachBatch,
     confirmAttachBatch
   } from '@/api/hrams/attach';

@@ -41,7 +41,7 @@
             <el-table-column prop="personKey" label="人员目录" min-width="130" show-overflow-tooltip />
             <el-table-column prop="fileName" label="文件名称" min-width="200" show-overflow-tooltip />
             <el-table-column prop="categoryCode" label="分类" width="80" />
-            <el-table-column prop="itemNo" label="页号" width="80" />
+            <el-table-column prop="itemNo" label="顺序" width="80" />
             <el-table-column label="校验状态" width="110">
               <template #default="{ row }">
                 <el-tag :type="statusTagType(row)">
