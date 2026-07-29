@@ -32,7 +32,6 @@
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import ArchiveDetailDrawer from '../archive/components/archive-detail-drawer.vue';
   import { pageQueryPerson, getQueryPersonDetail } from '@/api/hrams/query';
-  import { previewMaterial, exportArchivePackage, exportCatalog as exportCatalogApi } from '@/api/hrams/archive';
   import '../styles/v2.scss';
 
   defineOptions({ name: 'HramsQuery' });
@@ -54,35 +53,16 @@
     { prop: 'education', label: '学历', width: 90 },
     { prop: 'idCard', label: '身份证号', minWidth: 200 },
     { prop: 'personStatus', label: '当前状态', width: 90 },
-    { columnKey: 'action', label: '操作', width: 100, slot: 'action' }
+    { columnKey: 'action', label: '操作', width: 260, slot: 'action' }
   ]);
 
   const datasource = ({ pages, where: w }) => pageQueryPerson({ ...w, ...pages });
   const reload = (w, page) => tableRef.value?.reload?.({ where: w, page });
   const resetWhere = () => { where.value = {}; reload(where.value, 1); };
 
-  const showDetail = async (row) => {
-    try {
-      detail.value = await getQueryPersonDetail(row.id);
-      detailCat.value = flatCats.value[0]?.code || '1';
-      filterDetailMaterials();
-      drawer.value = true;
-    } catch (e) {
-      EleMessage.error({ message: e.message || '加载档案详情失败', plain: true });
-    }
-  };
-
-  const exportMaterials = () => {
-    const p = detail.value.person;
-    if (!p?.id) return;
-    exportArchivePackage(p.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
-  };
-
-  const exportCatalog = () => {
-    const p = detail.value.person;
-    if (p?.id) {
-      exportCatalogApi(p.id);
-    }
+  const showDetail = (row) => {
+    currentPersonId.value = row.id;
+    drawer.value = true;
   };
 
   onMounted(async () => {
