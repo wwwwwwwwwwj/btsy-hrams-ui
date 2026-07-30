@@ -85,5 +85,5 @@ export async function downloadPersonImportTemplate() {
     responseType: 'blob'
   });
   await checkDownloadRes(res);
-  download(res.data, `person_import_template_${Date.now()}.xlsx`);
+  download(res.data, '人员信息模板.xlsx');
 }

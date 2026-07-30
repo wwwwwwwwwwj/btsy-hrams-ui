@@ -27,6 +27,7 @@
           :datasource="datasource"
           v-model:selections="selections"
         >
+          <template #archiveStatus="{ row }">{{ archiveStatusLabel(row.archiveStatus) }}</template>
           <template #action="{ row }">
             <btn-items
               type="link"
@@ -80,6 +81,7 @@
       formatter: (row) => formatDateDay(row.birthDate)
     },
     { prop: 'personStatus', label: '当前状态', width: 90 },
+    { prop: 'archiveStatus', label: '档案状态', width: 90, slot: 'archiveStatus' },
     {
       prop: 'updateTime',
       label: '最近更新',
@@ -101,6 +103,12 @@
   const resetSearch = () => {
     search.value = {};
     reload(search.value, 1);
+  };
+
+  const archiveStatusLabel = (status) => {
+    if (status === 'borrowing') return '借阅中';
+    if (status === 'overdue') return '逾期未还';
+    return '正常';
   };
 
   const goMaterialMaintain = (row) => {
