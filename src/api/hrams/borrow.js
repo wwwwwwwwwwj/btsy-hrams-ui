@@ -49,6 +49,14 @@ export async function returnBorrow(id, returnTime) {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function deleteBorrow(id) {
+  const res = await request.delete(`/hrams/borrow/${id}`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function previewBorrowAttachment(borrowId) {
   const res = await request.get(`/hrams/borrow/${borrowId}/attachment/preview`, { responseType: 'blob' });
   const type = res.headers['content-type'] || 'application/octet-stream';

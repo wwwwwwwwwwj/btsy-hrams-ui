@@ -38,6 +38,7 @@
       </template>
       <template #action="{ row }">
         <el-button v-if="row.status !== 'returned'" link type="primary" v-permission="'hrams:borrow:return'" @click="openReturn(row)">归还</el-button>
+        <el-button v-if="row.status === 'returned'" link type="danger" v-permission="'hrams:borrow:remove'" @click="handleDelete(row)">删除</el-button>
       </template>
       </ele-pro-table>
     </div>
@@ -64,7 +65,8 @@
 <script setup>
   import { ref } from 'vue';
   import { EleMessage } from 'ele-admin-plus';
-  import { pageBorrow, returnBorrow, previewBorrowAttachment } from '@/api/hrams/borrow';
+import { ElMessageBox } from 'element-plus';
+  import { pageBorrow, returnBorrow, deleteBorrow, previewBorrowAttachment } from '@/api/hrams/borrow';
 
   const tableRef = ref(null);
   const where = ref({});
@@ -139,6 +141,22 @@
     } finally {
       returnSubmitting.value = false;
     }
+  };
+
+  const handleDelete = (row) => {
+    ElMessageBox.confirm(
+      `确认删除【${row.personName || ''}】的借阅记录吗？删除后不可恢复。`,
+      '删除确认',
+      { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
+    ).then(async () => {
+      try {
+        await deleteBorrow(row.id);
+        EleMessage.success({ message: '已删除', plain: true });
+        reloadRecords();
+      } catch (e) {
+        EleMessage.error({ message: e.message || '删除失败', plain: true });
+      }
+    }).catch(() => {});
   };
 
   const previewAttach = (row) => {

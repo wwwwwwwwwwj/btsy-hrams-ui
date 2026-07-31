@@ -13,7 +13,7 @@
         <el-button v-permission="'hrams:archive:download'" type="primary" @click="exportMaterials">导出档案材料</el-button>
         <el-button v-permission="'hrams:catalog:export'" @click="exportCatalogFile">导出档案目录</el-button>
       </div>
-      <el-descriptions v-if="fullPersonInfo" :column="2" border size="small" class="drawer-summary">
+      <el-descriptions v-if="fullPersonInfo" :column="3" border size="small" class="drawer-summary">
         <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
         <el-descriptions-item label="姓名">{{ detail.person.name }}</el-descriptions-item>
         <el-descriptions-item label="身份证号">{{ detail.person.idCard }}</el-descriptions-item>
@@ -61,6 +61,7 @@
               <template #default="{ row }">{{ formatDateDay(row.formDate) }}</template>
             </el-table-column>
             <el-table-column prop="pageCount" label="页数" width="70" />
+            <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
             <el-table-column label="操作" width="80" fixed="right">
               <template #default="{ row }">
                 <el-button

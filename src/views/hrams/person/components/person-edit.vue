@@ -440,6 +440,7 @@
       const p = await getPerson(id);
       loadFailed.value = false;
       form.value = { ...p };
+      
       customFields.value = { ...(p.customFields || {}) };
       setSelectedDeptId(p.deptId, { refreshName: false });
       await loadPhoto(p.photoOssId);
