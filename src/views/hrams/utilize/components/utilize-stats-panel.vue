@@ -115,12 +115,25 @@
 </script>
 
 <style scoped>
-  .chart-box { height: 300px; width: 100%; }
+  .chart-box {
+    width: 100%;
+    min-width: 0;
+    height: 300px;
+    overflow: hidden;
+  }
   .stats-card {
+    min-width: 0;
     border: 1px solid #eef2f8;
     border-radius: 12px;
     padding: 12px 16px;
     background: #fff;
+    overflow: hidden;
   }
   .stats-title { font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+  :deep(.el-row) {
+    max-width: 100%;
+  }
+  :deep(.el-col) {
+    min-width: 0;
+  }
 </style>

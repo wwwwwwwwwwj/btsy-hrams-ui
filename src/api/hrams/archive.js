@@ -141,7 +141,9 @@ export async function downloadMaterialsZip(personId, materialIds) {
     responseType: 'blob'
   });
   await checkDownloadRes(res);
-  download(res.data, `materials_${personId}.zip`);
+  const name =
+    parseFilenameFromDisposition(res.headers['content-disposition']) || `materials_${personId}.zip`;
+  download(res.data, name);
 }
 
 export async function deleteMaterial(materialId) {

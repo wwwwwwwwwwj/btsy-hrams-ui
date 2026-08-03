@@ -160,7 +160,9 @@ import { ElMessageBox } from 'element-plus';
   };
 
   const previewAttach = (row) => {
-    previewBorrowAttachment(row.id).catch((e) => EleMessage.error({ message: e.message, plain: true }));
+    previewBorrowAttachment(row.id, row.attachFileName).catch((e) =>
+      EleMessage.error({ message: e.message, plain: true })
+    );
   };
 
   defineExpose({ reloadRecords });

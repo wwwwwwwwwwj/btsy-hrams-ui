@@ -169,12 +169,13 @@
 
 <style scoped>
   .dashboard-page {
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 20px;
     margin-bottom: 28px;
   }
@@ -204,7 +205,7 @@
 
   .charts-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
     margin-bottom: 28px;
   }
@@ -212,12 +213,15 @@
   .borrow-stats-wrap {
     padding: 20px 18px 14px;
     margin-bottom: 28px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .chart-card,
   .remind-card {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     padding: 20px 18px 14px;
   }
 
@@ -235,7 +239,13 @@
 
   .chart-box {
     width: 100%;
+    min-width: 0;
     height: 320px;
+    overflow: hidden;
+  }
+
+  .remind-card :deep(.el-table) {
+    width: 100%;
   }
 
   .stats-footer {
