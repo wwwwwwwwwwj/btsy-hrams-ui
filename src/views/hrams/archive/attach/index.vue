@@ -60,6 +60,7 @@
   import { computed, onBeforeUnmount, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
+  import { ElMessageBox } from 'element-plus';
   import {
     uploadAttachZip,
     getAttachScanStatus,
@@ -481,8 +482,78 @@
         batchId: batchId.value,
         confirmedPersonIds: confirmedPersonIds.value
       });
-      EleMessage.success({ message: '挂接完成', plain: true });
-      goBack();
+
+      // 构建挂接结果汇总
+      const allPersons = personSummaries.value;
+      const totalCount = allPersons.length;
+      const successCount = allPersons.filter(p => p.attachable && !p.cancelled).length;
+      const cancelledCount = allPersons.filter(p => p.cancelled).length;
+
+      // 从 previewRows 提取失败人员及原因
+      const failedPersonMap = new Map();
+      previewRows.value.forEach(r => {
+        if (!r.personId) return;
+        if (r.status === 'pass' || r.status === 'catalog') return;
+        const key = String(r.personId);
+        const summary = allPersons.find(p => String(p.personId) === key);
+        if (!summary || summary.attachable || summary.cancelled) return;
+        if (!failedPersonMap.has(key)) {
+          failedPersonMap.set(key, { label: summary.label, reasons: new Set() });
+        }
+        const entry = failedPersonMap.get(key);
+        if (entry && r.message) {
+          entry.reasons.add(r.message);
+        }
+      });
+      const failedList = [...failedPersonMap.values()].map(p => ({
+        label: p.label,
+        reason: [...p.reasons].join('；')
+      }));
+      const failedCount = failedList.length;
+
+      let html = '<div style="min-width:400px;">';
+
+      // 上部统计卡片
+      html += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:20px;">';
+      html += `<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:18px 12px;text-align:center;">
+        <div style="font-size:13px;color:#909399;margin-bottom:8px;">挂接总人数</div>
+        <div style="font-size:28px;font-weight:700;color:#303133;">${totalCount}<span style="font-size:14px;font-weight:400;color:#606266;"> 人</span></div>
+      </div>`;
+      html += `<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:18px 12px;text-align:center;">
+        <div style="font-size:13px;color:#909399;margin-bottom:8px;">成功挂接</div>
+        <div style="font-size:28px;font-weight:700;color:#67c23a;">${successCount}<span style="font-size:14px;font-weight:400;color:#606266;"> 人</span></div>
+      </div>`;
+      html += `<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:18px 12px;text-align:center;">
+        <div style="font-size:13px;color:#909399;margin-bottom:8px;">失败挂接</div>
+        <div style="font-size:28px;font-weight:700;color:#f56c6c;">${failedCount}<span style="font-size:14px;font-weight:400;color:#606266;"> 人</span></div>
+      </div>`;
+      html += '</div>';
+
+      // 下部失败人员列表
+      if (failedList.length > 0) {
+        html += '<div style="background:#fef0f0;border-radius:6px;padding:12px 14px;">';
+        html += '<div style="font-size:14px;color:#f56c6c;margin-bottom:8px;font-weight:600;">挂接失败人员</div>';
+        failedList.forEach(p => {
+          html += `<div style="padding:5px 0;font-size:13px;line-height:1.6;">
+            <span style="color:#303133;font-weight:500;">${p.label}</span>
+            <span style="color:#dcdfe6;margin:0 8px;">|</span>
+            <span style="color:#e6a23c;">${p.reason || '校验未通过'}</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      if (cancelledCount > 0) {
+        html += `<div style="margin-top:12px;font-size:13px;color:#909399;text-align:center;">已取消挂接：<strong>${cancelledCount}</strong> 人</div>`;
+      }
+
+      html += '</div>';
+
+      ElMessageBox.alert(html, '挂接结果', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '知道了',
+        customClass: 'attach-result-dialog'
+      });
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     } finally {
@@ -519,5 +590,14 @@
     margin: -12px 0 16px;
     font-size: 13px;
     color: #2c6e9e;
+  }
+</style>
+
+<style>
+  .attach-result-dialog {
+    --ele-message-box-width: 450px;
+  }
+  .attach-result-dialog .el-message-box__headerbtn {
+    display: none;
   }
 </style>
