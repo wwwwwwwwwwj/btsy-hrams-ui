@@ -276,6 +276,7 @@ async function selectItem(i) {
   const item = filteredItems.value[i];
   if (!item) return;
   selectedIdx.value = i;
+  lastSelectedOssKey = item.ossKey || null;
   rotation.value = 0;
   previewError.value = false;
 
@@ -399,6 +400,8 @@ function parseFieldsFromResult(resultStr) {
   return out;
 }
 
+let lastSelectedOssKey = null;
+
 watch(selected, (item) => {
   if (!item) return;
   const df = item.difyResult || '';
@@ -417,6 +420,39 @@ watch(selected, (item) => {
   formErrors.pageCount = false;
   showReturn.value = false;
   returnReason.value = '';
+
+  // 选中项身份变化时（如确认后自动跳到下一条），刷新预览
+  if (item.ossKey && item.ossKey !== lastSelectedOssKey) {
+    lastSelectedOssKey = item.ossKey;
+    rotation.value = 0;
+    previewError.value = false;
+    const cached = previewCache.get(item.ossKey);
+    if (cached) {
+      clearPreviewTimer();
+      previewLoading.value = false;
+      previewSrc.value = cached;
+    } else {
+      previewLoading.value = true;
+      clearPreviewTimer();
+      getPresignedUrl(item.ossKey).then(res => {
+        clearPreviewTimer();
+        if (res.data?.success && res.data?.url) {
+          previewCache.set(item.ossKey, res.data.url);
+          previewSrc.value = res.data.url;
+          previewLoading.value = false;
+          previewError.value = false;
+        } else {
+          previewLoading.value = false;
+          previewError.value = true;
+        }
+      }).catch(e => {
+        console.error('获取预签名URL失败', e);
+        clearPreviewTimer();
+        previewLoading.value = false;
+        previewError.value = true;
+      });
+    }
+  }
 }, { immediate: true });
 
 // ── 关键信息核验（Dify 字段 vs 干事数据） ──

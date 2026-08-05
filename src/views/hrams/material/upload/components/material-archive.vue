@@ -61,6 +61,7 @@
               <th>页数</th>
               <th>来源批次</th>
               <th>状态</th>
+              <th>备注</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -72,6 +73,10 @@
               <td>{{ m.pageCount || '-' }} 页</td>
               <td class="batch-col">{{ m.batchNo }}</td>
               <td><span class="status-confirmed">已确认</span></td>
+              <td class="remark-col">
+                <span v-if="m.remark" :title="m.remark">{{ m.remark }}</span>
+                <span v-else>-</span>
+              </td>
               <td>
                 <span :class="['action-link', { 'is-loading': modalLoading }]" @click="openPreview(m)">👁 预览</span>
                 <span :class="['action-link', { 'is-loading': modalLoading }]" style="margin-left:10px" @click="openReclassify(m)">重新归类</span>
@@ -411,6 +416,7 @@ async function submitReclassify() {
 .mat-table tr:hover td { background: #f9fbfe; }
 .order-col { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: #2c6e9e; width: 50px; text-align: center; }
 .batch-col { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #57677a; }
+.remark-col span { display: inline-block; max-width: 6ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 .status-confirmed { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e2efe7; color: #3e7a5c; }
 .action-link { color: #2c6e9e; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 .action-link:hover { text-decoration: underline; }
