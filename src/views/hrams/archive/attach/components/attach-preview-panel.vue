@@ -50,9 +50,15 @@
               </template>
             </el-table-column>
             <el-table-column prop="message" label="问题说明" min-width="160" show-overflow-tooltip />
-            <el-table-column label="操作" width="90">
+            <el-table-column label="操作" width="140">
               <template #default="{ row }">
-                <el-button v-if="canDeleteRow(row)" link type="danger" :disabled="scanLoading" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
+                <template v-if="canDeleteRow(row)">
+                  <template v-if="deletingIndex === row.index">
+                    <el-button link type="danger" disabled v-permission="'hrams:archive:attach'">删除</el-button>
+                    <span style="color:#909399;font-size:12px;margin-left:4px;">文件正在删除中</span>
+                  </template>
+                  <el-button v-else link type="danger" :disabled="scanLoading" v-permission="'hrams:archive:attach'" @click="$emit('remove-row', row)">删除</el-button>
+                </template>
               </template>
             </el-table-column>
           </el-table>
@@ -76,6 +82,7 @@
     canConfirm: Boolean,
     confirmLoading: Boolean,
     scanLoading: Boolean,
+    deletingIndex: { type: Number, default: -1 },
     canDeleteRow: { type: Function, required: true }
   });
 

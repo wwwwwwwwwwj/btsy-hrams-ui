@@ -46,6 +46,7 @@
         :can-confirm="canConfirm"
         :confirm-loading="confirmLoading"
         :scan-loading="scanLoading"
+        :deleting-index="deletingIndex"
         :can-delete-row="canDeleteRow"
         @confirm="doConfirmAttach"
         @cancel-person="cancelPerson"
@@ -86,6 +87,8 @@
   const fileCount = ref(0);
   const scanLoading = ref(false);
   const confirmLoading = ref(false);
+  /** 正在被删除的文件行 index，-1 表示无 */
+  const deletingIndex = ref(-1);
   const attachBusy = computed(() => scanLoading.value || confirmLoading.value);
   const scanPhaseText = ref('');
   const cancelledPersonIds = ref(new Set());
@@ -441,6 +444,7 @@
       EleMessage.error({ message: '该问题需修正 ZIP 后重新上传，不能仅删除行', plain: true });
       return;
     }
+    deletingIndex.value = row.index;
     scanLoading.value = true;
     try {
       await excludeAttachPaths(batchId.value, [row.relativePath]);
@@ -452,6 +456,7 @@
       }
     } finally {
       scanLoading.value = false;
+      deletingIndex.value = -1;
     }
   };
 
