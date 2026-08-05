@@ -2,6 +2,8 @@ import { reactive } from 'vue';
 import { EleMessage } from 'ele-admin-plus';
 import request from '@/utils/request';
 import { checkDownloadRes } from '@/utils/common';
+import { getToken } from '@/utils/token-util';
+import { TOKEN_HEADER_NAME } from '@/config/setting';
 
 const state = reactive({
   imageVisible: false,
@@ -54,7 +56,8 @@ export async function openMaterialPreview(materialId) {
   state.loading = true;
   try {
     const res = await request.get(`/hrams/archive/materials/${materialId}/preview`, {
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: { [TOKEN_HEADER_NAME]: `Bearer ${getToken() || ''}` }
     });
     await checkDownloadRes(res);
     const type = resolvePreviewType(res);

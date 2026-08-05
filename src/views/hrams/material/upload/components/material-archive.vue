@@ -73,8 +73,8 @@
               <td class="batch-col">{{ m.batchNo }}</td>
               <td><span class="status-confirmed">已确认</span></td>
               <td>
-                <span class="action-link" @click="openPreview(m)">👁 预览</span>
-                <span class="action-link" style="margin-left:10px" @click="openReclassify(m)">重新归类</span>
+                <span :class="['action-link', { 'is-loading': modalLoading }]" @click="openPreview(m)">👁 预览</span>
+                <span :class="['action-link', { 'is-loading': modalLoading }]" style="margin-left:10px" @click="openReclassify(m)">重新归类</span>
               </td>
             </tr>
           </tbody>
@@ -92,18 +92,24 @@
       <div class="reclassify-body" v-if="reclassifyItem">
         <!-- 预览 -->
         <div class="rc-preview">
-          <img
-            v-if="reclassifyPreviewType === 'image'"
-            :src="reclassifyPreviewSrc"
-            class="rc-preview-img"
-            @error="reclassifyPreviewSrc = ''"
-          />
-          <iframe
-            v-else-if="reclassifyPreviewType === 'pdf'"
-            :src="reclassifyPreviewSrc"
-            class="rc-preview-pdf"
-          />
-          <div v-else class="rc-preview-empty">📄 无法预览此文件类型</div>
+          <div v-if="modalLoading" class="rc-preview-loading">
+            <i class="el-icon-loading" style="font-size:32px;color:#2c6e9e" />
+            <span style="margin-top:12px;font-size:14px;color:#57677a">正在加载预览…</span>
+          </div>
+          <template v-else>
+            <img
+              v-if="reclassifyPreviewType === 'image'"
+              :src="reclassifyPreviewSrc"
+              class="rc-preview-img"
+              @error="reclassifyPreviewSrc = ''"
+            />
+            <iframe
+              v-else-if="reclassifyPreviewType === 'pdf'"
+              :src="reclassifyPreviewSrc"
+              class="rc-preview-pdf"
+            />
+            <div v-else class="rc-preview-empty">📄 无法预览此文件类型</div>
+          </template>
         </div>
         <!-- 表单 -->
         <div class="rc-form">
@@ -150,9 +156,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { listArchiveByPerson, reclassifyMaterial, getPresignedUrl, listCategories } from '@/api/hrams/checking';
+import request from '@/utils/request';
+import { getToken } from '@/utils/token-util';
+import { TOKEN_HEADER_NAME } from '@/config/setting';
 
 const props = defineProps({
   batch: { type: Object, required: true }
@@ -261,6 +270,16 @@ const reclassifyForm = reactive({
 });
 const reclassifyPreviewSrc = ref('');
 const reclassifyPreviewType = ref('');
+const reclassifyObjectUrl = ref(null);
+const modalLoading = ref(false);
+
+// 关闭弹窗时释放 blob URL，避免内存泄漏
+watch(reclassifyVisible, (visible) => {
+  if (!visible && reclassifyObjectUrl.value) {
+    URL.revokeObjectURL(reclassifyObjectUrl.value);
+    reclassifyObjectUrl.value = null;
+  }
+});
 
 const modalTitle = computed(() => {
   const name = reclassifyItem.value?.materialName || reclassifyItem.value?.fileName || '';
@@ -269,6 +288,7 @@ const modalTitle = computed(() => {
 });
 
 async function openModal(m, preview) {
+  if (modalLoading.value) return;
   isPreview.value = preview;
   reclassifyItem.value = m;
   reclassifyForm.materialName = m.materialName || (m.originalFileName || m.fileName)?.replace(/\.[^.]+$/, '') || '';
@@ -282,15 +302,32 @@ async function openModal(m, preview) {
   if (/\.(jpg|jpeg|png|bmp|gif|webp)$/.test(name)) reclassifyPreviewType.value = 'image';
   else if (name.endsWith('.pdf')) reclassifyPreviewType.value = 'pdf';
   else reclassifyPreviewType.value = 'other';
-  if (m.ossKey) {
-    try {
-      const res = await getPresignedUrl(m.ossKey);
-      if (res.data?.success) reclassifyPreviewSrc.value = res.data.url;
-    } catch (e) { /* ignore */ }
-  } else if (m.id) {
-    reclassifyPreviewSrc.value = `/prod-api/hrams/archive/materials/${m.id}/preview`;
-  }
   reclassifyVisible.value = true;
+  modalLoading.value = true;
+  try {
+    if (m.ossKey) {
+      try {
+        const res = await getPresignedUrl(m.ossKey);
+        if (res.data?.success) reclassifyPreviewSrc.value = res.data.url;
+      } catch (e) { /* ignore */ }
+    } else if (m.id) {
+      // 先清理旧的 blob URL
+      if (reclassifyObjectUrl.value) {
+        URL.revokeObjectURL(reclassifyObjectUrl.value);
+        reclassifyObjectUrl.value = null;
+      }
+      const res = await request.get(`/hrams/archive/materials/${m.id}/preview`, {
+        responseType: 'blob',
+        headers: { [TOKEN_HEADER_NAME]: `Bearer ${getToken() || ''}` }
+      });
+      const contentType = res.headers?.['content-type'] || 'application/octet-stream';
+      const blob = new Blob([res.data], { type: contentType });
+      reclassifyObjectUrl.value = URL.createObjectURL(blob);
+      reclassifyPreviewSrc.value = reclassifyObjectUrl.value;
+    }
+  } finally {
+    modalLoading.value = false;
+  }
 }
 
 async function modalDelete() {
@@ -377,10 +414,12 @@ async function submitReclassify() {
 .status-confirmed { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e2efe7; color: #3e7a5c; }
 .action-link { color: #2c6e9e; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 .action-link:hover { text-decoration: underline; }
+.action-link.is-loading { color: #909399; cursor: not-allowed; pointer-events: none; }
 
 /* 重新归类弹窗 */
 .reclassify-body { display: flex; gap: 20px; }
 .rc-preview { flex: 1; background: #eef2f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 520px; overflow: hidden; }
+.rc-preview-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #57677a; }
 .rc-preview-img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .rc-preview-pdf { width: 100%; height: 520px; border: none; }
 .rc-preview-empty { color: #909399; font-size: 14px; }
