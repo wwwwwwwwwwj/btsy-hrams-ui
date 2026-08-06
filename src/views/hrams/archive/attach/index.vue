@@ -121,17 +121,18 @@
         entry.hasPass = true;
       }
       // 与后端 OK_STATUS = {"pass", "catalog"} 保持一致，
-      // 只要有一条非 pass 且非 catalog 就是不通过
-      if (r.status !== 'pass' && r.status !== 'catalog') {
+      // 只要有一条非 pass 且非 catalog 就是不通过（排除无 relativePath 的合成提示行，如缺失文件）
+      if (r.status !== 'pass' && r.status !== 'catalog' && r.relativePath) {
         entry.hasFail = true;
       }
     });
-    return [...map.values()].map((p) => ({
+    const result = [...map.values()].map((p) => ({
       personId: p.personId,
       label: p.label,
       attachable: p.hasPass && !p.hasFail,
       cancelled: cancelledPersonIds.value.has(String(p.personId))
     }));
+    return result;
   });
 
   const attachableFileCount = computed(
@@ -145,11 +146,14 @@
   );
 
   const canConfirm = computed(
-    () =>
-      Boolean(batchId.value) &&
-      attachableFileCount.value > 0 &&
-      confirmedPersonIds.value.length > 0 &&
-      !scanLoading.value
+    () => {
+      const result =
+        Boolean(batchId.value) &&
+        attachableFileCount.value > 0 &&
+        confirmedPersonIds.value.length > 0 &&
+        !scanLoading.value;
+      return result;
+    }
   );
 
   const visiblePreviewRows = computed(() =>
