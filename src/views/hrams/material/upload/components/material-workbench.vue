@@ -180,13 +180,13 @@
           <!-- pending / ocr_failed：完整操作 -->
           <template v-else>
             <el-button type="danger" plain size="small" @click="handleDelete">删除</el-button>
-            <el-button size="small" @click="showReturn = !showReturn">退回重传</el-button>
+            <el-button size="small" @click="toggleReturn">退回重传</el-button>
             <el-button type="primary" size="small" @click="handleConfirm">确认归类</el-button>
           </template>
         </div>
 
         <!-- 退回表单 -->
-        <div v-if="showReturn && selected?.status !== 'confirmed'" class="return-form">
+        <div ref="returnFormRef" v-if="showReturn && selected?.status !== 'confirmed'" class="return-form">
           <el-input v-model="returnReason" type="textarea" size="small" rows="2" placeholder="请填写退回原因，如：图像模糊、非本人材料等" />
           <div class="return-actions">
             <el-button size="small" @click="showReturn = false">取消</el-button>
@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onBeforeUnmount, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onBeforeUnmount, onMounted, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { getPresignedUrl, listCategories } from '@/api/hrams/checking';
 
@@ -355,6 +355,16 @@ const formErrors = reactive({});
 
 const showReturn = ref(false);
 const returnReason = ref('');
+const returnFormRef = ref(null);
+
+function toggleReturn() {
+  showReturn.value = !showReturn.value;
+  if (showReturn.value) {
+    nextTick(() => {
+      returnFormRef.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+}
 const rotation = ref(0);
 const ocrOn = ref(false);
 

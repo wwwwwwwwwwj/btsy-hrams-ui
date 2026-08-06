@@ -115,13 +115,16 @@
   const onTreeNodeClick = (node) => {
     if (node.rowIndex == null || node.rowIndex < 0) return;
     highlightRowIndex.value = node.rowIndex;
+    // 等待 el-table 重新渲染高亮行后再滚动
     nextTick(() => {
-      const tableBody = tableRef.value?.$el?.querySelector?.('.el-table__body-wrapper');
-      if (!tableBody) return;
-      const row = tableBody.querySelector('.attach-highlight-row');
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      requestAnimationFrame(() => {
+        const wrapper = tableRef.value?.$el?.querySelector?.('.el-table__body-wrapper');
+        if (!wrapper) return;
+        const row = wrapper.querySelector('.attach-highlight-row');
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
     });
   };
 

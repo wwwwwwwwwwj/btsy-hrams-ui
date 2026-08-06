@@ -91,7 +91,8 @@
     <el-dialog
       v-model="reclassifyVisible"
       :title="modalTitle"
-      width="960px"
+      width="85vw"
+      top="3vh"
       :close-on-click-modal="false"
     >
       <div class="reclassify-body" v-if="reclassifyItem">
@@ -424,10 +425,10 @@ async function submitReclassify() {
 
 /* 重新归类弹窗 */
 .reclassify-body { display: flex; gap: 20px; }
-.rc-preview { flex: 1; background: #eef2f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 520px; overflow: hidden; }
+.rc-preview { flex: 1; background: #eef2f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 75vh; overflow: hidden; }
 .rc-preview-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #57677a; }
 .rc-preview-img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.rc-preview-pdf { width: 100%; height: 520px; border: none; }
+.rc-preview-pdf { width: 100%; height: 75vh; border: none; }
 .rc-preview-empty { color: #909399; font-size: 14px; }
 .rc-form { width: 260px; flex-shrink: 0; }
 .rc-form .field { margin-bottom: 12px; }
