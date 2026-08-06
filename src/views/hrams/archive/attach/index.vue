@@ -519,6 +519,7 @@
         reason: [...p.reasons].join('；')
       }));
       const failedCount = failedList.length;
+      const successList = allPersons.filter(p => p.attachable && !p.cancelled);
 
       let html = '<div style="min-width:400px;">';
 
@@ -538,7 +539,19 @@
       </div>`;
       html += '</div>';
 
-      // 下部失败人员列表
+      // 挂接成功人员列表
+      if (successList.length > 0) {
+        html += '<div style="background:#f0f9eb;border-radius:6px;padding:12px 14px;margin-bottom:12px;">';
+        html += '<div style="font-size:14px;color:#67c23a;margin-bottom:8px;font-weight:600;">挂接成功人员</div>';
+        successList.forEach(p => {
+          html += `<div style="padding:4px 0;font-size:13px;color:#303133;">
+            <span style="font-weight:500;">${p.label}</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      // 挂接失败人员列表
       if (failedList.length > 0) {
         html += '<div style="background:#fef0f0;border-radius:6px;padding:12px 14px;">';
         html += '<div style="font-size:14px;color:#f56c6c;margin-bottom:8px;font-weight:600;">挂接失败人员</div>';
