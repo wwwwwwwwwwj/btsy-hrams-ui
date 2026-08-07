@@ -121,8 +121,8 @@
         entry.hasPass = true;
       }
       // 与后端 OK_STATUS = {"pass", "catalog"} 保持一致，
-      // 只要有一条非 pass 且非 catalog 就是不通过（排除无 relativePath 的合成提示行，如缺失文件）
-      if (r.status !== 'pass' && r.status !== 'catalog' && r.relativePath) {
+      // 只要有一条非 pass 且非 catalog 就是不通过（含缺失文件提示行）
+      if (r.status !== 'pass' && r.status !== 'catalog') {
         entry.hasFail = true;
       }
     });
