@@ -571,11 +571,12 @@
 
       html += '</div>';
 
-      ElMessageBox.alert(html, '挂接结果', {
+      await ElMessageBox.alert(html, '挂接结果', {
         dangerouslyUseHTMLString: true,
         confirmButtonText: '知道了',
         customClass: 'attach-result-dialog'
       });
+      goBack();
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
     } finally {
@@ -583,7 +584,17 @@
     }
   };
 
-  const goBack = () => router.push(HRAMS_ARCHIVE_LIST);
+  const goBack = () => {
+    stopPoll(POLL_CANCELLED);
+    batchId.value = null;
+    previewRows.value = [];
+    fileCount.value = 0;
+    scanPhaseText.value = '';
+    cancelledPersonIds.value = new Set();
+    zipFile.value = null;
+    uploadPanelRef.value?.clearSource?.() || uploadPanelRef.value?.clearZip?.();
+    router.push(HRAMS_ARCHIVE_LIST);
+  };
 </script>
 
 <style scoped>
