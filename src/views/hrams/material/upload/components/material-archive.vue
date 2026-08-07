@@ -164,7 +164,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { listArchiveByPerson, reclassifyMaterial, getPresignedUrl, listCategories } from '@/api/hrams/checking';
+import { listArchiveByPerson, reclassifyMaterial, getPresignedUrl, listCategories, deleteMaterialApi } from '@/api/hrams/checking';
 import request from '@/utils/request';
 import { getToken } from '@/utils/token-util';
 import { TOKEN_HEADER_NAME } from '@/config/setting';
@@ -213,12 +213,32 @@ const materialByCategory = computed(() => {
 });
 
 function catCount(code) {
-  return (materialByCategory.value[code] || []).length;
+  let count = (materialByCategory.value[code] || []).length;
+  const root = categoryTree.value.find(c => c.code === code);
+  if (root?.children?.length) {
+    for (const sub of root.children) {
+      count += (materialByCategory.value[sub.code] || []).length;
+    }
+  }
+  return count;
 }
 
 const selectedMaterials = computed(() => {
-  const list = materialByCategory.value[selectedCode.value] || [];
-  return [...list].sort((a, b) => (a.pageNo || 999) - (b.pageNo || 999));
+  // 收集当前选中编码及其所有子编码（如果选中的是大类）
+  const codes = [selectedCode.value];
+  const root = categoryTree.value.find(c => c.code === selectedCode.value);
+  if (root?.children?.length) {
+    for (const sub of root.children) {
+      codes.push(sub.code);
+    }
+  }
+  const list = [];
+  for (const code of codes) {
+    if (materialByCategory.value[code]) {
+      list.push(...materialByCategory.value[code]);
+    }
+  }
+  return list.sort((a, b) => (a.pageNo || 999) - (b.pageNo || 999));
 });
 
 const selectedTitle = computed(() => {
@@ -340,9 +360,13 @@ async function modalDelete() {
   if (!reclassifyItem.value) return;
   try {
     await ElMessageBox.confirm('确认删除该材料？删除后不可恢复。', '确认删除', { type: 'warning' });
-    emit('delete', { material: reclassifyItem.value });
+    await deleteMaterialApi(reclassifyItem.value.id);
     reclassifyVisible.value = false;
-  } catch {}
+    ElMessage.success('已删除');
+    await loadData();
+  } catch (e) {
+    if (e !== 'cancel' && e !== 'close') ElMessage.error(e?.message || '删除失败');
+  }
 }
 
 function openPreview(m) { openModal(m, true); }
