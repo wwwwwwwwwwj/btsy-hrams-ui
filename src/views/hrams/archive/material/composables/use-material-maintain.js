@@ -33,6 +33,25 @@ import { checkDownloadRes, download } from '@/utils/common';
 import { usePageTab } from '@/utils/use-page-tab';
 import { setPageTitle } from '@/utils/page-title-util';
 
+/** 并发限制器：给定一组返回 Promise 的工厂函数，最多同时执行 limit 个 */
+async function runLimitedConcurrency(tasks, limit) {
+  const results = new Array(tasks.length);
+  let idx = 0;
+  async function worker() {
+    while (idx < tasks.length) {
+      const i = idx++;
+      try {
+        results[i] = { status: 'fulfilled', value: await tasks[i]() };
+      } catch (e) {
+        results[i] = { status: 'rejected', reason: e };
+      }
+    }
+  }
+  const workers = Array(Math.min(limit, tasks.length)).fill(0).map(() => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 export function useMaterialMaintain() {
   const route = useRoute();
   const router = useRouter();
@@ -545,14 +564,16 @@ export function useMaterialMaintain() {
         return;
       }
 
-      // ═══ Phase 2: 并行 OCR ═══
-      const ocrResults = await Promise.allSettled(
-        okUploads.map(async ({ index, key }) => {
+      // ═══ Phase 2: 并发 OCR（最多 3 个同时进行）═══
+      const OCR_CONCURRENCY = 3;
+      const ocrResults = await runLimitedConcurrency(
+        okUploads.map(({ index, key }) => async () => {
           setRow(index, { statusText: 'OCR 识别中…' });
           const res = await ocrOssFile(key);
           if (!res?.data?.success || !res?.data?.ocrText) throw new Error(res?.data?.error || 'OCR 结果为空');
           return { index, ossKey: key, ocrText: res.data.ocrText, fileName: res.data.fileName };
-        })
+        }),
+        OCR_CONCURRENCY
       );
 
       const okOcr = [];
@@ -571,12 +592,12 @@ export function useMaterialMaintain() {
         return;
       }
 
-      // ═══ Phase 3: 并行 Dify SSE 流式 ═══
-      const streamPromises = okOcr.map(({ index, key, ocrText }) => {
-        const abortCtrl = new AbortController();
-        streamControllers.push(abortCtrl);
-
-        return (async () => {
+      // ═══ Phase 3: 并发 Dify SSE 流式（最多 3 个同时进行）═══
+      const DIFY_CONCURRENCY = 3;
+      await runLimitedConcurrency(
+        okOcr.map(({ index, key, ocrText }) => async () => {
+          const abortCtrl = new AbortController();
+          streamControllers.push(abortCtrl);
           let streamingText = '';
           try {
             const resp = await analyzeOcrTextStream(ocrText, { signal: abortCtrl.signal });
@@ -624,10 +645,9 @@ export function useMaterialMaintain() {
             if (err.name === 'AbortError') return;
             setRow(index, { status: 'recognize_failed', statusText: '识别失败', recognizeMessage: err.message || '分析失败' });
           }
-        })();
-      });
-
-      await Promise.allSettled(streamPromises);
+        }),
+        DIFY_CONCURRENCY
+      );
 
       // 汇总
       const allRows = Object.values(rowsMap);
