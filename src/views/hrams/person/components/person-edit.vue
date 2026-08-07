@@ -289,6 +289,7 @@
 <script setup>
   import { reactive, ref, watch } from 'vue';
   import { EleMessage, useModal } from 'ele-admin-plus';
+  import request from '@/utils/request';
   import DictData from '@/components/DictData/index.vue';
   import DeptSelect from '@/views/system/dept/components/dept-select.vue';
   import { listDept } from '@/api/system/dept';
@@ -373,14 +374,20 @@
   };
 
   const loadPhoto = async (ossId) => {
-    photoUrl.value = '';
+    revokePhotoUrl();
     if (!ossId) return;
     try {
-      const list = await listOssById(ossId);
-      const row = Array.isArray(list) ? list[0] : list;
-      photoUrl.value = row?.url || '';
+      const res = await request.get(`/resource/oss/download/${ossId}`, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: res.headers?.['content-type'] || 'image/png' });
+      photoUrl.value = URL.createObjectURL(blob);
     } catch {
       photoUrl.value = '';
+    }
+  };
+
+  const revokePhotoUrl = () => {
+    if (photoUrl.value && photoUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(photoUrl.value);
     }
   };
 
@@ -488,7 +495,7 @@
     try {
       const data = await uploadOss(file);
       form.value.photoOssId = data.ossId;
-      photoUrl.value = data.url || photoUrl.value;
+      await loadPhoto(data.ossId);
       EleMessage.success({ message: '照片已上传', plain: true });
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });

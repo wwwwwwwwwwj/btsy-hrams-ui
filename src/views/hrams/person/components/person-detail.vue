@@ -128,7 +128,7 @@
   import { computed, ref, watch } from 'vue';
   import { EleMessage, useModal } from 'ele-admin-plus';
   import { getPerson, listPersonFieldDefs } from '@/api/hrams/person';
-  import { listOssById } from '@/api/system/oss';
+  import request from '@/utils/request';
   import { formatDateDay } from '@/utils/hrams-date';
 
   const props = defineProps({ personId: [Number, String] });
@@ -159,12 +159,15 @@
   });
 
   const loadPhoto = async (ossId) => {
+    if (photoUrl.value && photoUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(photoUrl.value);
+    }
     photoUrl.value = '';
     if (!ossId) return;
     try {
-      const list = await listOssById(ossId);
-      const row = Array.isArray(list) ? list[0] : list;
-      photoUrl.value = row?.url || '';
+      const res = await request.get(`/resource/oss/download/${ossId}`, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: res.headers?.['content-type'] || 'image/png' });
+      photoUrl.value = URL.createObjectURL(blob);
     } catch {
       photoUrl.value = '';
     }
