@@ -47,9 +47,9 @@
         <el-form-item label="归还日期" required>
           <el-date-picker
             v-model="returnTime"
-            type="date"
-            value-format="YYYY-MM-DD"
-            placeholder="选择归还日期"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            placeholder="选择归还时间"
             style="width:100%"
           />
         </el-form-item>
@@ -67,6 +67,7 @@
   import { EleMessage } from 'ele-admin-plus';
 import { ElMessageBox } from 'element-plus';
   import { pageBorrow, returnBorrow, deleteBorrow, previewBorrowAttachment } from '@/api/hrams/borrow';
+  import { formatLocalDateTime } from '@/utils/hrams-date';
 
   const tableRef = ref(null);
   const where = ref({});
@@ -120,7 +121,7 @@ import { ElMessageBox } from 'element-plus';
 
   const openReturn = (row) => {
     returningRow.value = row;
-    returnTime.value = new Date().toISOString().slice(0, 10);
+    returnTime.value = formatLocalDateTime();
     returnVisible.value = true;
   };
 

@@ -83,6 +83,7 @@
   import { useUserStore } from '@/store/modules/user';
   import { registerBorrowForm, searchBorrowPersons } from '@/api/hrams/borrow';
   import { listCategories } from '@/api/hrams/archive';
+  import { formatLocalDateTime } from '@/utils/hrams-date';
 
   defineProps({
     inDialog: { type: Boolean, default: false }
@@ -105,8 +106,8 @@
       { required: true, message: '请选择预计归还时间', trigger: ['blur', 'change'] },
       { validator: (_rule, value, callback) => {
           if (value && form.value.borrowTime) {
-            const returnDay = new Date(value).toISOString().slice(0, 10);
-            const borrowDay = new Date(form.value.borrowTime).toISOString().slice(0, 10);
+            const returnDay = String(value).slice(0, 10);
+            const borrowDay = String(form.value.borrowTime).slice(0, 10);
             if (returnDay < borrowDay) {
               callback(new Error('预计归还时间必须大于借阅时间'));
             } else {
@@ -129,7 +130,7 @@
       personId: null,
       personName: '',
       archiveNo: '',
-      borrowTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      borrowTime: formatLocalDateTime(),
       borrower: nick,
       borrowScope: 'full',
       scopeCategoryCodes: []
