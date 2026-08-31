@@ -52,6 +52,7 @@
     { prop: 'politicalStatus', label: '政治面貌', minWidth: 110 },
     { prop: 'education', label: '学历', width: 90 },
     { prop: 'idCard', label: '身份证号', minWidth: 200 },
+    { prop: 'materialCount', label: '材料件数', width: 100 },
     { prop: 'personStatus', label: '当前状态', width: 90 },
     { columnKey: 'action', label: '操作', width: 260, slot: 'action' }
   ]);

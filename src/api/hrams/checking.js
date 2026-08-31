@@ -155,3 +155,94 @@ export function listArchiveByPerson(personId) {
 export function reclassifyMaterial(materialId, form) {
   return request.put(`${BASE}/material/${materialId}/reclassify`, form);
 }
+
+/** 回写重新识别的 OCR / AI 结果 */
+export function saveAiResult(materialId, data) {
+  return request.put(`${BASE}/material/${materialId}/ai-result`, data);
+}
+
+/** 该类目下一个可用材料顺序 */
+export function getNextPageNo(personId, categoryCode) {
+  return request.get(`${BASE}/person/${personId}/next-page-no`, { params: { categoryCode } });
+}
+
+/** 解析 Dify SSE，返回 answer 文本 */
+export async function readAnalyzeAnswer(resp) {
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split('\n\n');
+    buffer = parts.pop() || '';
+    for (const part of parts) {
+      if (!part.trim()) continue;
+      const lines = part.split('\n');
+      let eventName = '';
+      let eventData = '';
+      for (const line of lines) {
+        if (line.startsWith('event:')) eventName = line.substring(6).trim();
+        else if (line.startsWith('data:')) eventData = line.substring(5).trim();
+      }
+      if (!eventName || !eventData) continue;
+      let data;
+      try { data = JSON.parse(eventData); } catch { data = eventData; }
+      if (eventName === 'done') fullText = data.answer || fullText;
+      else if (eventName === 'error') throw new Error(data.message || '分析失败');
+    }
+  }
+  return fullText;
+}
+
+/** 对单份材料重新 OCR（如无文本）并跑 AI，写回结果 */
+export async function retryMaterialAi(item) {
+  if (!item?.id || !item.ossKey) {
+    throw new Error('文件未入库，请重新上传');
+  }
+  let ocrText = item.ocrText;
+  let pageCount = item.pageCount || 1;
+  try {
+    if (!ocrText) {
+      const res = await ocrOssFile(item.ossKey);
+      if (!res?.data?.success || !res?.data?.ocrText) {
+        throw new Error(res?.data?.error || 'OCR 结果为空');
+      }
+      ocrText = res.data.ocrText;
+      pageCount = res.data.pageCount || pageCount;
+    }
+    const resp = await analyzeOcrTextStream(ocrText);
+    const fullText = await readAnalyzeAnswer(resp);
+    if (!fullText) throw new Error('AI 无返回内容');
+    const saved = await saveAiResult(item.id, {
+      ocrText,
+      result: fullText,
+      pageCount,
+      status: 'pending',
+      remark: ''
+    });
+    return {
+      ocrText,
+      difyResult: fullText,
+      pageCount,
+      status: 'pending',
+      remark: '',
+      ...(saved.data?.data || saved.data || {})
+    };
+  } catch (e) {
+    const msg = e.message || '识别失败';
+    try {
+      await saveAiResult(item.id, {
+        ocrText: ocrText || item.ocrText || '',
+        result: item.difyResult || '',
+        pageCount,
+        status: 'ocr_failed',
+        remark: msg
+      });
+    } catch {}
+    throw new Error(msg);
+  }
+}

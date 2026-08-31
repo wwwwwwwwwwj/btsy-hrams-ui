@@ -2,7 +2,9 @@
   <div class="batch-list">
     <div class="list-header">
       <h2>材料批次管理</h2>
-      <el-button type="primary" size="large" round @click="$emit('new-batch')">📋 上传新批次</el-button>
+      <el-button type="primary" size="large" round @click="$emit('new-batch')">
+        <el-icon class="btn-icon"><Upload /></el-icon>上传新批次
+      </el-button>
     </div>
 
     <!-- 搜索栏 -->
@@ -46,23 +48,39 @@
         <div class="card-main">
           <div class="card-top">
             <span class="person-name">{{ b.personName }}</span>
-            <span class="archive-no">📁 {{ b.archiveNo }}</span>
+            <span class="archive-no">
+              <el-icon><Folder /></el-icon>{{ b.archiveNo }}
+            </span>
             <span class="batch-id">{{ b.batchNo }}</span>
-            <span v-if="b.idCard" class="idcard-text">🪪 {{ b.idCard }}</span>
+            <span v-if="b.idCard" class="idcard-text">
+              <el-icon><Postcard /></el-icon>{{ b.idCard }}
+            </span>
           </div>
           <div class="card-meta">
             上传人：{{ b.uploader }} · {{ b.createTime }} · 共 {{ b.fileCount ?? 0 }} 份
-            <span v-if="b.note" class="note"> · {{ b.note }}</span>
+          </div>
+          <div v-if="failCount(b) > 0 || b.note" class="fail-hint">
+            <el-icon><WarningFilled /></el-icon>
+            <span v-if="failCount(b) > 0">AI处理失败 {{ failCount(b) }} 份</span>
+            <span v-if="b.note">{{ failCount(b) > 0 ? '，' : '' }}{{ b.note }}</span>
           </div>
         </div>
         <div class="progress-col">
           <div class="progress-label"><span>人工确认</span><span>{{ b.successCount ?? 0 }}/{{ b.fileCount ?? 0 }}</span></div>
           <div class="progress-bar"><div class="progress-fill" :style="{ width: pct(b) + '%' }" /></div>
+          <div class="fail-count">{{ failCount(b) > 0 ? `失败 ${failCount(b)}` : '\u00a0' }}</div>
         </div>
-        <span class="status-pill" :class="statusClass(b)">{{ statusText(b) }}</span>
+        <span class="status-pill" :class="statusClass(b)">{{ retryingId === b.id ? '识别中' : statusText(b) }}</span>
         <div class="card-actions">
-          <el-button size="large" round :disabled="isProcessing(b)" @click="$emit('open-workbench', b)">分类确认台</el-button>
-          <el-button size="large" round @click="$emit('open-archive', b)">档案分类预览</el-button>
+          <el-button
+            size="large"
+            round
+            :loading="retryingId === b.id"
+            :disabled="isBusy(b)"
+            @click="$emit('retry-batch', b)"
+          >整批重新识别</el-button>
+          <el-button size="large" round :disabled="isBusy(b)" @click="$emit('open-workbench', b)">分类确认台</el-button>
+          <el-button size="large" round :disabled="retryingId === b.id" @click="$emit('open-archive', b)">档案分类预览</el-button>
         </div>
       </div>
     </div>
@@ -71,12 +89,14 @@
 
 <script setup>
 import { reactive, computed } from 'vue';
+import { Upload, Folder, Postcard, WarningFilled } from '@element-plus/icons-vue';
 
 const props = defineProps({
-  batches: { type: Array, default: () => [] }
+  batches: { type: Array, default: () => [] },
+  retryingId: { type: [Number, String], default: null }
 });
 
-defineEmits(['new-batch', 'open-workbench', 'open-archive']);
+defineEmits(['new-batch', 'open-workbench', 'open-archive', 'retry-batch']);
 
 const search = reactive({
   batchNo: '', archiveNo: '', name: '', idCard: '', status: ''
@@ -102,7 +122,9 @@ function resetSearch() {
 }
 
 function pct(b) { return Math.round((b.successCount || 0) / (b.fileCount || 1) * 100); }
+function failCount(b) { return Number(b.errorCount || 0); }
 function statusClass(b) {
+  if (props.retryingId === b.id) return 's-processing';
   return { pending: 's-pending', processing: 's-processing', done: 's-done', error: 's-error' }[b.status] || 's-pending';
 }
 function statusText(b) {
@@ -110,6 +132,9 @@ function statusText(b) {
 }
 function isProcessing(b) {
   return b.status === 'processing';
+}
+function isBusy(b) {
+  return isProcessing(b) || props.retryingId === b.id;
 }
 </script>
 
@@ -131,18 +156,21 @@ function isProcessing(b) {
 .card-main { flex: 1; min-width: 0; }
 .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
 .person-name { font-size: 15px; font-weight: 600; color: #1f2d3d; }
+.btn-icon { margin-right: 6px; }
+.archive-no, .idcard-text { display: inline-flex; align-items: center; gap: 4px; }
 .archive-no { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c6e9e; background: #ecf5fc; padding: 3px 10px; border-radius: 4px; }
 .batch-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #57677a; }
 .idcard-text { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #57677a; }
 .card-meta { font-size: 13px; color: #7b8ba0; }
-.note { color: #e74c3c; }
+.fail-hint { margin-top: 6px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: #9c3b34; }
+.fail-count { font-size: 12px; color: #9c3b34; width: 100%; min-height: 18px; line-height: 18px; text-align: left; }
 
-.progress-col { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+.progress-col { width: 150px; display: flex; flex-direction: column; align-items: stretch; gap: 5px; flex-shrink: 0; }
 .progress-label { font-size: 12px; color: #57677a; display: flex; justify-content: space-between; width: 100%; }
 .progress-bar { width: 100%; height: 8px; background: #eef2f6; border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; background: #2c6e9e; border-radius: 4px; transition: width .3s; }
 
-.status-pill { font-size: 12px; padding: 5px 14px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
+.status-pill { width: 88px; box-sizing: border-box; text-align: center; font-size: 12px; padding: 5px 0; border-radius: 20px; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
 .s-pending { background: #f6ead4; color: #b4791f; }
 .s-done { background: #e2efe7; color: #3e7a5c; }
 .s-error { background: #f4e4e1; color: #9c3b34; }

@@ -8,7 +8,6 @@
           {{ ftData.esEnabled ? 'ES 已启用' : 'Tika+库内正文' }}
         </el-tag>
       </div>
-      <el-alert v-if="ftHint" :title="ftHint" type="info" show-icon class="ft-alert" />
       <div v-if="ftData" class="ft-panels hrams-v2-card">
         <div class="ft-panel">
           <div class="panel-title">1. 人员及大类汇总</div>
@@ -148,7 +147,6 @@
     padding: 16px 20px;
     margin-bottom: 16px;
   }
-  .ft-alert { margin-bottom: 16px; }
   .ft-panels {
     display: grid;
     grid-template-columns: 1fr 1fr 1.2fr;

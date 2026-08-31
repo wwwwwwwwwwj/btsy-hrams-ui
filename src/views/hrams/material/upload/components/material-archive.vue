@@ -4,12 +4,16 @@
     <div class="person-strip">
       <div class="person-avatar">{{ batch.personName?.charAt(0) || '?' }}</div>
       <div class="person-info">
-        <span class="p-name">{{ batch.personName }} <span class="archive-badge">📁 {{ batch.archiveNo }}</span></span>
+        <span class="p-name">{{ batch.personName }} <span class="archive-badge"><el-icon><Folder /></el-icon>{{ batch.archiveNo }}</span></span>
         <span class="p-sub">档案分类预览 · 共 {{ archiveMaterials.length }} 份已确认材料</span>
       </div>
       <div class="strip-actions">
-        <el-button size="large" type="primary" round @click="$emit('switch-to-workbench')">📂 分类确认台</el-button>
-        <el-button size="large" type="primary" round @click="$emit('back')">← 返回批次列表</el-button>
+        <el-button size="large" type="primary" round @click="$emit('switch-to-workbench')">
+          <el-icon class="btn-icon"><Finished /></el-icon>分类确认台
+        </el-button>
+        <el-button size="large" type="primary" round @click="$emit('back')">
+          <el-icon class="btn-icon"><Back /></el-icon>返回批次列表
+        </el-button>
       </div>
     </div>
 
@@ -48,7 +52,7 @@
 
         <!-- 空状态 -->
         <div v-if="!selectedMaterials.length" class="empty-state">
-          <b>⚠ 该类目暂无已确认材料。</b>请先在"分类确认台"中确认材料归类。
+          <b>该类目暂无已确认材料。</b>请先在"分类确认台"中确认材料归类。
         </div>
 
         <!-- 材料表格 -->
@@ -78,7 +82,7 @@
                 <span v-else>-</span>
               </td>
               <td>
-                <span :class="['action-link', { 'is-loading': modalLoading }]" @click="openPreview(m)">👁 预览</span>
+                <span :class="['action-link', { 'is-loading': modalLoading }]" @click="openPreview(m)">预览</span>
                 <span :class="['action-link', { 'is-loading': modalLoading }]" style="margin-left:10px" @click="openReclassify(m)">重新归类</span>
               </td>
             </tr>
@@ -114,7 +118,7 @@
               :src="reclassifyPreviewSrc"
               class="rc-preview-pdf"
             />
-            <div v-else class="rc-preview-empty">📄 无法预览此文件类型</div>
+            <div v-else class="rc-preview-empty">无法预览此文件类型</div>
           </template>
         </div>
         <!-- 表单 -->
@@ -164,6 +168,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { Folder, Finished, Back } from '@element-plus/icons-vue';
 import { listArchiveByPerson, reclassifyMaterial, getPresignedUrl, listCategories, deleteMaterialApi } from '@/api/hrams/checking';
 import request from '@/utils/request';
 import { getToken } from '@/utils/token-util';
@@ -407,7 +412,8 @@ async function submitReclassify() {
 .person-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2c6e9e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; flex-shrink: 0; }
 .person-info { display: flex; flex-direction: column; }
 .p-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
-.archive-badge { font-size: 11px; font-weight: 400; color: #57677a; background: #eef2f6; padding: 2px 8px; border-radius: 4px; }
+.archive-badge { font-size: 11px; font-weight: 400; color: #57677a; background: #eef2f6; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+.btn-icon { margin-right: 6px; }
 .p-sub { font-size: 12px; color: #909399; }
 .strip-actions { margin-left: auto; }
 

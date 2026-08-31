@@ -4,9 +4,11 @@
     <MaterialBatchList
       v-if="currentView === 'batches'"
       :batches="batchList"
+      :retrying-id="retryingBatchId"
       @new-batch="checkingVisible = true"
       @open-workbench="openWorkbench"
       @open-archive="openArchive"
+      @retry-batch="retryBatch"
     />
 
     <MaterialWorkbench
@@ -42,7 +44,7 @@
   import MaterialBatchList from './components/material-batch-list.vue';
   import MaterialWorkbench from './components/material-workbench.vue';
   import MaterialArchive from './components/material-archive.vue';
-  import { listBatches, listMaterials, confirmMaterial, returnMaterial, deleteMaterialApi } from '@/api/hrams/checking';
+  import { listBatches, listMaterials, confirmMaterial, returnMaterial, deleteMaterialApi, retryMaterialAi } from '@/api/hrams/checking';
 
   defineOptions({ name: 'HramsMaterialUploadEntry' });
 
@@ -50,6 +52,7 @@
   const checkingVisible = ref(false);
   const activeBatch = ref(null);
   const batchList = reactive([]);
+  const retryingBatchId = ref(null);
 
   // ── 加载批次 ──
   async function loadBatches() {
@@ -63,10 +66,41 @@
 
   onMounted(loadBatches);
 
+  async function retryBatch(batch) {
+    if (!batch?.id || retryingBatchId.value) return;
+    retryingBatchId.value = batch.id;
+    try {
+      const res = await listMaterials(batch.id);
+      const items = res.data?.data || [];
+      const targets = items.filter((i) => i.ossKey && (i.status === 'pending' || i.status === 'ocr_failed'));
+      if (!targets.length) {
+        ElMessage.warning('没有可重新识别的材料（需已入库且未确认）');
+        return;
+      }
+      let ok = 0;
+      let fail = 0;
+      for (const item of targets) {
+        try {
+          await retryMaterialAi(item);
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (fail && ok) ElMessage.warning(`整批识别结束：成功 ${ok} 份，失败 ${fail} 份`);
+      else if (ok) ElMessage.success(`整批识别完成 ${ok} 份，请到分类确认台核对`);
+      else ElMessage.error(`整批识别失败 ${fail} 份`);
+      await loadBatches();
+    } catch (e) {
+      ElMessage.error(e.message || '整批识别失败');
+    } finally {
+      retryingBatchId.value = null;
+    }
+  }
+
   // ── 上传完成（批次和材料已在 dialog 中处理） ──
   async function onCheckingDone() {
     checkingVisible.value = false;
-    ElMessage.success('批次上传完成');
     await loadBatches();
   }
 

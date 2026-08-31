@@ -30,7 +30,7 @@
       <el-form-item label="文件" required>
         <div class="file-area">
           <label class="file-pick-btn">
-            📎 选择文件
+            <el-icon><Document /></el-icon>选择文件
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.bmp,.pdf,image/*,application/pdf"
@@ -40,7 +40,7 @@
             />
           </label>
           <label class="file-pick-btn">
-            📁 选择文件夹
+            <el-icon><FolderOpened /></el-icon>选择文件夹
             <input
               type="file"
               webkitdirectory
@@ -58,7 +58,9 @@
             :key="i"
             class="file-row"
           >
-            <span class="file-icon">{{ isPdf(f.name) ? '📕' : '🖼️' }}</span>
+            <span class="file-icon">
+              <el-icon><Document v-if="isPdf(f.name)" /><Picture v-else /></el-icon>
+            </span>
             <span class="file-name">{{ f.name }}</span>
             <span class="file-size">{{ formatSize(f.size) }}</span>
             <span class="file-status" :class="statusClass(f)">
@@ -91,6 +93,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, FolderOpened, Picture } from '@element-plus/icons-vue';
 import { useUserStore } from '@/store/modules/user';
 import { pagePerson } from '@/api/hrams/person';
 import { uploadOssFile, ocrOssFile, analyzeOcrTextStream, createBatch, addMaterialsToBatch } from '@/api/hrams/checking';

@@ -230,8 +230,8 @@
   /** 表单数据 */
   const form = reactive({
     tenantId: '000000',
-    username: 'admin',
-    password: 'admin123',
+    username: '',
+    password: '',
     code: '',
     uuid: '',
     rememberMe: true

@@ -4,12 +4,16 @@
     <div class="person-strip">
       <div class="person-avatar">{{ batch.personName?.charAt(0) || '?' }}</div>
       <div class="person-info">
-        <span class="p-name">{{ batch.personName }} <span class="archive-badge">📁 {{ batch.archiveNo }}</span>|<span>{{ batch.idCard }}</span></span>
+        <span class="p-name">{{ batch.personName }} <span class="archive-badge"><el-icon><Folder /></el-icon>{{ batch.archiveNo }}</span>|<span>{{ batch.idCard }}</span></span>
         <span class="p-sub">批次 {{ batch.batchNo }} · {{ batch.createTime }}</span>
       </div>
       <div class="strip-actions">
-        <el-button size="large" type="primary" round @click="$emit('switch-to-archive')">📋 档案分类预览</el-button>
-        <el-button size="large" type="primary" round @click="$emit('back')">← 返回批次列表</el-button>
+        <el-button size="large" type="primary" round @click="$emit('switch-to-archive')">
+          <el-icon class="btn-icon"><Tickets /></el-icon>档案分类预览
+        </el-button>
+        <el-button size="large" type="primary" round @click="$emit('back')">
+          <el-icon class="btn-icon"><Back /></el-icon>返回批次列表
+        </el-button>
       </div>
     </div>
 
@@ -34,10 +38,12 @@
             @click="selectItem(i)"
           >
             <span :class="['dot', statusDot(item)]" />
-            <span class="qicon">{{ isPdf((item.originalFileName || item.fileName)) ? '📕' : '🖼️' }}</span>
+            <span class="qicon">
+              <el-icon><Document v-if="isPdf((item.originalFileName || item.fileName))" /><Picture v-else /></el-icon>
+            </span>
             <div class="qbody">
               <div class="qname">{{ (item.originalFileName || item.fileName) }}</div>
-              <div v-if="item.status === 'ocr_failed'" class="qerr">⚠ OCR识别失败</div>
+              <div v-if="item.status === 'ocr_failed'" class="qerr">OCR识别失败</div>
               <div v-else class="qcat">{{ getCategoryDisplay(item) }}</div>
               <span v-if="item.status === 'returned'" class="badge badge-returned">↩ 已退回</span>
             </div>
@@ -54,7 +60,9 @@
             <el-button size="small" round @click="rotation = (rotation || 0) - 90">⟲</el-button>
             <el-button size="small" round @click="rotation = (rotation || 0) + 90">⟳</el-button>
           </template>
-          <el-button size="small" round :type="ocrOn ? 'primary' : 'default'" @click="ocrOn = !ocrOn">👁 OCR</el-button>
+          <el-button size="small" round :type="ocrOn ? 'primary' : 'default'" @click="ocrOn = !ocrOn">
+            <el-icon class="btn-icon"><View /></el-icon>OCR
+          </el-button>
         </div>
         <div class="prev-stage">
           <!-- 无选中 -->
@@ -80,7 +88,7 @@
               @error="onPreviewError"
             />
             <div v-if="previewType === 'other'" class="prev-unsupported">
-              <span style="font-size:48px;margin-bottom:12px">📄</span>
+              <el-icon :size="40"><Document /></el-icon>
               <span>无法预览此文件类型</span>
               <span style="font-size:11px;color:#909399;margin-top:4px">{{ (selected?.originalFileName || selected?.fileName) }}</span>
             </div>
@@ -91,7 +99,7 @@
               <span style="margin-top:10px;font-size:14px;color:#57677a">正在加载预览…</span>
             </div>
             <div v-else-if="previewError" class="prev-overlay">
-              <span style="font-size:36px;margin-bottom:10px">⚠️</span>
+              <el-icon :size="32" color="#e6a23c"><WarningFilled /></el-icon>
               <span style="font-size:14px;color:#57677a">文件加载失败</span>
               <el-button size="small" style="margin-top:12px" @click="retryPreview">重试</el-button>
             </div>
@@ -99,7 +107,7 @@
             <!-- OCR 叠加层 -->
             <div v-if="ocrOn" class="ocr-overlay-panel">
               <div class="ocr-overlay-header">
-                <span class="ocr-overlay-title">📝 OCR 识别结果</span>
+                <span class="ocr-overlay-title">OCR 识别结果</span>
                 <el-button link size="small" @click="ocrOn = false">✕</el-button>
               </div>
               <pre class="ocr-overlay-body">{{ selected?.ocrText || '暂无 OCR 识别结果' }}</pre>
@@ -111,86 +119,85 @@
 
       <!-- ====== 右栏：分类确认 ====== -->
       <div class="col col-classify">
-        <!-- 异常提示 -->
-        <div v-if="selected?.status === 'returned'" class="cls-section issue-section">
-          <h4>退回提示</h4>
-          <div class="return-banner">已退回重传 · 原因：{{ selected.returnReason }}</div>
+        <div class="cls-body">
+          <!-- 异常提示 -->
+          <div v-if="selected?.status === 'returned'" class="cls-section issue-section">
+            <h4>退回提示</h4>
+            <div class="return-banner">已退回重传 · 原因：{{ selected.returnReason }}</div>
+          </div>
+
+          <!-- 材料信息表单 -->
+          <div class="cls-section">
+            <h4>材料信息（可编辑）</h4>
+            <div class="field">
+              <label>材料名称 <span class="required">*</span></label>
+              <el-input v-model="form.materialName" size="small" placeholder="如 干部履历表" />
+              <span v-if="formErrors.materialName" class="err">请填写材料名称</span>
+            </div>
+            <div class="field">
+              <label>归入类目 <span class="required">*</span> <span class="ai-tag">AI</span></label>
+              <el-select v-model="form.categoryCode" size="small" style="width:100%" placeholder="选择类目" @change="onCategoryChange">
+                <el-option v-for="c in categories" :key="c.value" :label="c.label" :value="c.value" :disabled="c.disabled" />
+              </el-select>
+              <span v-if="formErrors.categoryCode" class="err">请选择归入类目</span>
+            </div>
+            <div class="field">
+              <label>材料顺序 <span class="required">*</span></label>
+              <el-input v-model="form.pageNo" size="small" placeholder="正整数" @input="onPageNoInput" />
+              <span v-if="formErrors.pageNo" class="err">请输入正整数</span>
+            </div>
+            <div class="field">
+              <label>材料形成日期 <span class="required">*</span></label>
+              <el-date-picker v-model="form.formDate" type="date" value-format="YYYY-MM-DD" size="small" style="width:100%" />
+              <span v-if="formErrors.formDate" class="err">请选择形成日期</span>
+            </div>
+            <div class="field">
+              <label>材料页数 <span class="required">*</span></label>
+              <el-input v-model="form.pageCount" size="small" placeholder="正整数" />
+              <span v-if="formErrors.pageCount" class="err">请输入正整数</span>
+            </div>
+            <div class="field">
+              <label>备注</label>
+              <el-input v-model="form.remark" type="textarea" size="small" rows="2" placeholder="可填写材料说明" />
+            </div>
+          </div>
+
+          <!-- 关键信息核验 -->
+          <div class="cls-section">
+            <h4>关键信息核验</h4>
+            <div class="verify-legend">
+              <span class="v-ok">● 一致</span>
+              <span class="v-warn">● 不一致</span>
+              <span class="v-empty">● 未识别到</span>
+            </div>
+            <div class="verify-row"><span class="vk">姓名</span><span :class="['vv', verifyCls(verify.name)]">{{ verify.name }}</span></div>
+            <div class="verify-row"><span class="vk">身份证号</span><span :class="['vv', verifyCls(verify.idCard)]">{{ verify.idCard }}</span></div>
+            <div class="verify-row"><span class="vk">材料年度</span><span :class="['vv', verifyCls(verify.year)]">{{ verify.year }}</span></div>
+          </div>
         </div>
 
-        <!-- 材料信息表单 -->
-        <div class="cls-section">
-          <h4>材料信息（可编辑）</h4>
-          <div class="field">
-            <label>材料名称 <span class="required">*</span></label>
-            <el-input v-model="form.materialName" size="small" placeholder="如 干部履历表" />
-            <span v-if="formErrors.materialName" class="err">请填写材料名称</span>
+        <div class="cls-footer" v-if="selected">
+          <div class="action-row">
+            <template v-if="selected.status === 'confirmed'">
+              <el-button class="done-btn" disabled>已归类</el-button>
+            </template>
+            <template v-else-if="selected.status === 'returned'">
+              <el-button type="danger" plain size="small" @click="handleDelete">删除</el-button>
+              <el-button class="returned-btn" disabled>已退回</el-button>
+            </template>
+            <template v-else>
+              <el-button type="danger" plain size="small" :disabled="retrying" @click="handleDelete">删除</el-button>
+              <el-button size="small" :disabled="retrying" @click="toggleReturn">退回重传</el-button>
+              <el-button size="small" :loading="retrying" :disabled="!selected.ossKey" @click="handleRetryAi">重新识别</el-button>
+              <el-button type="primary" size="small" :disabled="retrying" @click="handleConfirm">确认归类</el-button>
+            </template>
           </div>
-          <div class="field">
-            <label>归入类目 <span class="required">*</span> <span class="ai-tag">AI</span></label>
-            <el-select v-model="form.categoryCode" size="small" style="width:100%" placeholder="选择类目">
-              <el-option v-for="c in categories" :key="c.value" :label="c.label" :value="c.value" :disabled="c.disabled" />
-            </el-select>
-            <span v-if="formErrors.categoryCode" class="err">请选择归入类目</span>
-          </div>
-          <div class="field">
-            <label>材料顺序 <span class="required">*</span></label>
-            <el-input v-model="form.pageNo" size="small" placeholder="正整数" />
-            <span v-if="formErrors.pageNo" class="err">请输入正整数</span>
-          </div>
-          <div class="field">
-            <label>材料形成日期 <span class="required">*</span></label>
-            <el-date-picker v-model="form.formDate" type="date" value-format="YYYY-MM-DD" size="small" style="width:100%" />
-            <span v-if="formErrors.formDate" class="err">请选择形成日期</span>
-          </div>
-          <div class="field">
-            <label>材料页数 <span class="required">*</span></label>
-            <el-input v-model="form.pageCount" size="small" placeholder="正整数" />
-            <span v-if="formErrors.pageCount" class="err">请输入正整数</span>
-          </div>
-          <div class="field">
-            <label>备注</label>
-            <el-input v-model="form.remark" type="textarea" size="small" rows="2" placeholder="可填写材料说明" />
-          </div>
-        </div>
-
-        <!-- 关键信息核验 -->
-        <div class="cls-section">
-          <h4>关键信息核验</h4>
-          <div class="verify-legend">
-            <span class="v-ok">● 一致</span>
-            <span class="v-warn">● 不一致</span>
-            <span class="v-empty">● 未识别到</span>
-          </div>
-          <div class="verify-row"><span class="vk">姓名</span><span :class="verifyCls(verify.name)">{{ verify.name }}</span></div>
-          <div class="verify-row"><span class="vk">身份证号</span><span :class="verifyCls(verify.idCard)">{{ verify.idCard }}</span></div>
-          <div class="verify-row"><span class="vk">材料年度</span><span :class="verifyCls(verify.year)">{{ verify.year }}</span></div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <div class="action-row" v-if="selected">
-          <!-- confirmed -->
-          <template v-if="selected.status === 'confirmed'">
-            <el-button class="done-btn" disabled>已归类</el-button>
-          </template>
-          <!-- returned -->
-          <template v-else-if="selected.status === 'returned'">
-            <el-button type="danger" plain size="small" @click="handleDelete">删除</el-button>
-            <el-button class="returned-btn" disabled>已退回</el-button>
-          </template>
-          <!-- pending / ocr_failed：完整操作 -->
-          <template v-else>
-            <el-button type="danger" plain size="small" @click="handleDelete">删除</el-button>
-            <el-button size="small" @click="toggleReturn">退回重传</el-button>
-            <el-button type="primary" size="small" @click="handleConfirm">确认归类</el-button>
-          </template>
-        </div>
-
-        <!-- 退回表单 -->
-        <div ref="returnFormRef" v-if="showReturn && selected?.status !== 'confirmed'" class="return-form">
-          <el-input v-model="returnReason" type="textarea" size="small" rows="2" placeholder="请填写退回原因，如：图像模糊、非本人材料等" />
-          <div class="return-actions">
-            <el-button size="small" @click="showReturn = false">取消</el-button>
-            <el-button type="primary" size="small" @click="handleReturn">确认退回</el-button>
+          <div ref="returnFormRef" v-if="showReturn && selected?.status !== 'confirmed'" class="return-form">
+            <el-input v-model="returnReason" type="textarea" size="small" rows="2" placeholder="请填写退回原因，如：图像模糊、非本人材料等" />
+            <div class="return-actions">
+              <el-button size="small" @click="showReturn = false">取消</el-button>
+              <el-button type="primary" size="small" @click="handleReturn">确认退回</el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -201,7 +208,8 @@
 <script setup>
 import { ref, reactive, computed, watch, onBeforeUnmount, onMounted, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getPresignedUrl, listCategories } from '@/api/hrams/checking';
+import { Folder, Tickets, Back, Document, Picture, View, WarningFilled } from '@element-plus/icons-vue';
+import { getPresignedUrl, listCategories, retryMaterialAi, getNextPageNo } from '@/api/hrams/checking';
 
 const props = defineProps({
   batch: { type: Object, required: true }
@@ -338,6 +346,28 @@ function retryPreview() {
   if (selected.value) selectItem(selectedIdx.value);
 }
 
+async function handleRetryAi() {
+  const item = selected.value;
+  if (!item?.id) return;
+  if (!item.ossKey) {
+    ElMessage.warning('文件未入库，请重新上传');
+    return;
+  }
+  retrying.value = true;
+  try {
+    const updated = await retryMaterialAi(item);
+    Object.assign(item, updated);
+    fillForm(item);
+    ElMessage.success('识别完成，请核对后确认归类');
+  } catch (e) {
+    item.status = 'ocr_failed';
+    item.remark = e.message || '识别失败';
+    ElMessage.error(e.message || '识别失败');
+  } finally {
+    retrying.value = false;
+  }
+}
+
 onBeforeUnmount(() => {
   clearPreviewTimer();
 });
@@ -411,15 +441,65 @@ function parseFieldsFromResult(resultStr) {
 }
 
 let lastSelectedOssKey = null;
+const retrying = ref(false);
+const pageNoManual = ref(false);
+const lastAutoPageNo = ref('');
 
-watch(selected, (item) => {
-  if (!item) return;
+function occupiedPageNos(categoryCode, excludeId) {
+  const used = new Set();
+  items.value.forEach((i) => {
+    if (!categoryCode || i.id === excludeId || i.status === 'returned') return;
+    const cat = i.categoryCode || '';
+    if (cat !== categoryCode) return;
+    const n = parseInt(i.pageNo || i.itemNo, 10);
+    if (n > 0) used.add(n);
+  });
+  return used;
+}
+
+function pickFreePageNo(start, used) {
+  let n = Math.max(1, start || 1);
+  while (used.has(n)) n += 1;
+  return n;
+}
+
+async function suggestPageNo(force = false) {
+  const item = selected.value;
+  const categoryCode = form.categoryCode;
+  if (!item || !categoryCode) return;
+  if (!force && pageNoManual.value) return;
+  const personId = props.batch.personId;
+  let start = 1;
+  if (personId) {
+    try {
+      const res = await getNextPageNo(personId, categoryCode);
+      start = Number(res.data?.data ?? res.data) || 1;
+    } catch (e) {
+      console.error('获取材料顺序失败', e);
+    }
+  }
+  const n = pickFreePageNo(start, occupiedPageNos(categoryCode, item.id));
+  form.pageNo = String(n);
+  lastAutoPageNo.value = String(n);
+  pageNoManual.value = false;
+  item.pageNo = n;
+  item.categoryCode = categoryCode;
+}
+
+function onPageNoInput() {
+  pageNoManual.value = String(form.pageNo) !== lastAutoPageNo.value;
+}
+
+function onCategoryChange() {
+  pageNoManual.value = false;
+  suggestPageNo(true);
+}
+
+function fillForm(item) {
   const df = item.difyResult || '';
   const parsed = parseFieldsFromResult(df);
   form.materialName = item.materialName || (item.originalFileName || item.fileName)?.replace(/\.[^.]+$/, '') || '';
-  // 优先使用后端匹配的分类编码，其次用 materialType 文本
   form.categoryCode = item.categoryCode || item.materialType || parsed.materialType || '';
-  form.pageNo = item.pageNo || '';
   form.formDate = item.formDate || parsed.materialTime || '';
   form.pageCount = item.pageCount || '1';
   form.remark = (item.status === 'ocr_failed') ? '' : (item.remark || '');
@@ -430,6 +510,21 @@ watch(selected, (item) => {
   formErrors.pageCount = false;
   showReturn.value = false;
   returnReason.value = '';
+  if (item.pageNo) {
+    form.pageNo = String(item.pageNo);
+    lastAutoPageNo.value = '';
+    pageNoManual.value = true;
+  } else {
+    form.pageNo = '';
+    lastAutoPageNo.value = '';
+    pageNoManual.value = false;
+    suggestPageNo();
+  }
+}
+
+watch(selected, (item) => {
+  if (!item) return;
+  fillForm(item);
 
   // 选中项身份变化时（如确认后自动跳到下一条），刷新预览
   if (item.ossKey && item.ossKey !== lastSelectedOssKey) {
@@ -686,7 +781,8 @@ function statusDot(item) {
 .person-avatar { width: 36px; height: 36px; border-radius: 50%; background: #2c6e9e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; }
 .person-info { display: flex; flex-direction: column; }
 .p-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
-.archive-badge { font-size: 11px; font-weight: 400; color: #57677a; background: #eef2f6; padding: 2px 8px; border-radius: 4px; }
+.archive-badge { font-size: 11px; font-weight: 400; color: #57677a; background: #eef2f6; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+.btn-icon { margin-right: 6px; }
 .p-sub { font-size: 12px; color: #909399; }
 .strip-actions { margin-left: auto; }
 
@@ -747,13 +843,15 @@ function statusDot(item) {
 .ocr-overlay-title { font-size: 12px; font-weight: 600; color: #57677a; }
 .ocr-overlay-body { flex: 1; margin: 0; padding: 10px 12px; font-size: 11px; line-height: 1.6; color: #1f2d3d; white-space: pre-wrap; overflow-y: auto; font-family: inherit; }
 
-/* 右栏 */
-.col-classify { width: 300px; flex-shrink: 0; overflow-y: auto; background: #f9fbfe; }
-.cls-section { padding: 12px 14px; border-bottom: 1px solid #e6edf4; background: #fff; }
-.cls-section h4 { margin: 0 0 10px; font-size: 12px; color: #57677a; text-transform: uppercase; font-weight: 500; letter-spacing: .3px; }
+/* 右栏：表单可滚，操作条固定，禁止横向滚动 */
+.col-classify { width: 380px; flex-shrink: 0; overflow: hidden; background: #f9fbfe; min-width: 0; }
+.cls-body { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.cls-footer { flex-shrink: 0; background: #fff; border-top: 1px solid #e6edf4; }
+.cls-section { padding: 14px 16px; border-bottom: 1px solid #e6edf4; background: #fff; }
+.cls-section h4 { margin: 0 0 10px; font-size: 12px; color: #57677a; font-weight: 500; letter-spacing: .3px; }
 .issue-section { background: #fef5f5; }
 .warn-banner { background: #f4e4e1; border: 1px solid #e3c4c0; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #9c3b34; display: flex; gap: 6px; align-items: flex-start; }
-.return-banner { background: #f6ead4; border: 1px solid #ead9af; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #8a631e; }
+.return-banner { background: #f6ead4; border: 1px solid #ead9af; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #8a631e; word-break: break-word; }
 
 .field { margin-bottom: 10px; }
 .field label { display: block; font-size: 12px; color: #57677a; margin-bottom: 3px; }
@@ -761,18 +859,19 @@ function statusDot(item) {
 .ai-tag { font-size: 10px; padding: 1px 7px; border-radius: 8px; background: #ecf5fc; color: #2c6e9e; margin-left: 4px; }
 .err { font-size: 11px; color: #9c3b34; margin-top: 3px; }
 
-.verify-legend { font-size: 11px; color: #57677a; margin-bottom: 8px; display: flex; gap: 14px; }
+.verify-legend { font-size: 11px; color: #57677a; margin-bottom: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
 .v-ok { color: #3e7a5c; }
 .v-warn { color: #9c3b34; }
 .v-empty { color: #a6a99e; }
-.verify-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed #e7e7e0; }
-.vk { color: #57677a; }
+.verify-row { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #e7e7e0; }
+.vk { color: #57677a; flex-shrink: 0; width: 64px; line-height: 1.5; }
+.vv { flex: 1; min-width: 0; word-break: break-word; white-space: normal; line-height: 1.5; }
 
-.action-row { display: flex; gap: 8px; padding: 12px 14px; background: #fff; border-top: 1px solid #e6edf4; }
-.action-row .el-button { flex: 1; }
+.action-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+.action-row .el-button { flex: 1 1 auto; min-width: 0; }
 .done-btn { flex: 1; background: #3e7a5c; color: #fff; border: none; border-radius: 20px; cursor: default; }
 .returned-btn { flex: 1; background: #b4791f; color: #fff; border: none; border-radius: 20px; cursor: default; }
 
-.return-form { padding: 0 14px 12px; background: #fff; }
+.return-form { padding: 0 16px 12px; background: #fff; }
 .return-actions { display: flex; gap: 8px; margin-top: 8px; }
 </style>

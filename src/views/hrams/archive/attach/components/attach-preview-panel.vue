@@ -2,6 +2,11 @@
   <div>
     <div v-if="personSummaries.length" class="hrams-v2-card person-summary-card">
       <div class="upload-title">人员校验汇总</div>
+      <div class="person-stat-line">
+        选中 {{ selectedPersonCount }} 人 · 文件夹匹配 {{ personSummaries.length }} 人 ·
+        <span class="stat-ok">可挂接 {{ attachablePersonCount }} 人</span> ·
+        <span class="stat-fail">校验不通过 {{ failedPersonCount }} 人</span>
+      </div>
       <div v-for="p in personSummaries" :key="p.personId" class="person-summary-row">
         <span>{{ p.label }}</span>
         <el-tag :type="p.attachable && !p.cancelled ? 'success' : 'danger'" size="small">
@@ -24,15 +29,32 @@
       </div>
       <el-row :gutter="16">
         <el-col :span="8">
-          <div class="tree-title">目录树预览</div>
+          <div class="tree-toolbar">
+            <div class="tree-title">目录树预览</div>
+            <el-button-group>
+              <el-button size="small" @click="expandAll">全部展开</el-button>
+              <el-button size="small" @click="collapseAll">全部收起</el-button>
+            </el-button-group>
+          </div>
           <el-tree
+            ref="treeRef"
             :data="sortedPreviewTree"
             node-key="id"
-            default-expand-all
             highlight-current
             :props="{ label: 'label', children: 'children' }"
             @node-click="onTreeNodeClick"
-          />
+          >
+            <template #default="{ data }">
+              <span
+                :class="{
+                  'person-tree-node': data.nodeType === 'person' && personSummaries.length > 10,
+                  'person-tree-node-error': data.nodeType === 'person' && data.hasError
+                }"
+              >
+                {{ data.label }}
+              </span>
+            </template>
+          </el-tree>
         </el-col>
         <el-col :span="16">
           <el-table ref="tableRef" :data="visiblePreviewRows" border max-height="480" :row-class-name="tableRowClass">
@@ -69,7 +91,7 @@
 </template>
 
 <script setup>
-  import { computed, ref, nextTick } from 'vue';
+  import { computed, ref, nextTick, watch } from 'vue';
 
   const props = defineProps({
     personSummaries: { type: Array, default: () => [] },
@@ -89,6 +111,14 @@
   defineEmits(['confirm', 'cancel-person', 'restore-person', 'remove-row']);
 
   const tableRef = ref(null);
+  const treeRef = ref(null);
+
+  const attachablePersonCount = computed(
+    () => props.personSummaries.filter((p) => p.attachable && !p.cancelled).length
+  );
+  const failedPersonCount = computed(
+    () => props.personSummaries.filter((p) => !p.attachable).length
+  );
 
   const sortCategoryChildren = (nodes) => {
     if (!nodes || !nodes.length) return nodes;
@@ -105,6 +135,48 @@
       children: sortCategoryChildren(person.children)
     }));
   });
+
+  const visitTreeNodes = (nodes, handler) => {
+    nodes.forEach((node) => {
+      handler(node);
+      if (node.childNodes?.length) {
+        visitTreeNodes(node.childNodes, handler);
+      }
+    });
+  };
+
+  const getRootNodes = () => treeRef.value?.store?.root?.childNodes || [];
+
+  const expandAll = () => {
+    visitTreeNodes(getRootNodes(), (node) => {
+      node.expanded = true;
+    });
+  };
+
+  const collapseAll = () => {
+    visitTreeNodes(getRootNodes(), (node) => {
+      node.expanded = false;
+    });
+  };
+
+  const applyAdaptiveExpansion = async () => {
+    await nextTick();
+    const roots = getRootNodes();
+    collapseAll();
+    if (props.personSummaries.length <= 3) {
+      expandAll();
+    } else if (props.personSummaries.length <= 10) {
+      roots.forEach((node) => {
+        node.expanded = true;
+      });
+    }
+  };
+
+  watch(
+    () => props.previewTree,
+    () => applyAdaptiveExpansion(),
+    { deep: true, immediate: true, flush: 'post' }
+  );
 
   const tableRowClass = ({ row }) => {
     return highlightRowIndex.value === row.index ? 'attach-highlight-row' : '';
@@ -138,6 +210,13 @@
 <style scoped>
   .person-summary-card,
   .result-card { padding: 22px 24px; margin-bottom: 24px; }
+  .person-stat-line {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #6c7e97;
+  }
+  .person-stat-line .stat-ok { color: #67c23a; }
+  .person-stat-line .stat-fail { color: #f56c6c; }
   .person-summary-row {
     display: flex;
     align-items: center;
@@ -153,6 +232,14 @@
     justify-content: space-between;
     margin-bottom: 18px;
   }
-  .tree-title { margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+  .tree-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .tree-title { font-size: 14px; font-weight: 600; }
+  .person-tree-node { font-weight: 600; }
+  .person-tree-node-error { color: #f56c6c; }
   :deep(.attach-highlight-row) { background: #fdf6ec !important; }
 </style>

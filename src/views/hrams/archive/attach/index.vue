@@ -186,12 +186,17 @@
         const node = {
           id: `p-${pid}`,
           label: r.personName ? `${r.archiveNo || ''} ${r.personName}` : '未识别人员',
+          nodeType: 'person',
+          hasError: false,
           children: []
         };
         personMap.set(pid, node);
         roots.push(node);
       }
       const personNode = personMap.get(pid);
+      if (r.status !== 'pass' && r.status !== 'catalog') {
+        personNode.hasError = true;
+      }
       const fileNode = {
         id: `f-${r.index}-${r.relativePath || r.fileName}`,
         label: `${r.fileName || '—'} [${r.statusText || r.status}]`,
