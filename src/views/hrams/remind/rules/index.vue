@@ -1,7 +1,7 @@
 <template>
-  <ele-page hide-footer>
+  <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-card" style="padding: 16px 20px">
+      <div class="hrams-v2-card hrams-v2-table-card">
         <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:remind:list'" @click="scan">立即扫描</el-button>
         </div>
@@ -13,7 +13,7 @@
           <el-table-column prop="status" label="启用" width="80">
             <template #default="{ row }">{{ row.status === '0' ? '是' : '否' }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" v-permission="'hrams:remind:list'" @click="openEdit(row)">编辑</el-button>
             </template>

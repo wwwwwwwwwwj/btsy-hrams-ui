@@ -72,7 +72,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="message" label="问题说明" min-width="160" show-overflow-tooltip />
-            <el-table-column label="操作" width="140">
+            <el-table-column label="操作" width="140" fixed="right">
               <template #default="{ row }">
                 <template v-if="canDeleteRow(row)">
                   <template v-if="deletingIndex === row.index">

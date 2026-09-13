@@ -1,7 +1,7 @@
 <template>
-  <ele-page hide-footer>
+  <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-card" style="padding: 16px 20px">
+      <div class="hrams-v2-card hrams-v2-table-card">
         <el-table :data="records">
           <el-table-column prop="remindType" label="类型" width="120">
             <template #default="{ row }">{{ typeLabel(row.remindType) }}</template>

@@ -1,7 +1,7 @@
 <template>
-  <ele-page hide-footer>
+  <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-card" style="padding: 16px 20px">
+      <div class="hrams-v2-card hrams-v2-table-card">
         <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:backup:create'" @click="doCreate">立即备份</el-button>
         </div>
@@ -19,7 +19,7 @@
             <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
           </el-table-column>
           <el-table-column prop="filePath" label="路径" min-width="220" show-overflow-tooltip />
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="row.status === 'success'"

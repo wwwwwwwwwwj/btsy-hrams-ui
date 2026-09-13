@@ -1,8 +1,32 @@
-.hrams-v2-page {
+@use 'ele-admin-plus/es/style/util.scss' as *;
+@use 'ele-admin-plus/es/ele-pro-table/style/css-var.scss' as *;
+
+.hrams-v2-page,
+.material-person-pick,
+.material-maintain,
+.utilize-records {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
   min-height: 0;
   padding: 0;
   background: transparent;
   color: #1f2d3d;
+}
+
+.ele-page.is-flex-auto-table > .hrams-v2-page {
+  overflow: hidden;
+  padding-bottom: var(--ele-page-padding, 16px);
+  box-sizing: border-box;
+}
+
+.ele-page.is-flex-auto-table > .hrams-v2-page.review-page {
+  padding-bottom: 0;
+}
+
+.hrams-v2-page > .material-person-pick,
+.hrams-v2-page > .material-maintain {
+  overflow: hidden;
 }
 
 .hrams-v2-header {
@@ -32,11 +56,11 @@
 }
 
 .hrams-v2-filter {
+  flex-shrink: 0;
   padding: 16px 20px;
   margin-bottom: 24px;
 }
 
-/* 列表页：筛选区 + 表格区合并为一张主卡片 */
 .hrams-v2-page > .hrams-v2-card.hrams-v2-filter,
 .material-person-pick > .hrams-v2-card.hrams-v2-filter,
 .material-maintain > .hrams-v2-card.hrams-v2-filter,
@@ -59,20 +83,82 @@
 }
 
 .hrams-v2-table-card {
-  padding: 12px 20px 20px;
-  overflow: hidden;
+  flex: auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 20px 12px;
+  box-sizing: border-box;
 
-  :deep(.ele-pro-table) {
-    border-radius: 12px;
-    overflow: hidden;
+  > .ele-pro-table {
+    width: 100%;
+    min-width: 0;
   }
 
-  :deep(.ele-toolbar.is-plain) {
+  > .ele-pro-table > .ele-pro-table-footer {
+    flex-shrink: 0;
+  }
+
+  > .ele-toolbar.is-plain,
+  > .ele-pro-table > .ele-toolbar.is-plain {
     margin: 0 0 4px;
   }
 
-  :deep(.ele-toolbar .ele-toolbar-tools) {
-    padding-right: 2px;
+  > .hrams-v2-card-toolbar,
+  > .el-button {
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  > .el-table {
+    flex: 1 0 148px;
+    height: 148px;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+.hrams-v2-table-card:not(.material-workspace) {
+  @include flex-auto-pro-table();
+}
+
+.hrams-v2-table-card.material-workspace {
+  overflow: hidden;
+
+  > .el-row {
+    flex: auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .material-tree-col,
+  .material-table-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+
+  .category-tree {
+    flex: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+  }
+
+  .summary {
+    flex-shrink: 0;
+  }
+
+  .material-table-col > .el-table {
+    flex: 1 0 148px;
+    height: 148px;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 }
 
@@ -100,39 +186,56 @@
   margin-bottom: 12px;
 }
 
-.hrams-v2-primary,
-.hrams-v2-page :deep(.el-button--primary) {
-  border-color: #2c6e9e;
-  background: #2c6e9e;
-}
-
-.hrams-v2-page :deep(.el-button) {
-  border-radius: 30px;
-}
-
-.hrams-v2-page :deep(.el-input__wrapper),
-.hrams-v2-page :deep(.el-select__wrapper),
-.hrams-v2-page :deep(.el-date-editor.el-input__wrapper),
-.hrams-v2-page :deep(.el-textarea__inner) {
-  border-radius: 12px;
-}
-
-.hrams-v2-page :deep(.el-card),
-.hrams-v2-page :deep(.ele-card) {
-  border-radius: 24px;
-}
-
-.hrams-v2-page :deep(.hrams-v2-table-card .el-table) {
-  border-radius: 12px;
-}
-
-.hrams-v2-page :deep(.el-table th.el-table__cell) {
+.hrams-v2-page .el-table th.el-table__cell {
   background: #f9fbfe;
   color: #1f2d3d;
   font-weight: 600;
 }
 
-.hrams-v2-page :deep(.el-dialog),
-.hrams-v2-page :deep(.el-drawer) {
-  border-radius: 24px;
+.hrams-v2-page > .el-tabs {
+  flex-shrink: 0;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs {
+  flex: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs > .el-tabs__header {
+  flex-shrink: 0;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs > .el-tabs__content {
+  flex: auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs > .el-tabs__content > .el-tab-pane {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs > .el-tabs__content > .el-tab-pane:has(> .hrams-v2-card) {
+  overflow: auto;
+}
+
+.hrams-v2-page.utilize-page > .el-tabs > .el-tabs__content > .el-tab-pane > .hrams-v2-card {
+  padding: 20px 24px;
+}
+
+.hrams-v2-page.utilize-page .utilize-records {
+  flex: auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }

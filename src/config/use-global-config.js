@@ -21,7 +21,7 @@ export function useGlobalConfig() {
     },
     tools: ['reload', 'export', 'print', 'size', 'columns', 'maximized'],
     pagination: {
-      pageSize: 20
+      pageSize: 10
     },
     exportConfig: {
       // 使用 exceljs 进行导出

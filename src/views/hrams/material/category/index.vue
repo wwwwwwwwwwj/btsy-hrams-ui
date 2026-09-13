@@ -1,7 +1,7 @@
 <template>
-  <ele-page hide-footer>
+  <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
-      <div class="hrams-v2-card" style="padding: 16px 20px">
+      <div class="hrams-v2-card hrams-v2-table-card">
         <div class="hrams-v2-card-toolbar">
           <el-button type="primary" v-permission="'hrams:category:config'" @click="save">保存</el-button>
         </div>
