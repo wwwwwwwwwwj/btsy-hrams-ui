@@ -7,30 +7,61 @@
         <el-tag v-if="ftData" :type="ftData.esEnabled ? 'success' : 'info'">
           {{ ftData.esEnabled ? 'ES 已启用' : 'Tika+库内正文' }}
         </el-tag>
+        <span v-if="ftData" class="ft-count">{{ cards.length }} 条</span>
       </div>
-      <div v-if="ftData" class="ft-panels hrams-v2-card">
-        <div class="ft-panel">
-          <div class="panel-title">1. 人员及大类汇总</div>
-          <div v-for="(p, idx) in ftData.personSummaries" :key="idx" :class="['ft-item', ftPersonIdx === idx ? 'active' : '']" @click="selectPerson(idx)">
-            档案编号 {{ p.archiveNo }} {{ p.personName }} — {{ p.total }} 条
-            <el-button v-if="ftPersonIdx === idx" link type="primary" size="small" @click.stop="expandCategories">更多</el-button>
-          </div>
+
+      <div v-if="personChips.length > 1 || categoryChips.length > 1" class="hrams-v2-card ft-filters">
+        <div v-if="personChips.length > 1" class="ft-filter-row">
+          <span class="ft-filter-label">人员</span>
+          <el-tag
+            :type="ftPersonIdx == null ? 'primary' : 'info'"
+            effect="plain"
+            class="ft-chip"
+            @click="ftPersonIdx = null"
+          >全部</el-tag>
+          <el-tag
+            v-for="p in personChips"
+            :key="p.personIndex"
+            :type="ftPersonIdx === p.personIndex ? 'primary' : 'info'"
+            effect="plain"
+            class="ft-chip"
+            @click="ftPersonIdx = p.personIndex"
+          >{{ p.personName }} {{ p.total }}</el-tag>
         </div>
-        <div v-show="ftPersonIdx != null" class="ft-panel">
-          <div class="panel-title">2. 匹配大类</div>
-          <div v-if="!ftCategories.length" class="empty">该人员无匹配大类</div>
-          <div v-for="c in ftCategories" :key="c.categoryCode" :class="['ft-item', ftCat === c.categoryCode ? 'active' : '']" @click="selectCategory(c.categoryCode)">
-            {{ c.categoryName }} ({{ c.count }})
-          </div>
+        <div v-if="categoryChips.length > 1" class="ft-filter-row">
+          <span class="ft-filter-label">大类</span>
+          <el-tag
+            :type="!ftCat ? 'primary' : 'info'"
+            effect="plain"
+            class="ft-chip"
+            @click="ftCat = ''"
+          >全部</el-tag>
+          <el-tag
+            v-for="c in categoryChips"
+            :key="c.categoryCode"
+            :type="ftCat === c.categoryCode ? 'primary' : 'info'"
+            effect="plain"
+            class="ft-chip"
+            @click="ftCat = c.categoryCode"
+          >{{ c.categoryName }} {{ c.count }}</el-tag>
         </div>
-        <div v-show="ftCat" class="ft-panel">
-          <div class="panel-title">3. 匹配内容</div>
-          <div v-for="(s, i) in ftSnippets" :key="i" class="snippet">
-            <span class="snippet-text" v-html="snippetHtml(s)" />
-            <el-button v-if="s.materialId" link type="primary" @click="previewMaterial(s.materialId)">查看详情</el-button>
+      </div>
+
+      <div v-if="ftData" class="ft-list">
+        <div v-if="!cards.length" class="hrams-v2-card empty">暂无检索结果</div>
+        <article v-for="(card, i) in cards" :key="card.key || i" class="hrams-v2-card ft-hit">
+          <div class="ft-hit-head">
+            <div class="ft-person">
+              {{ card.personName || '未知人员' }}
+              <span v-if="card.archiveNo" class="ft-archive">档号 {{ card.archiveNo }}</span>
+            </div>
+            <div class="ft-category">{{ card.categoryName || '未分类' }}</div>
           </div>
-          <div v-if="!ftSnippets.length" class="empty">请选择左侧人员与大类</div>
-        </div>
+          <div class="ft-snippet" v-html="snippetHtml(card)" />
+          <div class="ft-hit-foot">
+            <el-button v-if="card.materialId" link type="primary" @click="previewMaterial(card.materialId)">查看详情</el-button>
+          </div>
+        </article>
       </div>
     </div>
   </ele-page>
@@ -48,28 +79,59 @@
   defineOptions({ name: 'HramsQueryFulltext' });
   const route = useRoute();
   const keyword = ref('');
-  const ftHint = ref('');
   const ftData = ref(null);
   const ftPersonIdx = ref(null);
-  const ftCat = ref(null);
+  const ftCat = ref('');
   const loading = ref(false);
 
-  const ftCategories = computed(() => {
-    if (ftPersonIdx.value == null || !ftData.value?.personSummaries?.length) return [];
-    return ftData.value.personSummaries[ftPersonIdx.value].categories || [];
+  const personChips = computed(() => ftData.value?.personSummaries || []);
+
+  const categoryChips = computed(() => {
+    const people = personChips.value;
+    const source = ftPersonIdx.value == null
+      ? people
+      : people.filter((p) => p.personIndex === ftPersonIdx.value);
+    const map = new Map();
+    source.forEach((p) => {
+      (p.categories || []).forEach((c) => {
+        const prev = map.get(c.categoryCode);
+        map.set(c.categoryCode, {
+          categoryCode: c.categoryCode,
+          categoryName: c.categoryName || c.categoryCode,
+          count: (prev?.count || 0) + (c.count || 0)
+        });
+      });
+    });
+    return [...map.values()];
   });
 
-  const ftSnippets = computed(() => {
-    if (!ftData.value?.snippets) return [];
-    return ftData.value.snippets.filter((s) => {
-      if (ftPersonIdx.value != null && s.personIndex !== ftPersonIdx.value) return false;
-      if (ftCat.value && s.categoryCode !== ftCat.value) return false;
+  const cards = computed(() => {
+    const data = ftData.value;
+    if (!data?.snippets?.length) return [];
+    const people = data.personSummaries || [];
+    return data.snippets.map((s, i) => {
+      const person = people.find((p) => p.personIndex === s.personIndex) || {};
+      const cat = (person.categories || []).find((c) => c.categoryCode === s.categoryCode);
+      return {
+        key: `${s.personIndex}-${s.materialId || i}`,
+        personIndex: s.personIndex,
+        personName: person.personName,
+        archiveNo: person.archiveNo,
+        categoryCode: s.categoryCode,
+        categoryName: cat?.categoryName || s.categoryCode,
+        materialId: s.materialId,
+        text: s.text
+      };
+    }).filter((card) => {
+      if (ftPersonIdx.value != null && card.personIndex !== ftPersonIdx.value) return false;
+      if (ftCat.value && card.categoryCode !== ftCat.value) return false;
       return true;
     });
   });
 
   const snippetHtml = (s) => {
-    const raw = s.text || '';
+    let raw = s.text || '';
+    raw = raw.replace(/【([^】]+)】/g, '<em>$1</em>');
     if (/<em>|<mark>/i.test(raw)) {
       return sanitizeHighlightHtml(raw);
     }
@@ -80,19 +142,6 @@
     return sanitizeHighlightHtml(highlighted);
   };
 
-  const selectPerson = (idx) => {
-    ftPersonIdx.value = idx;
-    const cats = ftData.value?.personSummaries?.[idx]?.categories || [];
-    ftCat.value = cats.length ? cats[0].categoryCode : null;
-  };
-
-  const expandCategories = () => {
-    const cats = ftCategories.value;
-    if (cats.length && !ftCat.value) ftCat.value = cats[0].categoryCode;
-  };
-
-  const selectCategory = (code) => { ftCat.value = code; };
-
   const doFulltext = async () => {
     if (!keyword.value?.trim()) {
       EleMessage.warning({ message: '请输入关键字', plain: true });
@@ -101,26 +150,22 @@
     loading.value = true;
     try {
       const data = await fulltextSearch(keyword.value);
-      ftHint.value = data.message || '';
       ftData.value = data;
+      ftCat.value = '';
       if (data.personSummaries?.length) {
         const pid = route.query.personId;
         if (pid) {
           const idx = data.personSummaries.findIndex((p) => String(p.personId) === String(pid));
-          if (idx >= 0) {
-            selectPerson(idx);
-          } else {
-            ftPersonIdx.value = null;
-            ftCat.value = null;
+          ftPersonIdx.value = idx >= 0 ? idx : null;
+          if (idx < 0) {
             EleMessage.warning({ message: '未在检索结果中找到指定人员', plain: true });
           }
         } else {
-          selectPerson(0);
+          ftPersonIdx.value = null;
         }
       } else {
         ftPersonIdx.value = null;
-        ftCat.value = null;
-        EleMessage.info({ message: ftHint.value || '暂无检索结果', plain: true });
+        EleMessage.info({ message: data.message || '暂无检索结果', plain: true });
       }
     } catch (e) {
       EleMessage.error({ message: e.message || '检索失败', plain: true });
@@ -147,18 +192,81 @@
     padding: 16px 20px;
     margin-bottom: 16px;
   }
-  .ft-panels {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1.2fr;
-    gap: 12px;
-    min-height: 320px;
-    padding: 16px;
+  .ft-count {
+    margin-left: auto;
+    font-size: 13px;
+    color: #6c7e97;
   }
-  .ft-panel { border: 1px solid #eef2f8; border-radius: 12px; padding: 12px; background: #fff; }
-  .panel-title { font-weight: 600; margin-bottom: 12px; }
-  .ft-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 6px; }
-  .ft-item.active { background: #ecf5fc; color: #1e6f9f; }
-  .snippet { font-size: 13px; line-height: 1.6; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #eee; }
-  .snippet-text :deep(em), .snippet-text :deep(mark) { color: #c0392b; font-weight: 600; font-style: normal; }
-  .empty { color: #999; font-size: 13px; padding: 16px; }
+  .ft-filters {
+    padding: 12px 20px;
+    margin-bottom: 16px;
+  }
+  .ft-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .ft-filter-row + .ft-filter-row {
+    margin-top: 8px;
+  }
+  .ft-filter-label {
+    width: 36px;
+    font-size: 13px;
+    color: #6c7e97;
+  }
+  .ft-chip {
+    cursor: pointer;
+  }
+  .ft-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 16px;
+  }
+  .ft-hit {
+    padding: 16px 20px 12px;
+  }
+  .ft-hit-head {
+    margin-bottom: 10px;
+  }
+  .ft-person {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2d3d;
+  }
+  .ft-archive {
+    margin-left: 10px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6c7e97;
+  }
+  .ft-category {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #3d6f9f;
+  }
+  .ft-snippet {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #3d4f63;
+  }
+  .ft-snippet :deep(em),
+  .ft-snippet :deep(mark) {
+    color: #c0392b;
+    font-weight: 600;
+    font-style: normal;
+  }
+  .ft-hit-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  .empty {
+    color: #999;
+    font-size: 13px;
+    padding: 24px 20px;
+  }
 </style>
