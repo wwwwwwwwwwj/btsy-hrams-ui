@@ -61,6 +61,8 @@ export async function openMaterialPreview(materialId) {
     });
     await checkDownloadRes(res);
     const type = resolvePreviewType(res);
+    const previewSource = String(res.headers?.['x-hrams-preview-source'] || '').toLowerCase();
+    state.title = previewSource === 'source' ? '材料预览（源文件）' : '材料预览';
     objectUrl = URL.createObjectURL(new Blob([res.data], { type }));
     if (/^image\//i.test(type)) {
       state.imageUrls = [objectUrl];

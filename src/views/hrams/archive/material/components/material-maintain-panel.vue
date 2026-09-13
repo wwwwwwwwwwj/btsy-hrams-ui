@@ -74,7 +74,7 @@
             {{ panel.totalPages || 0 }}</div
           >
         </el-col>
-        <el-col :md="17" :sm="24">
+        <el-col :md="17" :sm="24" class="material-table-col">
           <el-table
             :data="materials"
             :row-class-name="rowClass"
@@ -104,7 +104,14 @@
                 formatDateDay(row.formDate)
               }}</template>
             </el-table-column>
-            <el-table-column prop="pageCount" label="页数" width="70" />
+            <el-table-column label="页数" width="90">
+              <template #default="{ row }">
+                <span>{{ row.pageCount }}</span>
+                <el-tooltip v-if="row.pageCountDiff" :content="row.pageCountDiff">
+                  <el-text type="warning" size="small">差</el-text>
+                </el-tooltip>
+              </template>
+            </el-table-column>
             <el-table-column prop="batchNo" label="上传批次" min-width="130" show-overflow-tooltip />
             <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
             <el-table-column prop="createTime" label="上传时间" width="165" />
@@ -130,6 +137,7 @@
 
 <script setup>
   import { formatDateDay } from '@/utils/hrams-date';
+  import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
   import { useRouter } from 'vue-router';
 
   const props = defineProps({
@@ -253,7 +261,6 @@
   }
 
   .category-tree {
-    max-height: calc(100vh - 320px);
     overflow: auto;
     border: 1px solid #eef2f8;
     border-radius: 12px;
@@ -292,10 +299,6 @@
     margin-top: 12px;
     font-size: 13px;
     color: #6c7e97;
-  }
-
-  .material-tree-col {
-    margin-bottom: 12px;
   }
 
   :deep(.is-disabled) {
