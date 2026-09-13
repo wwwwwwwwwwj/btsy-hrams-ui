@@ -14,8 +14,18 @@
             style="width: 260px"
           />
         </el-form-item>
+        <el-form-item v-if="mode === 'ledger'" label="利用方式">
+          <el-select v-model="where.utilizeType" clearable placeholder="全部" style="width: 140px">
+            <el-option label="电子查阅" value="electronic" />
+            <el-option label="纸质外借" value="paper" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="where.status" clearable placeholder="全部" style="width: 140px">
+            <el-option label="审批中" value="applying" />
+            <el-option label="已授权" value="authorized" />
+            <el-option label="已撤权" value="revoked" />
+            <el-option label="授权到期" value="expired" />
             <el-option label="借阅中" value="borrowing" />
             <el-option label="逾期未还" value="overdue" />
             <el-option label="已归还" value="returned" />
@@ -30,15 +40,20 @@
     </div>
     <div class="hrams-v2-card hrams-v2-table-card">
       <ele-pro-table ref="tableRef" row-key="id" :columns="columns" :datasource="datasource">
+      <template #utilizeType="{ row }">{{ row.utilizeType === 'electronic' ? '电子查阅' : '纸质外借' }}</template>
       <template #borrowScope="{ row }">{{ borrowScopeLabel(row) }}</template>
+      <template #approveStatus="{ row }">{{ approveLabel(row.approveStatus) }}</template>
       <template #status="{ row }"><el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
       <template #attach="{ row }">
         <el-button v-if="row.ossId" link type="primary" @click="previewAttach(row)">查看附件</el-button>
         <span v-else>-</span>
       </template>
       <template #action="{ row }">
-        <el-button v-if="row.status !== 'returned'" link type="primary" v-permission="'hrams:borrow:return'" @click="openReturn(row)">归还</el-button>
-        <el-button v-if="row.status === 'returned'" link type="danger" v-permission="'hrams:borrow:remove'" @click="handleDelete(row)">删除</el-button>
+        <el-button v-if="mode === 'approve' && row.approveStatus === 'pending'" link type="primary" v-permission="'hrams:borrow:approve'" @click="doApprove(row, true)">通过</el-button>
+        <el-button v-if="mode === 'approve' && row.approveStatus === 'pending'" link type="danger" v-permission="'hrams:borrow:approve'" @click="doApprove(row, false)">驳回</el-button>
+        <el-button v-if="mode === 'mine' && row.status === 'authorized'" link type="danger" v-permission="'hrams:borrow:revoke'" @click="doRevoke(row)">撤权</el-button>
+        <el-button v-if="mode === 'paper' && ['borrowing','overdue'].includes(row.status)" link type="primary" v-permission="'hrams:borrow:return'" @click="openReturn(row)">归还</el-button>
+        <el-button v-if="row.status === 'returned' || row.status === 'revoked'" link type="danger" v-permission="'hrams:borrow:remove'" @click="handleDelete(row)">删除</el-button>
       </template>
       </ele-pro-table>
     </div>
@@ -66,8 +81,13 @@
   import { ref } from 'vue';
   import { EleMessage } from 'ele-admin-plus';
 import { ElMessageBox } from 'element-plus';
-  import { pageBorrow, returnBorrow, deleteBorrow, previewBorrowAttachment } from '@/api/hrams/borrow';
+  import { pageBorrow, returnBorrow, deleteBorrow, previewBorrowAttachment, approveBorrow, revokeBorrow } from '@/api/hrams/borrow';
   import { formatLocalDateTime } from '@/utils/hrams-date';
+
+  const props = defineProps({
+    mode: { type: String, default: 'ledger' },
+    fixedQuery: { type: Object, default: () => ({}) }
+  });
 
   const tableRef = ref(null);
   const where = ref({});
@@ -83,13 +103,15 @@ import { ElMessageBox } from 'element-plus';
     { prop: 'borrowTime', label: '借阅时间', minWidth: 160 },
     { prop: 'expectedReturn', label: '预计归还', minWidth: 160 },
     { prop: 'borrower', label: '借阅人', width: 100 },
-    { columnKey: 'borrowScope', label: '调阅范围', width: 100, slot: 'borrowScope' },
+    { columnKey: 'utilizeType', label: '方式', width: 90, slot: 'utilizeType' },
+    { columnKey: 'borrowScope', label: '范围', width: 100, slot: 'borrowScope' },
+    { columnKey: 'approveStatus', label: '审批', width: 80, slot: 'approveStatus' },
     { prop: 'reason', label: '借阅事由', minWidth: 120, showOverflowTooltip: true },
     { prop: 'remark', label: '备注', minWidth: 100, showOverflowTooltip: true },
     { columnKey: 'attach', label: '附件', width: 100, slot: 'attach' },
     { prop: 'returnTime', label: '归还时间', minWidth: 160 },
     { columnKey: 'status', label: '借阅状态', width: 100, slot: 'status' },
-    { columnKey: 'action', label: '操作', width: 90, slot: 'action' }
+    { columnKey: 'action', label: '操作', width: 90, slot: 'action', fixed: 'right' }
   ]);
 
   const borrowScopeLabel = (row) => {
@@ -99,11 +121,28 @@ import { ElMessageBox } from 'element-plus';
     }
     return '整卷';
   };
-  const statusLabel = (s) => ({ borrowing: '借阅中', overdue: '逾期未还', returned: '已归还' }[s] || s);
-  const statusType = (s) => ({ borrowing: 'warning', overdue: 'danger', returned: 'success' }[s] || 'info');
+  const statusLabel = (s) => ({
+    applying: '审批中',
+    authorized: '已授权',
+    revoked: '已撤权',
+    expired: '授权到期',
+    borrowing: '借阅中',
+    overdue: '逾期未还',
+    returned: '已归还'
+  }[s] || s);
+  const approveLabel = (s) => ({ pending: '待审', finish: '通过', back: '驳回', cancel: '撤回', draft: '草稿' }[s] || s);
+  const statusType = (s) => ({
+    borrowing: 'warning',
+    overdue: 'danger',
+    returned: 'success',
+    authorized: 'success',
+    applying: 'info',
+    expired: 'warning',
+    revoked: 'info'
+  }[s] || 'info');
 
   const buildWhere = (w) => {
-    const q = { ...(w || where.value) };
+    const q = { ...props.fixedQuery, ...(w || where.value) };
     if (borrowDateRange.value?.length === 2) {
       q.borrowTimeBegin = `${borrowDateRange.value[0]} 00:00:00`;
       q.borrowTimeEnd = `${borrowDateRange.value[1]} 23:59:59`;
@@ -158,6 +197,26 @@ import { ElMessageBox } from 'element-plus';
         EleMessage.error({ message: e.message || '删除失败', plain: true });
       }
     }).catch(() => {});
+  };
+
+  const doApprove = async (row, pass) => {
+    try {
+      await approveBorrow(row.id, pass, pass ? '同意' : '驳回');
+      EleMessage.success({ message: pass ? '已通过' : '已驳回', plain: true });
+      reloadRecords();
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
+  };
+
+  const doRevoke = async (row) => {
+    try {
+      await revokeBorrow(row.id, '撤权');
+      EleMessage.success({ message: '已撤权', plain: true });
+      reloadRecords();
+    } catch (e) {
+      EleMessage.error({ message: e.message, plain: true });
+    }
   };
 
   const previewAttach = (row) => {

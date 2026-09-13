@@ -31,6 +31,30 @@ export async function registerBorrow(data) {
   return Promise.reject(new Error(res.data.msg));
 }
 
+export async function approveBorrow(id, pass, message) {
+  const res = await request.put(`/hrams/borrow/${id}/approve`, null, { params: { pass, message } });
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function revokeBorrow(id, reason) {
+  const res = await request.put(`/hrams/borrow/${id}/revoke`, null, { params: { reason } });
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function cancelBorrow(id) {
+  const res = await request.put(`/hrams/borrow/${id}/cancel`);
+  if (res.data.code === 200) {
+    return res.data.msg;
+  }
+  return Promise.reject(new Error(res.data.msg));
+}
+
 export async function registerBorrowForm(formData) {
   const res = await request.post('/hrams/borrow/register', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }

@@ -44,10 +44,19 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item label="借阅时间" prop="borrowTime">
+    <el-form-item label="利用方式" prop="utilizeType">
+      <el-radio-group v-model="form.utilizeType">
+        <el-radio value="electronic">电子查阅</el-radio>
+        <el-radio value="paper">纸质外借</el-radio>
+      </el-radio-group>
+    </el-form-item>
+    <el-form-item v-if="form.utilizeType === 'electronic'" label="跨单位">
+      <el-switch v-model="form.crossUnit" active-value="1" inactive-value="0" />
+    </el-form-item>
+    <el-form-item label="申请时间" prop="borrowTime">
       <el-date-picker v-model="form.borrowTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" />
     </el-form-item>
-    <el-form-item label="预计归还" prop="expectedReturn">
+    <el-form-item :label="form.utilizeType === 'electronic' ? '授权到期' : '预计归还'" prop="expectedReturn">
       <el-date-picker v-model="form.expectedReturn" type="date" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" />
     </el-form-item>
     <el-form-item label="借阅人" prop="borrower">
@@ -102,8 +111,9 @@
 
   const rules = {
     archiveNo: [{ required: true, message: '请输入档案编号', trigger: ['blur', 'change'] }],
+    utilizeType: [{ required: true, message: '请选择利用方式', trigger: ['change'] }],
     expectedReturn: [
-      { required: true, message: '请选择预计归还时间', trigger: ['blur', 'change'] },
+      { required: true, message: '请选择到期时间', trigger: ['blur', 'change'] },
       { validator: (_rule, value, callback) => {
           if (value && form.value.borrowTime) {
             const returnDay = String(value).slice(0, 10);
@@ -132,6 +142,8 @@
       archiveNo: '',
       borrowTime: formatLocalDateTime(),
       borrower: nick,
+      utilizeType: 'electronic',
+      crossUnit: '0',
       borrowScope: 'full',
       scopeCategoryCodes: []
     };
@@ -236,7 +248,7 @@
     if (!f.archiveNo?.trim()) return emptyMsg('档案编号');
     if (!f.borrower?.trim()) return emptyMsg('借阅人');
     if (!f.reason?.trim()) return emptyMsg('借阅事由');
-    if (!f.expectedReturn) return emptyMsg('预计归还时间');
+    if (!f.expectedReturn) return emptyMsg(f.utilizeType === 'electronic' ? '授权到期时间' : '预计归还时间');
     if (f.borrowScope === 'partial' && (!f.scopeCategoryCodes || f.scopeCategoryCodes.length === 0)) {
       return EleMessage.warning({ message: '指定大类调阅须选择至少一个大类', plain: true });
     }
@@ -272,7 +284,7 @@
       EleMessage.error({ message: e.message, plain: true });
       return;
     }
-    EleMessage.success({ message: '登记成功', plain: true });
+    EleMessage.success({ message: '已提交审批，通过后才会授权或出袋', plain: true });
     resetForm();
     emit('submitted');
   };
