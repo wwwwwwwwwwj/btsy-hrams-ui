@@ -36,7 +36,7 @@ export async function getPerson(id) {
 export async function addPerson(data) {
   const res = await request.post('/hrams/person', data);
   if (res.data.code === 200) {
-    return res.data.msg;
+    return res.data.data;
   }
   return Promise.reject(new Error(res.data.msg));
 }
@@ -75,6 +75,18 @@ export async function importPerson(file) {
   if (res.data.code === 200) {
     return res.data.data;
   }
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function listPersonCareers(id) {
+  const res = await request.get(`/hrams/person/${id}/careers`);
+  if (res.data.code === 200) return res.data.data || [];
+  return Promise.reject(new Error(res.data.msg));
+}
+
+export async function savePersonCareers(id, careers) {
+  const res = await request.put(`/hrams/person/${id}/careers`, careers);
+  if (res.data.code === 200) return res.data.msg;
   return Promise.reject(new Error(res.data.msg));
 }
 

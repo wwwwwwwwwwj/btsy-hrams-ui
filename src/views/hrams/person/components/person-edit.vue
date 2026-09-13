@@ -253,6 +253,7 @@
               <el-form-item label="工作履历">
                 <el-input v-model="form.careerSummary" type="textarea" :rows="4" maxlength="2000" show-word-limit placeholder="历任单位、职务及任职时间等" />
               </el-form-item>
+              <person-career-table v-model="careers" />
               <el-form-item label="考核奖惩">
                 <el-input v-model="form.assessmentSummary" type="textarea" :rows="3" maxlength="2000" show-word-limit placeholder="年度考核、表彰、处分等" />
               </el-form-item>
@@ -294,7 +295,8 @@
   import DeptSelect from '@/views/system/dept/components/dept-select.vue';
   import { listDept } from '@/api/system/dept';
   import { uploadOss, listOssById } from '@/api/system/oss';
-  import { addPerson, updatePerson, getPerson } from '@/api/hrams/person';
+  import { addPerson, updatePerson, getPerson, listPersonCareers, savePersonCareers } from '@/api/hrams/person';
+  import PersonCareerTable from './person-career-table.vue';
   import { parseIdCardInfo } from '@/utils/hrams-id-card';
   import PersonCustomFields from './person-custom-fields.vue';
 
@@ -306,6 +308,7 @@
   const formRef = ref(null);
   const form = ref({});
   const customFields = ref({});
+  const careers = ref([]);
   const activeTab = ref('basic');
   const selectedDeptId = ref();
   const deptList = ref([]);
@@ -449,6 +452,7 @@
       form.value = { ...p };
       
       customFields.value = { ...(p.customFields || {}) };
+      careers.value = await listPersonCareers(id);
       setSelectedDeptId(p.deptId, { refreshName: false });
       await loadPhoto(p.photoOssId);
       isUpdate.value = true;
@@ -457,6 +461,7 @@
       isUpdate.value = true;
       form.value = { id, personStatus: '在职' };
       customFields.value = {};
+      careers.value = [];
       photoUrl.value = '';
       setSelectedDeptId(undefined);
       EleMessage.error({ message: e.message || '加载人员失败', plain: true });
@@ -476,6 +481,7 @@
     } else {
       form.value = { personStatus: '在职', ...(d || {}) };
       customFields.value = {};
+      careers.value = [];
       photoUrl.value = '';
       setSelectedDeptId(undefined);
       isUpdate.value = false;
@@ -527,8 +533,10 @@
       loading.value = true;
       const payload = { ...form.value, customFields: customFields.value };
       try {
+        let personId = form.value.id;
         if (isUpdate.value) await updatePerson(payload);
-        else await addPerson(payload);
+        else personId = await addPerson(payload);
+        if (personId) await savePersonCareers(personId, careers.value);
         EleMessage.success({ message: '保存成功', plain: true });
         props.onDone?.();
         closeModal();

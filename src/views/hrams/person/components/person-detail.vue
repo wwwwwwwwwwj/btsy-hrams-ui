@@ -85,6 +85,7 @@
               <div class="detail-text-label">工作履历</div>
               <div class="detail-text-body">{{ dash(person.careerSummary) }}</div>
             </div>
+            <person-career-table v-model="careers" disabled />
             <div class="detail-text-block">
               <div class="detail-text-label">考核奖惩</div>
               <div class="detail-text-body">{{ dash(person.assessmentSummary) }}</div>
@@ -127,7 +128,8 @@
 <script setup>
   import { computed, ref, watch } from 'vue';
   import { EleMessage, useModal } from 'ele-admin-plus';
-  import { getPerson, listPersonFieldDefs } from '@/api/hrams/person';
+  import { getPerson, listPersonFieldDefs, listPersonCareers } from '@/api/hrams/person';
+  import PersonCareerTable from './person-career-table.vue';
   import request from '@/utils/request';
   import { formatDateDay } from '@/utils/hrams-date';
 
@@ -138,6 +140,7 @@
   const activeTab = ref('basic');
   const photoUrl = ref('');
   const fieldDefs = ref([]);
+  const careers = ref([]);
 
   const dash = (v) => (v === 0 ? '0' : v ? String(v) : '—');
 
@@ -178,10 +181,12 @@
     activeTab.value = 'basic';
     try {
       person.value = await getPerson(id);
+      careers.value = await listPersonCareers(id);
       await loadPhoto(person.value?.photoOssId);
     } catch (e) {
       EleMessage.error({ message: e.message, plain: true });
       person.value = null;
+      careers.value = [];
     } finally {
       loading.value = false;
     }
@@ -192,6 +197,7 @@
     (id) => {
       if (!id) {
         person.value = null;
+        careers.value = [];
         photoUrl.value = '';
         return;
       }
