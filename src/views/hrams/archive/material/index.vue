@@ -1,5 +1,5 @@
 <template>
-  <ele-page hide-footer :flex-table="personId ? void 0 : 'auto'">
+  <ele-page hide-footer flex-table="auto">
     <div class="hrams-v2-page">
       <material-person-pick
         v-if="!personId"
@@ -44,6 +44,7 @@
             >
               上传材料
             </el-button>
+            <el-button v-if="reviewId" @click="backToReview">返回审核单</el-button>
           </span>
         </template>
       </material-maintain-panel>
@@ -89,18 +90,21 @@
 </template>
 
 <script setup>
-  import { useRouter } from 'vue-router';
+  import { computed } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import MaterialImageEditor from './components/material-image-editor.vue';
   import MaterialPersonPick from './components/material-person-pick.vue';
   import MaterialFormDialogs from './components/material-form-dialogs.vue';
   import MaterialMaintainPanel from './components/material-maintain-panel.vue';
   import { useMaterialMaintain } from './composables/use-material-maintain';
-  import { HRAMS_ARCHIVE_LIST } from '@/utils/hrams-routes';
+  import { HRAMS_SPECIAL_REVIEW } from '@/utils/hrams-routes';
   import '../../styles/v2.scss';
 
   defineOptions({ name: 'HramsArchiveMaterial' });
 
   const router = useRouter();
+  const route = useRoute();
+  const reviewId = computed(() => route.query.reviewId);
 
   const {
     personId,
@@ -160,6 +164,13 @@
     doBatchDelete,
     doDownload
   } = useMaterialMaintain();
+
+  const backToReview = () => {
+    router.push({
+      path: HRAMS_SPECIAL_REVIEW,
+      query: { reviewId: String(reviewId.value), personId: personId.value || '' }
+    });
+  };
 </script>
 
 <style scoped>

@@ -8,6 +8,7 @@ export const HRAMS_MATERIAL_MGMT_PATH = '/archive-material';
 /** 卷内目录与单份材料维护 */
 export const HRAMS_MATERIAL_MAINTAIN_PATH = '/archive-material-maintain';
 export const HRAMS_UTILIZE_REGISTER = '/archive-utilize';
+export const HRAMS_SPECIAL_REVIEW = '/archive-audit';
 export const HRAMS_QUERY_PERSON = '/person-query';
 
 /** 侧栏隐藏入口（挂在 *-group 目录下） */

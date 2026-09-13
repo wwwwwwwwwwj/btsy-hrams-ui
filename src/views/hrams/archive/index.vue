@@ -37,6 +37,11 @@
                   title: '材料维护',
                   permission: 'hrams:archive:material',
                   onClick: () => goMaterialMaintain(row)
+                },
+                {
+                  title: '专项审核',
+                  permission: 'hrams:review:add',
+                  onClick: () => goReview(row)
                 }
               ]"
             />
@@ -59,7 +64,8 @@
   import { formatDateDay } from '@/utils/hrams-date';
   import {
     HRAMS_ARCHIVE_ATTACH,
-    HRAMS_MATERIAL_MAINTAIN_PATH
+    HRAMS_MATERIAL_MAINTAIN_PATH,
+    HRAMS_SPECIAL_REVIEW
   } from '@/utils/hrams-routes';
 
   defineOptions({ name: 'HramsArchive' });
@@ -91,9 +97,10 @@
     {
       columnKey: 'action',
       label: '操作',
-      width: 120,
+      width: 200,
       slot: 'action',
-      align: 'center'
+      align: 'center',
+      fixed: 'right'
     }
   ]);
 
@@ -109,6 +116,13 @@
     if (status === 'borrowing') return '借阅中';
     if (status === 'overdue') return '逾期未还';
     return '正常';
+  };
+
+  const goReview = (row) => {
+    router.push({
+      path: HRAMS_SPECIAL_REVIEW,
+      query: { personId: String(row.id), name: row.name || '', archiveNo: row.archiveNo || '' }
+    });
   };
 
   const goMaterialMaintain = (row) => {

@@ -9,6 +9,7 @@ export const HRAMS_MENU_ROUTES = [
   { title: '材料管理', path: '/archive-material', component: 'hrams/material/index' },
   { title: '目录管理', path: '/system/hrams-catalog', component: 'hrams/material/category/index' },
   { title: '档案利用', path: '/archive-utilize', component: 'hrams/utilize/index' },
+  { title: '专项审核', path: '/archive-audit', component: 'hrams/review/index' },
   { title: '综合查询', path: '/person-query', component: 'hrams/query/index' },
   { title: '全文检索', path: '/query-search-group/fulltext', component: 'hrams/query/fulltext/index' },
   { title: '智能问答', path: '/query-search-group/qa', component: 'hrams/query/qa/index' },

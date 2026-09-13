@@ -12,6 +12,7 @@
       <div class="drawer-actions">
         <el-button v-permission="'hrams:archive:download'" type="primary" @click="exportMaterials">导出档案材料</el-button>
         <el-button v-permission="'hrams:catalog:export'" @click="exportCatalogFile">导出档案目录</el-button>
+        <el-button v-permission="'hrams:review:add'" @click="goReview">专项审核</el-button>
       </div>
       <el-descriptions v-if="fullPersonInfo" :column="3" border size="small" class="drawer-summary">
         <el-descriptions-item label="档案编号">{{ detail.person.archiveNo }}</el-descriptions-item>
@@ -84,9 +85,11 @@
 
 <script setup>
   import { computed, ref, watch } from 'vue';
+  import { useRouter } from 'vue-router';
   import { EleMessage } from 'ele-admin-plus';
   import { formatDateDay } from '@/utils/hrams-date';
   import { getPerson } from '@/api/hrams/person';
+  import { HRAMS_SPECIAL_REVIEW } from '@/utils/hrams-routes';
   import {
     getMaterialPanel,
     listMaterials,
@@ -103,6 +106,7 @@
     fullPersonInfo: { type: Boolean, default: false }
   });
   const emit = defineEmits(['update:modelValue']);
+  const router = useRouter();
 
   const loading = ref(false);
   const detail = ref({});
@@ -236,6 +240,15 @@
       ? props.exportMaterialsHandler(detail.value)
       : exportArchivePackage(p.id);
     Promise.resolve(task).catch((e) => EleMessage.error({ message: e.message, plain: true }));
+  };
+
+  const goReview = () => {
+    const p = detail.value.person;
+    if (!p?.id) return;
+    router.push({
+      path: HRAMS_SPECIAL_REVIEW,
+      query: { personId: String(p.id), name: p.name || '', archiveNo: p.archiveNo || '' }
+    });
   };
 
   const exportCatalogFile = () => {

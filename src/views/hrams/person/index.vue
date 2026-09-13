@@ -22,6 +22,7 @@
         <template #action="{ row }">
           <btn-items type="link" :divider="true" :items="[
             { title: '查看', permission: 'hrams:person:query', onClick: () => handleView(row) },
+            { title: '专项审核', permission: 'hrams:review:add', onClick: () => goReview(row) },
             { preset: 'edit', icon: false, permission: 'hrams:person:edit', onClick: () => handleEdit(row) },
             { preset: 'del', icon: false, permission: 'hrams:person:remove', onClick: () => handleRemove(row) }
           ]" />
@@ -42,15 +43,18 @@
 
 <script setup>
   import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { ElMessageBox } from 'element-plus';
   import { EleMessage, useModal } from 'ele-admin-plus';
   import PersonArchiveSearchForm from '../components/person-archive-search-form.vue';
   import { pagePerson, removePerson, exportPerson, importPerson, downloadPersonImportTemplate } from '@/api/hrams/person';
   import '../styles/v2.scss';
   import { formatDateDay } from '@/utils/hrams-date';
+  import { HRAMS_SPECIAL_REVIEW } from '@/utils/hrams-routes';
 
   defineOptions({ name: 'HramsPerson' });
   const { openModal } = useModal();
+  const router = useRouter();
   const tableRef = ref(null);
   const selections = ref([]);
   const where = ref({});
@@ -76,7 +80,7 @@
     { prop: 'nativePlace', label: '籍贯', minWidth: 100 },
     { prop: 'major', label: '专业', minWidth: 100 },
     { prop: 'personStatus', label: '当前状态', width: 90 },
-    { columnKey: 'action', label: '操作', width: 200, slot: 'action', align: 'center' }
+    { columnKey: 'action', label: '操作', width: 280, slot: 'action', align: 'center', fixed: 'right' }
   ]);
 
   const datasource = ({ pages, where: w }) => pagePerson({ ...w, ...pages });
@@ -88,6 +92,13 @@
       custom: true,
       asyncComponent: () => import('./components/person-edit.vue'),
       componentProps: { data: row || {}, onDone: () => reload(where.value, 1) }
+    });
+  };
+
+  const goReview = (row) => {
+    router.push({
+      path: HRAMS_SPECIAL_REVIEW,
+      query: { personId: String(row.id), name: row.name || '', archiveNo: row.archiveNo || '' }
     });
   };
 
